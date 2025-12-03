@@ -1,19 +1,20 @@
 
 import React from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
+import CancelSubscriptionModal from '../components/CancelSubscriptionModal';
 
 const Nav = () => {
   const loc = useLocation();
   const tabs = [
-    { name: 'Perfil', path: '' },
-    { name: 'Notificações', path: 'notificacoes' },
-    { name: 'Segurança', path: 'seguranca' }
+    { name: 'Perfil', path: '/configuracoes' },
+    { name: 'Notificações', path: '/configuracoes/notificacoes' },
+    { name: 'Segurança', path: '/configuracoes/seguranca' }
   ];
 
   return (
     <div className="flex border-b border-gray-200 dark:border-gray-700 mb-8">
       {tabs.map(t => {
-        const isActive = loc.pathname.endsWith(t.path) || (t.path === '' && loc.pathname.endsWith('configuracoes'));
+        const isActive = loc.pathname === t.path;
         return (
           <Link
             key={t.name}
@@ -215,30 +216,55 @@ const Notifications = () => (
   </div>
 );
 
-const Security = () => (
-  <div className="max-w-3xl space-y-8">
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
-      <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Alterar Senha</h3>
-      <div className="space-y-4">
-        <input type="password" placeholder="Senha Atual" className="w-full h-12 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-4" />
-        <input type="password" placeholder="Nova Senha" className="w-full h-12 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-4" />
-        <input type="password" placeholder="Confirmar Nova Senha" className="w-full h-12 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-4" />
-        <button className="px-6 py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-primary-600">Atualizar Senha</button>
-      </div>
-    </div>
+const Security = () => {
+  const [isCancelModalOpen, setIsCancelModalOpen] = React.useState(false);
 
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Autenticação de Dois Fatores (2FA)</h3>
-        <label className="relative inline-flex items-center cursor-pointer">
-          <input type="checkbox" className="sr-only peer" />
-          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-        </label>
+  return (
+    <div className="max-w-3xl space-y-8">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Alterar Senha</h3>
+        <div className="space-y-4">
+          <input type="password" placeholder="Senha Atual" className="w-full h-12 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-4" />
+          <input type="password" placeholder="Nova Senha" className="w-full h-12 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-4" />
+          <input type="password" placeholder="Confirmar Nova Senha" className="w-full h-12 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-4" />
+          <button className="px-6 py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-primary-600">Atualizar Senha</button>
+        </div>
       </div>
-      <p className="text-gray-500 text-sm">Adicione uma camada extra de segurança à sua conta.</p>
+
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">Autenticação de Dois Fatores (2FA)</h3>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" className="sr-only peer" />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+          </label>
+        </div>
+        <p className="text-gray-500 text-sm">Adicione uma camada extra de segurança à sua conta.</p>
+      </div>
+
+      {/* Área de Perigo / Cancelamento */}
+      <div className="pt-8 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex justify-between items-center">
+          <div>
+            <h4 className="text-sm font-bold text-gray-900 dark:text-white">Zona de Perigo</h4>
+            <p className="text-xs text-gray-500 mt-1">Ações irreversíveis relacionadas à sua conta.</p>
+          </div>
+          <button
+            onClick={() => setIsCancelModalOpen(true)}
+            className="text-xs text-red-500 hover:text-red-700 hover:underline font-medium transition-colors"
+          >
+            Cancelar assinatura
+          </button>
+        </div>
+      </div>
+
+      <CancelSubscriptionModal
+        isOpen={isCancelModalOpen}
+        onClose={() => setIsCancelModalOpen(false)}
+      />
     </div>
-  </div>
-);
+  );
+};
 
 export default function Settings() {
   return (

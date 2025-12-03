@@ -124,21 +124,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             >
               <span className="material-symbols-outlined">menu</span>
             </button>
-            <div className="hidden md:block relative">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg">search</span>
-              <input
-                type="text"
-                placeholder="Pesquisar..."
-                className="h-10 w-64 rounded-lg bg-gray-100 dark:bg-gray-800 pl-10 pr-4 text-sm outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-              />
-            </div>
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 relative">
-              <span className="material-symbols-outlined text-gray-600 dark:text-gray-300">notifications</span>
-              <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-white dark:border-[#111621]"></span>
-            </button>
             <div className="h-10 w-10 rounded-full bg-cover bg-center cursor-pointer ring-2 ring-transparent hover:ring-primary/50 transition-all" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80")' }}></div>
           </div>
         </header>

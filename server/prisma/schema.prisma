@@ -1,0 +1,58 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  plan      String   @default("FREE") // FREE, BASIC, PRO
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  companies Company[]
+  products  Product[]
+}
+
+model Company {
+  id          String   @id @default(uuid())
+  name        String
+  contactName String?
+  email       String?
+  phone       String?
+  country     String?
+  status      String   @default("ACTIVE") // ACTIVE, INACTIVE, PROSPECT
+  rating      Int      @default(0)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products Product[]
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  category    String
+  brand       String?
+  model       String?
+  marketValue Decimal?
+  status      String   @default("RECEIVED") // RECEIVED, ANALYZING, PUBLISHED, SOLD, SHIPPED
+  condition   String?  // NEW, USED, OPEN_BOX
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  companyId   String?
+  company     Company? @relation(fields: [companyId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

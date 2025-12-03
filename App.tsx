@@ -8,16 +8,17 @@ import Bazar from './pages/Bazar';
 import Finance from './pages/Finance';
 import Logistics from './pages/Logistics';
 import Settings from './pages/Settings';
+import ProductPlanner from './pages/ProductPlanner';
 import Auth from './pages/Auth';
+import Sales from './pages/Sales';
 
 const SidebarItem: React.FC<{ to: string; icon: string; label: string; active: boolean }> = ({ to, icon, label, active }) => (
   <Link
     to={to}
-    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-      active
-        ? 'bg-primary/10 text-primary'
-        : 'text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5'
-    }`}
+    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${active
+      ? 'bg-primary/10 text-primary'
+      : 'text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5'
+      }`}
   >
     <span className={`material-symbols-outlined text-lg ${active ? 'fill' : ''}`}>{icon}</span>
     <span className="text-sm font-medium">{label}</span>
@@ -38,43 +39,45 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }
   }, [isDarkMode]);
 
+  // ...
+
   const navItems = [
     { to: '/', icon: 'dashboard', label: 'Dashboard' },
-    { to: '/produtos', icon: 'package_2', label: 'Produtos' },
-    { to: '/empresas', icon: 'domain', label: 'Empresas' },
-    { to: '/financeiro', icon: 'account_balance', label: 'Financeiro' },
-    { to: '/agenda', icon: 'calendar_today', label: 'Agenda' },
-    { to: '/bazar', icon: 'auto_awesome', label: 'Bazares IA' },
-    { to: '/envios', icon: 'local_shipping', label: 'Envios' },
     { to: '/configuracoes', icon: 'settings', label: 'Configurações' },
+    { to: '/empresas', icon: 'domain', label: 'Empresas' },
+    { to: '/produtos', icon: 'package_2', label: 'Produtos' },
+    { to: '/agenda', icon: 'calendar_today', label: 'Agenda' },
+    { to: '/financeiro', icon: 'account_balance', label: 'Financeiro' },
+    { to: '/vendas', icon: 'shopping_cart', label: 'Vendas' },
+    { to: '/envios', icon: 'local_shipping', label: 'Envios' },
+    { to: '/planejador-produtos', icon: 'trending_up', label: 'Planejador de Produtos' },
+    { to: '/bazar', icon: 'auto_awesome', label: 'Planejador de Bazares' },
   ];
+
+  // ...
 
   return (
     <div className="flex min-h-screen w-full bg-background-light dark:bg-background-dark font-sans text-gray-900 dark:text-gray-100 transition-colors duration-200">
       {/* Mobile Overlay */}
       {isMobileMenuOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-40 bg-black/50 md:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <aside 
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-[#111621] border-r border-gray-200 dark:border-gray-800 transform transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:flex md:flex-col ${
-          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-[#111621] border-r border-gray-200 dark:border-gray-800 transform transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:flex md:flex-col ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         <div className="flex h-full flex-col justify-between p-4">
           <div className="flex flex-col gap-8">
             {/* Logo */}
-            <div className="flex items-center gap-3 px-3">
-              <div className="size-8 text-primary">
-                <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full text-primary-600">
-                  <path d="M44 4H30.6666V17.3334H17.3334V30.6666H4V44H44V4Z" fill="currentColor"></path>
-                </svg>
+            <div className="flex items-center justify-center px-3 py-4">
+              <div className="w-24">
+                <img src="/logo.png" alt="InflueTech Logo" className="w-full h-full object-contain" />
               </div>
-              <h1 className="text-lg font-bold">InflueSync</h1>
             </div>
 
             {/* Navigation */}
@@ -93,17 +96,17 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
           {/* Bottom Actions */}
           <div className="flex flex-col gap-2">
-             <button 
-                onClick={() => setIsDarkMode(!isDarkMode)}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5"
-             >
-                <span className="material-symbols-outlined text-lg">{isDarkMode ? 'light_mode' : 'dark_mode'}</span>
-                <span className="text-sm font-medium">{isDarkMode ? 'Modo Claro' : 'Modo Escuro'}</span>
-             </button>
-             <Link to="/auth/login" className="flex items-center gap-3 px-3 py-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10">
-                <span className="material-symbols-outlined text-lg">logout</span>
-                <span className="text-sm font-medium">Sair</span>
-             </Link>
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5"
+            >
+              <span className="material-symbols-outlined text-lg">{isDarkMode ? 'light_mode' : 'dark_mode'}</span>
+              <span className="text-sm font-medium">{isDarkMode ? 'Modo Claro' : 'Modo Escuro'}</span>
+            </button>
+            <Link to="/auth/login" className="flex items-center gap-3 px-3 py-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10">
+              <span className="material-symbols-outlined text-lg">logout</span>
+              <span className="text-sm font-medium">Sair</span>
+            </Link>
           </div>
         </div>
       </aside>
@@ -113,7 +116,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         {/* Top Header */}
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-gray-200 bg-white/80 dark:bg-[#111621]/90 backdrop-blur-sm px-4 md:px-8 dark:border-gray-800">
           <div className="flex items-center gap-4">
-            <button 
+            <button
               className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
               onClick={() => setIsMobileMenuOpen(true)}
             >
@@ -121,9 +124,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             </button>
             <div className="hidden md:block relative">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg">search</span>
-              <input 
-                type="text" 
-                placeholder="Pesquisar..." 
+              <input
+                type="text"
+                placeholder="Pesquisar..."
                 className="h-10 w-64 rounded-lg bg-gray-100 dark:bg-gray-800 pl-10 pr-4 text-sm outline-none focus:ring-2 focus:ring-primary/50 transition-all"
               />
             </div>
@@ -156,13 +159,15 @@ const App: React.FC = () => {
           <Layout>
             <Routes>
               <Route path="/" element={<Dashboard />} />
-              <Route path="/produtos" element={<Products />} />
-              <Route path="/empresas/*" element={<Companies />} />
-              <Route path="/financeiro/*" element={<Finance />} />
-              <Route path="/agenda" element={<Agenda />} />
-              <Route path="/bazar/*" element={<Bazar />} />
-              <Route path="/envios/*" element={<Logistics />} />
               <Route path="/configuracoes/*" element={<Settings />} />
+              <Route path="/empresas/*" element={<Companies />} />
+              <Route path="/produtos" element={<Products />} />
+              <Route path="/agenda" element={<Agenda />} />
+              <Route path="/financeiro/*" element={<Finance />} />
+              <Route path="/vendas" element={<Sales />} />
+              <Route path="/envios/*" element={<Logistics />} />
+              <Route path="/planejador-produtos" element={<ProductPlanner />} />
+              <Route path="/bazar/*" element={<Bazar />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Layout>

@@ -140,31 +140,35 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   );
 };
 
+import { InfluencerProvider } from './context/InfluencerContext';
+
 const App: React.FC = () => {
   return (
-    <Router>
-      <Routes>
-        <Route path="/auth/*" element={<Auth />} />
-        <Route path="/*" element={
-          <Layout>
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/configuracoes/*" element={<Settings />} />
-              <Route path="/empresas/*" element={<Companies />} />
-              <Route path="/produtos" element={<Products />} />
-              <Route path="/agenda" element={<Agenda />} />
-              <Route path="/financeiro/*" element={<Finance />} />
-              <Route path="/vendas" element={<Sales />} />
-              <Route path="/envios/*" element={<Logistics />} />
-              <Route path="/media-kit" element={<MediaKit />} />
-              <Route path="/planejador-produtos" element={<ProductPlanner />} />
-              <Route path="/bazar/*" element={<Bazar />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </Layout>
-        } />
-      </Routes>
-    </Router>
+    <InfluencerProvider>
+      <Router>
+        <Routes>
+          <Route path="/auth/*" element={<Auth />} />
+          <Route path="/*" element={
+            <Layout>
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/configuracoes/*" element={<Settings />} />
+                <Route path="/empresas/*" element={<Companies />} />
+                <Route path="/produtos" element={<Products />} />
+                <Route path="/agenda" element={<Agenda />} />
+                <Route path="/financeiro/*" element={<Finance />} />
+                <Route path="/vendas" element={<Sales />} />
+                <Route path="/envios/*" element={<Logistics />} />
+                <Route path="/media-kit" element={<MediaKit />} />
+                <Route path="/planejador-produtos" element={<ProductPlanner />} />
+                <Route path="/bazar/*" element={<Bazar />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Layout>
+          } />
+        </Routes>
+      </Router>
+    </InfluencerProvider>
   );
 };
 

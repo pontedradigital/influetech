@@ -9,6 +9,26 @@ const COUNTRIES = [
   'Espanha', 'Austrália', 'Holanda', 'Suíça', 'Suécia', 'Outro'
 ];
 
+// Lista de categorias de produtos (em ordem alfabética)
+const PRODUCT_CATEGORIES = [
+  'Cadeiras',
+  'Caixa de Som',
+  'Controles',
+  'Hardware',
+  'Headset',
+  'Jogos',
+  'Kit Mouse + Teclado',
+  'Microfones',
+  'Mochilas',
+  'Monitores',
+  'Mouse',
+  'Mousepad',
+  'Notebook',
+  'Outros/Diversos',
+  'Setup Completo',
+  'Teclado'
+];
+
 // Função para validar telefone internacional
 const validatePhone = (phone: string): boolean => {
   if (!phone) return true; // Campo opcional
@@ -44,20 +64,11 @@ const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, title, message }: { is
 // Modal de Editar Produto
 const EditProductModal = ({ isOpen, onClose, onSave, product }: { isOpen: boolean; onClose: () => void; onSave: (product: Product) => void; product: Product | null }) => {
   const [name, setName] = useState('');
-  const [category, setCategory] = useState('Eletrônicos');
+  const [category, setCategory] = useState(PRODUCT_CATEGORIES[0]);
   const [companyId, setCompanyId] = useState('');
   const [price, setPrice] = useState('');
   const [status, setStatus] = useState<Product['status']>('Em análise');
   const [companies, setCompanies] = useState<Array<{ id: string; name: string }>>([]);
-
-  React.useEffect(() => {
-    if (product) {
-      setName(product.name);
-      setCategory(product.category);
-      setPrice(product.price?.toString() || '');
-      setStatus(product.status);
-    }
-  }, [product]);
 
   React.useEffect(() => {
     if (isOpen) {
@@ -67,6 +78,20 @@ const EditProductModal = ({ isOpen, onClose, onSave, product }: { isOpen: boolea
         .catch(err => console.error('Erro ao carregar empresas:', err));
     }
   }, [isOpen]);
+
+  React.useEffect(() => {
+    if (product) {
+      setName(product.name);
+      setCategory(product.category);
+      setPrice(product.price?.toString() || '');
+      setStatus(product.status);
+
+      if (companies.length > 0) {
+        const found = companies.find(c => c.name === product.company);
+        if (found) setCompanyId(found.id);
+      }
+    }
+  }, [product, companies]);
 
   if (!isOpen || !product) return null;
 
@@ -92,6 +117,7 @@ const EditProductModal = ({ isOpen, onClose, onSave, product }: { isOpen: boolea
           ...product,
           name,
           category,
+          company: companies.find(c => c.id === companyId)?.name || product.company,
           price: parseFloat(price) || 0,
           status
         });
@@ -123,17 +149,31 @@ const EditProductModal = ({ isOpen, onClose, onSave, product }: { isOpen: boolea
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Categoria</label>
               <select value={category} onChange={e => setCategory(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white">
-                <option>Eletrônicos</option>
-                <option>Acessórios</option>
-                <option>Setup</option>
-                <option>Áudio</option>
-                <option>Casa Inteligente</option>
+                {PRODUCT_CATEGORIES.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Preço (R$)</label>
               <input type="number" value={price} onChange={e => setPrice(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Empresa</label>
+            <select
+              value={companyId}
+              onChange={e => setCompanyId(e.target.value)}
+              className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white"
+            >
+              <option value="">Selecione uma empresa</option>
+              {companies.map(company => (
+                <option key={company.id} value={company.id}>
+                  {company.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -255,7 +295,7 @@ const companies: Company[] = [
 
 const NewProductModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose: () => void; onSave: (product: Product) => void }) => {
   const [name, setName] = useState('');
-  const [category, setCategory] = useState('Eletrônicos');
+  const [category, setCategory] = useState(PRODUCT_CATEGORIES[0]);
   const [companyId, setCompanyId] = useState('');
   const [price, setPrice] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -349,11 +389,9 @@ const NewProductModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Categoria</label>
               <select value={category} onChange={e => setCategory(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white">
-                <option>Eletrônicos</option>
-                <option>Acessórios</option>
-                <option>Setup</option>
-                <option>Áudio</option>
-                <option>Casa Inteligente</option>
+                {PRODUCT_CATEGORIES.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
               </select>
             </div>
             <div>
@@ -415,6 +453,12 @@ export default function Products() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
 
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedStatus, setSelectedStatus] = useState<string>('');
+  const [selectedCompany, setSelectedCompany] = useState<string>('');
+
   React.useEffect(() => {
     fetch('http://localhost:3001/api/products')
       .then(res => res.json())
@@ -445,6 +489,22 @@ export default function Products() {
     setDeletingProductId(null);
   };
 
+  // Get unique values for filters
+  const categories = Array.from(new Set(products.map(p => p.category))).sort();
+  const statuses = Array.from(new Set(products.map(p => p.status))).sort();
+  const companies = Array.from(new Set(products.map(p => p.company))).filter(Boolean).sort();
+
+  // Filter products
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.company?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = !selectedCategory || product.category === selectedCategory;
+    const matchesStatus = !selectedStatus || product.status === selectedStatus;
+    const matchesCompany = !selectedCompany || product.company === selectedCompany;
+
+    return matchesSearch && matchesCategory && matchesStatus && matchesCompany;
+  });
+
   return (
     <div className="flex flex-col gap-6">
       <DeleteConfirmModal isOpen={!!deletingProductId} onClose={() => setDeletingProductId(null)} onConfirm={confirmDelete} title="Excluir Produto" message="Tem certeza que deseja excluir este produto?" />
@@ -468,62 +528,142 @@ export default function Products() {
         </button>
       </div>
 
+      {/* Search and Filters */}
       <div className="flex flex-wrap gap-4">
         <div className="relative flex-1 min-w-[200px]">
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
-          <input className="w-full h-10 pl-10 pr-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-primary/50 text-gray-900 dark:text-white" placeholder="Pesquisar produto..." />
+          <input
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full h-10 pl-10 pr-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-primary/50 text-gray-900 dark:text-white"
+            placeholder="Pesquisar produto..."
+          />
         </div>
-        {['Categoria', 'Status', 'Empresa'].map(filter => (
-          <button key={filter} className="flex items-center gap-2 px-4 h-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors">
-            {filter} <span className="material-symbols-outlined text-base">expand_more</span>
-          </button>
-        ))}
+
+        {/* Category Filter */}
+        <select
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          className="px-4 h-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-primary/50"
+        >
+          <option value="">Todas Categorias</option>
+          {categories.map(cat => (
+            <option key={cat} value={cat}>{cat}</option>
+          ))}
+        </select>
+
+        {/* Status Filter */}
+        <select
+          value={selectedStatus}
+          onChange={(e) => setSelectedStatus(e.target.value)}
+          className="px-4 h-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-primary/50"
+        >
+          <option value="">Todos Status</option>
+          {statuses.map(status => (
+            <option key={status} value={status}>{status}</option>
+          ))}
+        </select>
+
+        {/* Company Filter */}
+        <select
+          value={selectedCompany}
+          onChange={(e) => setSelectedCompany(e.target.value)}
+          className="px-4 h-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-primary/50"
+        >
+          <option value="">Todas Empresas</option>
+          {companies.map(company => (
+            <option key={company} value={company}>{company}</option>
+          ))}
+        </select>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {products.map(product => (
-          <div key={product.id} className="flex flex-col bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all group">
-            <div className="h-48 w-full overflow-hidden relative">
-              <img src={product.image} alt={product.name} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
-              <div className="absolute top-2 right-2">
-                <span className="px-2 py-1 bg-black/70 text-white text-xs rounded-md backdrop-blur-sm">{product.category}</span>
-              </div>
-            </div>
-            <div className="p-4 flex flex-col gap-3 flex-1">
-              <div>
-                <h3 className="font-bold text-gray-900 dark:text-white truncate" title={product.name}>{product.name}</h3>
-                <p className="text-gray-500 text-sm">{product.company}</p>
-              </div>
-              <div className="flex justify-between items-center mt-auto">
-                <span className="text-lg font-bold text-primary">
-                  {product.price ? `R$ ${product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'N/A'}
-                </span>
-                <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium 
-                  ${product.status === 'Vendido' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
-                    product.status === 'Enviado' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' :
-                      product.status === 'Publicado' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' :
-                        'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'}`}>
-                  {product.status}
-                </span>
-              </div>
-              <div className="pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-2">
-                <button
-                  onClick={() => setEditingProduct(product)}
-                  className="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
-                >
-                  <span className="material-symbols-outlined text-lg">edit</span>
-                </button>
-                <button
-                  onClick={() => setDeletingProductId(product.id)}
-                  className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                >
-                  <span className="material-symbols-outlined text-lg">delete</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
+      {/* Products List */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-gray-50 dark:bg-gray-700/50 text-xs uppercase text-gray-500 font-semibold">
+              <tr>
+                <th className="px-6 py-4">Produto</th>
+                <th className="px-6 py-4">Categoria</th>
+                <th className="px-6 py-4">Empresa</th>
+                <th className="px-6 py-4">Preço</th>
+                <th className="px-6 py-4">Data Recebimento</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4 text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              {filteredProducts.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                    {searchTerm || selectedCategory || selectedStatus || selectedCompany
+                      ? 'Nenhum produto encontrado com os filtros aplicados.'
+                      : 'Nenhum produto cadastrado ainda.'}
+                  </td>
+                </tr>
+              ) : (
+                filteredProducts.map(product => (
+                  <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                    <td className="px-6 py-4">
+                      <div>
+                        <p className="font-bold text-gray-900 dark:text-white">{product.name}</p>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-gray-600 dark:text-gray-300">{product.category}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-gray-600 dark:text-gray-300">{product.company || '-'}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="font-bold text-primary">
+                        {product.price ? `R$ ${product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'N/A'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-gray-600 dark:text-gray-300">{product.receiveDate}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold
+                        ${product.status === 'Vendido' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                          product.status === 'Enviado' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' :
+                            product.status === 'Publicado' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' :
+                              'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'}`}>
+                        {product.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => setEditingProduct(product)}
+                          className="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+                          title="Editar"
+                        >
+                          <span className="material-symbols-outlined text-lg">edit</span>
+                        </button>
+                        <button
+                          onClick={() => setDeletingProductId(product.id)}
+                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          title="Excluir"
+                        >
+                          <span className="material-symbols-outlined text-lg">delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      {/* Results count */}
+      {filteredProducts.length > 0 && (
+        <div className="text-sm text-gray-500">
+          Mostrando {filteredProducts.length} de {products.length} produto{products.length !== 1 ? 's' : ''}
+        </div>
+      )}
     </div>
   );
 }
@@ -586,10 +726,14 @@ const NewCompanyModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose
         setCountry('');
         setPhoneError('');
         onClose();
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
+        console.error('Erro na resposta:', response.status, errorData);
+        alert(`Erro ao criar empresa: ${errorData.error || 'Erro desconhecido'}`);
       }
     } catch (error) {
       console.error('Erro ao criar empresa:', error);
-      alert('Erro ao criar empresa');
+      alert(`Erro ao criar empresa: ${error instanceof Error ? error.message : 'Erro de conexão com o servidor'}`);
     }
   };
 
@@ -680,16 +824,16 @@ export function Companies() {
       .catch(err => console.error('Erro ao buscar empresas:', err));
   }, []);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir esta empresa?')) return;
+  const confirmDelete = async () => {
+    if (!deletingCompanyId) return;
 
     try {
-      const response = await fetch(`http://localhost:3001/api/companies/${id}`, {
+      const response = await fetch(`http://localhost:3001/api/companies/${deletingCompanyId}`, {
         method: 'DELETE'
       });
 
       if (response.ok) {
-        setCompanies(companies.filter(c => c.id !== id));
+        setCompanies(companies.filter(c => c.id !== deletingCompanyId));
       } else {
         alert('Erro ao excluir empresa');
       }
@@ -697,10 +841,27 @@ export function Companies() {
       console.error('Erro ao excluir empresa:', error);
       alert('Erro ao excluir empresa');
     }
+    setDeletingCompanyId(null);
   };
 
   return (
     <div className="flex flex-col gap-6">
+      <DeleteConfirmModal
+        isOpen={!!deletingCompanyId}
+        onClose={() => setDeletingCompanyId(null)}
+        onConfirm={confirmDelete}
+        title="Excluir Empresa"
+        message="Tem certeza que deseja excluir esta empresa?"
+      />
+      <EditCompanyModal
+        isOpen={!!editingCompany}
+        onClose={() => setEditingCompany(null)}
+        onSave={(updatedCompany) => {
+          setCompanies(companies.map(c => c.id === updatedCompany.id ? updatedCompany : c));
+          setEditingCompany(null);
+        }}
+        company={editingCompany}
+      />
       <NewCompanyModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

@@ -11,6 +11,7 @@ import Settings from './pages/Settings';
 import ProductPlanner from './pages/ProductPlanner';
 import Auth from './pages/Auth';
 import Sales from './pages/Sales';
+import MediaKit from './pages/MediaKit';
 
 const SidebarItem: React.FC<{ to: string; icon: string; label: string; active: boolean }> = ({ to, icon, label, active }) => (
   <Link
@@ -50,6 +51,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     { to: '/financeiro', icon: 'account_balance', label: 'Financeiro' },
     { to: '/vendas', icon: 'shopping_cart', label: 'Vendas' },
     { to: '/envios', icon: 'local_shipping', label: 'Envios' },
+    { to: '/media-kit', icon: 'picture_as_pdf', label: 'Media Kit' },
     { to: '/planejador-produtos', icon: 'trending_up', label: 'Planejador de Produtos' },
     { to: '/bazar', icon: 'auto_awesome', label: 'Planejador de Bazares' },
   ];
@@ -166,6 +168,7 @@ const App: React.FC = () => {
               <Route path="/financeiro/*" element={<Finance />} />
               <Route path="/vendas" element={<Sales />} />
               <Route path="/envios/*" element={<Logistics />} />
+              <Route path="/media-kit" element={<MediaKit />} />
               <Route path="/planejador-produtos" element={<ProductPlanner />} />
               <Route path="/bazar/*" element={<Bazar />} />
               <Route path="*" element={<Navigate to="/" replace />} />

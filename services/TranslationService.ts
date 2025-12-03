@@ -26,6 +26,10 @@ const DICTIONARY: Record<string, Record<LanguageCode, string>> = {
     'Seguidores': { pt: 'Seguidores', en: 'Followers', es: 'Seguidores', zh: '粉丝' },
     'Inscritos': { pt: 'Inscritos', en: 'Subscribers', es: 'Suscriptores', zh: '订阅者' },
     'Visualizações': { pt: 'Visualizações', en: 'Views', es: 'Vistas', zh: '观看次数' },
+    'Público': { pt: 'Público', en: 'Audience', es: 'Público', zh: '受众' },
+    'Estatísticas Sociais': { pt: 'Estatísticas Sociais', en: 'Social Stats', es: 'Estadísticas Sociales', zh: '社交统计' },
+    'O que esperar': { pt: 'O que esperar', en: 'What to Expect', es: 'Qué Esperar', zh: '期待什么' },
+    'Métricas': { pt: 'Métricas', en: 'Metrics', es: 'Métricas', zh: '指标' },
 
     // Partnership
     'Investimento Mínimo': { pt: 'Investimento Mínimo', en: 'Minimum Investment', es: 'Inversión Mínima', zh: '最低投资' },

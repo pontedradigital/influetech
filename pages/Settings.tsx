@@ -557,6 +557,42 @@ const Security = () => {
 
 const ImportCalculatorSettings = () => {
   const { data, updateImportSettings } = useInfluencer();
+  const [loadingRate, setLoadingRate] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+
+  const fetchDollarRate = async (isAutomatic = false) => {
+    if (!isAutomatic) setLoadingRate(true);
+    try {
+      const response = await fetch('https://economia.awesomeapi.com.br/last/USD-BRL');
+      const apiData = await response.json();
+      if (apiData.USDBRL && apiData.USDBRL.ask) {
+        const rate = parseFloat(apiData.USDBRL.ask);
+        updateImportSettings({ dollarRate: parseFloat(rate.toFixed(2)) });
+        setLastUpdate(new Date());
+      }
+    } catch (error) {
+      console.error('Erro ao buscar cotação:', error);
+      if (!isAutomatic) {
+        alert('Erro ao buscar cotação do dólar. Verifique sua conexão.');
+      }
+    } finally {
+      if (!isAutomatic) setLoadingRate(false);
+    }
+  };
+
+  // Auto-update every hour
+  React.useEffect(() => {
+    // Fetch on mount
+    fetchDollarRate(true);
+
+    // Set up interval for hourly updates
+    const interval = setInterval(() => {
+      fetchDollarRate(true);
+    }, 60 * 60 * 1000); // 1 hour in milliseconds
+
+    // Cleanup interval on unmount
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="max-w-3xl space-y-8">
@@ -568,16 +604,31 @@ const ImportCalculatorSettings = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <label className="block">
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Cotação do Dólar (R$)</span>
-              <div className="relative mt-1">
-                <span className="absolute left-3 top-3 text-gray-500">R$</span>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={data.importSettings.dollarRate}
-                  onChange={e => updateImportSettings({ dollarRate: Number(e.target.value) })}
-                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 pl-10 pr-4 focus:ring-2 focus:ring-primary/50"
-                />
+              <div className="relative mt-1 flex gap-2">
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-3 text-gray-500">R$</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={data.importSettings.dollarRate}
+                    onChange={e => updateImportSettings({ dollarRate: Number(e.target.value) })}
+                    className="block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 pl-10 pr-4 focus:ring-2 focus:ring-primary/50"
+                  />
+                </div>
+                <button
+                  onClick={fetchDollarRate}
+                  disabled={loadingRate}
+                  className="px-4 h-12 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
+                  title="Atualizar com cotação atual"
+                >
+                  <span className={`material-symbols-outlined ${loadingRate ? 'animate-spin' : ''}`}>
+                    {loadingRate ? 'refresh' : 'currency_exchange'}
+                  </span>
+                </button>
               </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Atualização automática a cada 1 hora. {lastUpdate && `Última atualização: ${lastUpdate.toLocaleTimeString('pt-BR')}`}
+              </p>
             </label>
             <label className="block">
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">ICMS Padrão (%)</span>

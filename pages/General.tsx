@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Product, Company } from '../types';
+import { useInfluencer } from '../context/InfluencerContext';
 
 // Lista de países
 const COUNTRIES = [
@@ -301,7 +302,63 @@ const NewProductModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [status, setStatus] = useState<Product['status']>('Em análise');
   const [companies, setCompanies] = useState<Array<{ id: string; name: string }>>([]);
+
   const [loadingCompanies, setLoadingCompanies] = useState(false);
+
+  // Import Calculation State
+  const { data: influencerData } = useInfluencer();
+  const [isImported, setIsImported] = useState(false);
+  const [priceUSD, setPriceUSD] = useState('');
+  const [shippingUSD, setShippingUSD] = useState('');
+  const [calculationResult, setCalculationResult] = useState<{
+    priceBRL: number;
+    shippingBRL: number;
+    importTax: number;
+    icms: number;
+    total: number;
+  } | null>(null);
+
+  // Calculate Import Costs
+  React.useEffect(() => {
+    if (isImported && priceUSD) {
+      const usd = parseFloat(priceUSD) || 0;
+      const shipping = parseFloat(shippingUSD) || 0;
+      const rate = influencerData.importSettings.dollarRate;
+
+      const priceBRL = usd * rate;
+      const shippingBRL = shipping * rate;
+      const baseTotalBRL = priceBRL + shippingBRL;
+
+      let importTaxRate = 0;
+      if (usd <= 50) {
+        importTaxRate = influencerData.importSettings.taxRateUnder50 / 100;
+      } else {
+        importTaxRate = influencerData.importSettings.taxRateOver50 / 100;
+      }
+
+      const importTax = baseTotalBRL * importTaxRate;
+
+      // ICMS Calculation (Base + ImportTax) / (1 - ICMS Rate)
+      // Standard formula: Total = (Base + ImportTax) / (1 - ICMS)
+      // ICMS Amount = Total * ICMS Rate
+      const icmsRate = influencerData.importSettings.icmsRate / 100;
+      const totalWithICMS = (baseTotalBRL + importTax) / (1 - icmsRate);
+      const icmsAmount = totalWithICMS * icmsRate;
+
+      setCalculationResult({
+        priceBRL,
+        shippingBRL,
+        importTax,
+        icms: icmsAmount,
+        total: totalWithICMS
+      });
+
+      // Auto-fill price field with calculated total
+      setPrice(totalWithICMS.toFixed(2));
+    } else {
+      setCalculationResult(null);
+    }
+  }, [isImported, priceUSD, shippingUSD, influencerData.importSettings]);
 
   // Fetch companies when modal opens
   React.useEffect(() => {
@@ -383,6 +440,67 @@ const NewProductModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Nome do Produto</label>
             <input required type="text" value={name} onChange={e => setName(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-400" placeholder="Ex: Headphone Bluetooth" />
+          </div>
+
+          <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4 mb-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isImported}
+                onChange={e => setIsImported(e.target.checked)}
+                className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+              />
+              <span className="text-sm font-medium text-gray-900 dark:text-white">Produto Importado?</span>
+            </label>
+
+            {isImported && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Preço (USD)</label>
+                    <input
+                      type="number"
+                      value={priceUSD}
+                      onChange={e => setPriceUSD(e.target.value)}
+                      className="w-full h-11 px-4 rounded-lg bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Frete (USD)</label>
+                    <input
+                      type="number"
+                      value={shippingUSD}
+                      onChange={e => setShippingUSD(e.target.value)}
+                      className="w-full h-11 px-4 rounded-lg bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+
+                {calculationResult && (
+                  <div className="bg-white dark:bg-gray-900 p-3 rounded-lg border border-gray-200 dark:border-gray-700 text-sm space-y-1">
+                    <div className="flex justify-between text-gray-500">
+                      <span>Conversão (R$ {influencerData.importSettings.dollarRate.toFixed(2)})</span>
+                      <span>R$ {(calculationResult.priceBRL + calculationResult.shippingBRL).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-gray-500">
+                      <span>Imposto Importação ({parseFloat(priceUSD) <= 50 ? influencerData.importSettings.taxRateUnder50 : influencerData.importSettings.taxRateOver50}%)</span>
+                      <span>R$ {calculationResult.importTax.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-gray-500">
+                      <span>ICMS ({influencerData.importSettings.icmsRate}%)</span>
+                      <span>R$ {calculationResult.icms.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between font-bold text-gray-900 dark:text-white pt-2 border-t border-gray-100 dark:border-gray-800">
+                      <span>Custo Total Estimado</span>
+                      <span className="text-primary">R$ {calculationResult.total.toFixed(2)}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
           </div>
 
           <div className="grid grid-cols-2 gap-4">

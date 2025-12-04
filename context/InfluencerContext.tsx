@@ -31,10 +31,18 @@ export interface PartnershipPreferences {
     currency: 'BRL' | 'USD';
 }
 
+export interface ImportSettings {
+    dollarRate: number;
+    taxRateUnder50: number;
+    taxRateOver50: number;
+    icmsRate: number;
+}
+
 export interface InfluencerData {
     profile: InfluencerProfile;
     socials: SocialNetwork[];
     partnerships: PartnershipPreferences;
+    importSettings: ImportSettings;
 }
 
 interface InfluencerContextType {
@@ -42,6 +50,7 @@ interface InfluencerContextType {
     updateProfile: (data: Partial<InfluencerProfile>) => void;
     updateSocials: (data: SocialNetwork[]) => void;
     updatePartnerships: (data: Partial<PartnershipPreferences>) => void;
+    updateImportSettings: (data: Partial<ImportSettings>) => void;
     totalFollowers: number;
 }
 
@@ -71,6 +80,12 @@ const defaultData: InfluencerData = {
         productValueSuggestion: 500,
         currency: 'BRL',
     },
+    importSettings: {
+        dollarRate: 5.00,
+        taxRateUnder50: 20,
+        taxRateOver50: 60,
+        icmsRate: 17,
+    },
 };
 
 const InfluencerContext = createContext<InfluencerContextType | undefined>(undefined);
@@ -78,7 +93,16 @@ const InfluencerContext = createContext<InfluencerContextType | undefined>(undef
 export const InfluencerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [data, setData] = useState<InfluencerData>(() => {
         const saved = localStorage.getItem('influencer_data');
-        return saved ? JSON.parse(saved) : defaultData;
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            // Merge saved data with default data to ensure new fields (like importSettings) exist
+            return {
+                ...defaultData,
+                ...parsed,
+                importSettings: parsed.importSettings || defaultData.importSettings
+            };
+        }
+        return defaultData;
     });
 
     useEffect(() => {
@@ -97,10 +121,14 @@ export const InfluencerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setData(prev => ({ ...prev, partnerships: { ...prev.partnerships, ...updates } }));
     };
 
+    const updateImportSettings = (updates: Partial<ImportSettings>) => {
+        setData(prev => ({ ...prev, importSettings: { ...prev.importSettings, ...updates } }));
+    };
+
     const totalFollowers = data.socials.reduce((acc, curr) => acc + (Number(curr.followers) || 0), 0);
 
     return (
-        <InfluencerContext.Provider value={{ data, updateProfile, updateSocials, updatePartnerships, totalFollowers }}>
+        <InfluencerContext.Provider value={{ data, updateProfile, updateSocials, updatePartnerships, updateImportSettings, totalFollowers }}>
             {children}
         </InfluencerContext.Provider>
     );

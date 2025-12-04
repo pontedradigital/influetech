@@ -11,7 +11,8 @@ const Nav = () => {
   const tabs = [
     { name: 'Perfil', path: '/configuracoes' },
     { name: 'Notificações', path: '/configuracoes/notificacoes' },
-    { name: 'Segurança', path: '/configuracoes/seguranca' }
+    { name: 'Segurança', path: '/configuracoes/seguranca' },
+    { name: 'Calculadora de Importação', path: '/configuracoes/importacao' }
   ];
 
   return (
@@ -554,6 +555,91 @@ const Security = () => {
   );
 };
 
+const ImportCalculatorSettings = () => {
+  const { data, updateImportSettings } = useInfluencer();
+
+  return (
+    <div className="max-w-3xl space-y-8">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Configurações de Importação</h3>
+        <p className="text-sm text-gray-500 mb-6">Defina as taxas e cotações para o cálculo automático de produtos importados.</p>
+
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <label className="block">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Cotação do Dólar (R$)</span>
+              <div className="relative mt-1">
+                <span className="absolute left-3 top-3 text-gray-500">R$</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={data.importSettings.dollarRate}
+                  onChange={e => updateImportSettings({ dollarRate: Number(e.target.value) })}
+                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 pl-10 pr-4 focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+            </label>
+            <label className="block">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">ICMS Padrão (%)</span>
+              <div className="relative mt-1">
+                <input
+                  type="number"
+                  step="0.1"
+                  value={data.importSettings.icmsRate}
+                  onChange={e => updateImportSettings({ icmsRate: Number(e.target.value) })}
+                  className="block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary/50"
+                />
+                <span className="absolute right-3 top-3 text-gray-500">%</span>
+              </div>
+            </label>
+          </div>
+
+          <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg flex items-start gap-3">
+            <span className="material-symbols-outlined text-yellow-600 dark:text-yellow-400 mt-0.5">info</span>
+            <p className="text-sm text-yellow-800 dark:text-yellow-200">
+              <strong>Atenção ao ICMS:</strong> O valor de 17% é uma média nacional, mas cada estado brasileiro possui sua própria alíquota de ICMS. Recomendamos que cada usuário verifique a alíquota do seu estado para manter a calculadora precisa.
+            </p>
+          </div>
+
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+            <h4 className="text-base font-bold text-gray-900 dark:text-white mb-4">Taxas de Importação (Remessa Conforme)</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <label className="block">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Abaixo de US$ 50,00</span>
+                <div className="relative mt-1">
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={data.importSettings.taxRateUnder50}
+                    onChange={e => updateImportSettings({ taxRateUnder50: Number(e.target.value) })}
+                    className="block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary/50"
+                  />
+                  <span className="absolute right-3 top-3 text-gray-500">%</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Padrão: 20%</p>
+              </label>
+              <label className="block">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Acima de US$ 50,00</span>
+                <div className="relative mt-1">
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={data.importSettings.taxRateOver50}
+                    onChange={e => updateImportSettings({ taxRateOver50: Number(e.target.value) })}
+                    className="block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary/50"
+                  />
+                  <span className="absolute right-3 top-3 text-gray-500">%</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Padrão: 60%</p>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function Settings() {
   return (
     <div>
@@ -566,6 +652,7 @@ export default function Settings() {
         <Route path="/" element={<Profile />} />
         <Route path="/notificacoes" element={<Notifications />} />
         <Route path="/seguranca" element={<Security />} />
+        <Route path="/importacao" element={<ImportCalculatorSettings />} />
       </Routes>
     </div>
   );

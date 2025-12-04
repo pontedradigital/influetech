@@ -144,7 +144,7 @@ const Profile = () => {
               type="text"
               value={data.profile.name}
               onChange={e => updateProfile({ name: e.target.value })}
-              className="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 h-12 px-4 focus:ring-2 focus:ring-primary/50"
+              className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary/50"
             />
           </label>
           <label className="block">
@@ -165,7 +165,7 @@ const Profile = () => {
               type="tel"
               value={data.profile.phone}
               onChange={e => updateProfile({ phone: e.target.value })}
-              className="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 h-12 px-4 focus:ring-2 focus:ring-primary/50"
+              className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary/50"
             />
           </label>
           <label className="block">
@@ -174,7 +174,7 @@ const Profile = () => {
               type="text"
               value={data.profile.location}
               onChange={e => updateProfile({ location: e.target.value })}
-              className="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 h-12 px-4 focus:ring-2 focus:ring-primary/50"
+              className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary/50"
             />
           </label>
           <label className="block">
@@ -185,7 +185,7 @@ const Profile = () => {
               onChange={e => updateProfile({ cep: e.target.value })}
               placeholder="00000-000"
               maxLength={9}
-              className="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 h-12 px-4 focus:ring-2 focus:ring-primary/50"
+              className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary/50"
             />
             <p className="text-xs text-gray-500 mt-1">Usado para cálculo de frete nos envios</p>
           </label>
@@ -203,7 +203,7 @@ const Profile = () => {
             <select
               value={newSocialPlatform}
               onChange={(e) => setNewSocialPlatform(e.target.value as any)}
-              className="rounded-lg border-gray-300 dark:border-gray-700 text-sm h-10"
+              className="rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white text-sm h-10"
             >
               <option value="Instagram">Instagram</option>
               <option value="TikTok">TikTok</option>
@@ -236,7 +236,7 @@ const Profile = () => {
                   placeholder="Usuário / Handle (ex: @usuario)"
                   value={social.handle}
                   onChange={(e) => handleSocialChange(social.id, 'handle', e.target.value)}
-                  className="rounded-lg border-gray-300 dark:border-gray-700 h-10 px-3 text-sm"
+                  className="rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white h-10 px-3 text-sm"
                 />
                 <div className="relative">
                   <input
@@ -244,7 +244,7 @@ const Profile = () => {
                     placeholder="Seguidores"
                     value={social.followers}
                     onChange={(e) => handleSocialChange(social.id, 'followers', Number(e.target.value))}
-                    className="w-full rounded-lg border-gray-300 dark:border-gray-700 h-10 px-3 text-sm"
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white h-10 px-3 text-sm"
                   />
                   <span className="absolute right-3 top-2.5 text-xs text-gray-400">Seguidores</span>
                 </div>
@@ -255,7 +255,7 @@ const Profile = () => {
                       placeholder="Média de Views"
                       value={social.averageViews || ''}
                       onChange={(e) => handleSocialChange(social.id, 'averageViews', Number(e.target.value))}
-                      className="w-full rounded-lg border-gray-300 dark:border-gray-700 h-10 px-3 text-sm"
+                      className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white h-10 px-3 text-sm"
                     />
                     <span className="absolute right-3 top-2.5 text-xs text-gray-400">Views/Mês</span>
                   </div>
@@ -265,7 +265,7 @@ const Profile = () => {
                   placeholder="URL do Perfil (opcional)"
                   value={social.url}
                   onChange={(e) => handleSocialChange(social.id, 'url', e.target.value)}
-                  className="md:col-span-2 rounded-lg border-gray-300 dark:border-gray-700 h-10 px-3 text-sm"
+                  className="md:col-span-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white h-10 px-3 text-sm"
                 />
               </div>
               <button
@@ -294,7 +294,7 @@ const Profile = () => {
               <select
                 value={data.profile.niche}
                 onChange={e => updateProfile({ niche: e.target.value })}
-                className="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 h-12 px-4 focus:ring-2 focus:ring-primary/50"
+                className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary/50"
               >
                 <option value="">Selecione seu nicho principal</option>
                 <option>Hardware e Componentes</option>
@@ -316,7 +316,7 @@ const Profile = () => {
                 step="0.1"
                 value={data.profile.engagementRate}
                 onChange={e => updateProfile({ engagementRate: Number(e.target.value) })}
-                className="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 h-12 px-4 focus:ring-2 focus:ring-primary/50"
+                className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary/50"
               />
             </label>
           </div>
@@ -329,7 +329,7 @@ const Profile = () => {
                 placeholder="Ex: 18-34 anos"
                 value={data.profile.audienceAge}
                 onChange={e => updateProfile({ audienceAge: e.target.value })}
-                className="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 h-12 px-4 focus:ring-2 focus:ring-primary/50"
+                className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary/50"
               />
             </label>
             <label className="block">
@@ -339,7 +339,7 @@ const Profile = () => {
                 placeholder="Ex: 70% Masculino, 30% Feminino"
                 value={data.profile.audienceGender}
                 onChange={e => updateProfile({ audienceGender: e.target.value })}
-                className="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 h-12 px-4 focus:ring-2 focus:ring-primary/50"
+                className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary/50"
               />
             </label>
           </div>
@@ -374,7 +374,7 @@ const Profile = () => {
               value={data.profile.bio}
               onChange={e => updateProfile({ bio: e.target.value })}
               placeholder="Conte um pouco sobre você e seu conteúdo..."
-              className="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 focus:ring-2 focus:ring-primary/50"
+              className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white px-4 py-3 focus:ring-2 focus:ring-primary/50"
             />
           </label>
         </div>
@@ -439,7 +439,7 @@ const Profile = () => {
                 type="number"
                 value={data.partnerships.productValueSuggestion}
                 onChange={e => updatePartnerships({ productValueSuggestion: Number(e.target.value) })}
-                className={`mt-1 block w-full rounded-lg border h-12 px-4 focus:ring-2 focus:ring-primary/50 ${viabilityStatus ? 'border-orange-300 bg-orange-50 dark:bg-orange-900/20' : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800'}`}
+                className={`mt-1 block w-full rounded-lg border h-12 px-4 focus:ring-2 focus:ring-primary/50 text-gray-900 dark:text-white ${viabilityStatus ? 'border-orange-300 bg-orange-50 dark:bg-orange-900/20' : 'border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900'}`}
               />
               {viabilityStatus && (
                 <div className="mt-2 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg flex items-start gap-3">
@@ -453,7 +453,7 @@ const Profile = () => {
               <select
                 value={data.partnerships.currency}
                 onChange={e => updatePartnerships({ currency: e.target.value as 'BRL' | 'USD' })}
-                className="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 h-12 px-4 focus:ring-2 focus:ring-primary/50"
+                className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary/50"
               >
                 <option value="BRL">Real (BRL)</option>
                 <option value="USD">Dólar (USD)</option>

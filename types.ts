@@ -15,7 +15,6 @@ export interface Company {
   name: string;
   contact: string;
   status: 'Ativo' | 'Inativo' | 'Pendente';
-  logo: string;
   email: string;
 }
 

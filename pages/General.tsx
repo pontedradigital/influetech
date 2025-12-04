@@ -287,10 +287,10 @@ const initialProducts: Product[] = [
 ];
 
 const companies: Company[] = [
-  { id: '1', name: 'Google', contact: 'Sundar Pichai', status: 'Ativo', email: 'contact@google.com', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg' },
-  { id: '2', name: 'Apple', contact: 'Tim Cook', status: 'Ativo', email: 'contact@apple.com', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/apple/apple-original.svg' },
-  { id: '3', name: 'Meta', contact: 'Mark Zuckerberg', status: 'Inativo', email: 'contact@meta.com', logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/facebook/facebook-original.svg' },
-  { id: '4', name: 'Amazon', contact: 'Andy Jassy', status: 'Pendente', email: 'contact@amazon.com', logo: 'https://upload.wikimedia.org/wikipedia/commons/4/4a/Amazon_icon.svg' },
+  { id: '1', name: 'Google', contact: 'Sundar Pichai', status: 'Ativo', email: 'contact@google.com' },
+  { id: '2', name: 'Apple', contact: 'Tim Cook', status: 'Ativo', email: 'contact@apple.com' },
+  { id: '3', name: 'Meta', contact: 'Mark Zuckerberg', status: 'Inativo', email: 'contact@meta.com' },
+  { id: '4', name: 'Amazon', contact: 'Andy Jassy', status: 'Pendente', email: 'contact@amazon.com' },
 ];
 
 const NewProductModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose: () => void; onSave: (product: Product) => void }) => {
@@ -716,8 +716,7 @@ const NewCompanyModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose
           name: newCompany.name,
           contact: newCompany.contactName,
           email: newCompany.email,
-          status: 'Ativo',
-          logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg'
+          status: 'Ativo'
         });
         setName('');
         setContact('');
@@ -816,8 +815,7 @@ export function Companies() {
           name: c.name,
           contact: c.contactName,
           status: c.status === 'ACTIVE' ? 'Ativo' : 'Inativo',
-          email: c.email,
-          logo: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg'
+          email: c.email
         }));
         setCompanies(mapped);
       })
@@ -898,7 +896,7 @@ export function Companies() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center p-2">
-                        <img src={company.logo} alt={company.name} className="max-w-full max-h-full" />
+                        <span className="material-symbols-outlined text-gray-500">business</span>
                       </div>
                       <span className="font-medium text-gray-900 dark:text-white">{company.name}</span>
                     </div>

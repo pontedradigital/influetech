@@ -40,16 +40,26 @@ export default function MediaKitGenerationModal({ isOpen, onClose, initialData }
 
             // 1. Translate Labels
             const labels = {
-                aboutMe: TranslationService.translate('Sobre Mim', selectedLanguage as any) || 'About Me',
-                contact: TranslationService.translate('Contato', selectedLanguage as any) || 'Contact',
-                metrics: TranslationService.translate('Métricas de Alcance', selectedLanguage as any) || 'Metrics',
-                audience: TranslationService.translate('Público', selectedLanguage as any) || 'Audience',
-                socialStats: TranslationService.translate('Estatísticas Sociais', selectedLanguage as any) || 'Social Stats',
-                whatToExpect: TranslationService.translate('O que esperar', selectedLanguage as any) || 'What to Expect',
-                followers: TranslationService.translate('Seguidores', selectedLanguage as any) || 'Followers',
-                views: TranslationService.translate('Visualizações', selectedLanguage as any) || 'Views',
-                subscribers: TranslationService.translate('Inscritos', selectedLanguage as any) || 'Subscribers',
-                engagement: TranslationService.translate('Taxa de Engajamento', selectedLanguage as any) || 'Engagement',
+                aboutMe: TranslationService.translate('Sobre Mim', selectedLanguage as any) || 'Sobre Mim',
+                contact: TranslationService.translate('Contato', selectedLanguage as any) || 'Contato',
+                metrics: TranslationService.translate('Métricas de Alcance', selectedLanguage as any) || 'Métricas de Alcance',
+                audience: TranslationService.translate('Demografia do Público', selectedLanguage as any) || 'Demografia do Público',
+                socialStats: TranslationService.translate('Estatísticas Sociais', selectedLanguage as any) || 'Estatísticas Sociais',
+                whatToExpect: TranslationService.translate('O que esperar', selectedLanguage as any) || 'O que esperar',
+                followers: TranslationService.translate('Seguidores', selectedLanguage as any) || 'Seguidores',
+                views: TranslationService.translate('Visualizações', selectedLanguage as any) || 'Visualizações',
+                subscribers: TranslationService.translate('Inscritos', selectedLanguage as any) || 'Inscritos',
+                engagement: TranslationService.translate('Taxa de Engajamento', selectedLanguage as any) || 'Taxa de Engajamento',
+                ageRange: TranslationService.translate('Faixa Etária', selectedLanguage as any) || 'Faixa Etária',
+                male: TranslationService.translate('Masculino', selectedLanguage as any) || 'Masculino',
+                female: TranslationService.translate('Feminino', selectedLanguage as any) || 'Feminino',
+                frequency: TranslationService.translate('Frequência', selectedLanguage as any) || 'Frequência',
+                email: TranslationService.translate('Email', selectedLanguage as any) || 'Email',
+                phone: TranslationService.translate('Telefone', selectedLanguage as any) || 'Telefone',
+                location: TranslationService.translate('Localização', selectedLanguage as any) || 'Localização',
+                totalMonthlyViews: TranslationService.translate('Total de Views Mensais', selectedLanguage as any) || 'Total de Views Mensais',
+                followersByPlatform: TranslationService.translate('Seguidores por Plataforma', selectedLanguage as any) || 'Seguidores por Plataforma',
+                viewsByPlatform: TranslationService.translate('Views por Plataforma', selectedLanguage as any) || 'Views por Plataforma',
             };
 
             // 2. Ensure all required fields have valid values (no null/undefined)
@@ -67,7 +77,8 @@ export default function MediaKitGenerationModal({ isOpen, onClose, initialData }
                         platform: social.platform || 'Platform',
                         handle: social.handle || '',
                         followers: social.followers || 0,
-                        averageViews: social.averageViews || undefined
+                        averageViews: social.averageViews || undefined,
+                        postingFrequency: social.postingFrequency || undefined
                     }))
                     : [],
 
@@ -94,6 +105,10 @@ export default function MediaKitGenerationModal({ isOpen, onClose, initialData }
                     minimumValue: initialData.partnershipPreferences?.minimumValue || 0,
                     currency: initialData.partnershipPreferences?.currency || 'BRL'
                 },
+
+                audienceAge: initialData.audienceAge || undefined,
+                audienceGenderMale: initialData.audienceGenderMale !== undefined ? initialData.audienceGenderMale : undefined,
+                audienceGenderFemale: initialData.audienceGenderFemale !== undefined ? initialData.audienceGenderFemale : undefined,
 
                 labels
             };

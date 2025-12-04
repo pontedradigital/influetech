@@ -268,6 +268,19 @@ const Profile = () => {
                   onChange={(e) => handleSocialChange(social.id, 'url', e.target.value)}
                   className="md:col-span-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white h-10 px-3 text-sm"
                 />
+                <select
+                  value={social.postingFrequency || ''}
+                  onChange={(e) => handleSocialChange(social.id, 'postingFrequency', e.target.value)}
+                  className="md:col-span-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white h-10 px-3 text-sm"
+                >
+                  <option value="">Frequência de Postagens</option>
+                  <option value="Diário">Diário</option>
+                  <option value="3-5x por semana">3-5x por semana</option>
+                  <option value="1-2x por semana">1-2x por semana</option>
+                  <option value="Semanal">Semanal</option>
+                  <option value="Quinzenal">Quinzenal</option>
+                  <option value="Mensal">Mensal</option>
+                </select>
               </div>
               <button
                 onClick={() => handleSocialRemove(social.id)}
@@ -333,16 +346,36 @@ const Profile = () => {
                 className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary/50"
               />
             </label>
-            <label className="block">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Distribuição de Gênero</span>
-              <input
-                type="text"
-                placeholder="Ex: 70% Masculino, 30% Feminino"
-                value={data.profile.audienceGender}
-                onChange={e => updateProfile({ audienceGender: e.target.value })}
-                className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary/50"
-              />
-            </label>
+            <div className="grid grid-cols-2 gap-4">
+              <label className="block">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Masculino (%)</span>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={data.profile.audienceGenderMale}
+                  onChange={e => {
+                    const value = Math.min(100, Math.max(0, Number(e.target.value)));
+                    updateProfile({ audienceGenderMale: value });
+                  }}
+                  className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary/50"
+                />
+              </label>
+              <label className="block">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Feminino (%)</span>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={data.profile.audienceGenderFemale}
+                  onChange={e => {
+                    const value = Math.min(100, Math.max(0, Number(e.target.value)));
+                    updateProfile({ audienceGenderFemale: value });
+                  }}
+                  className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary/50"
+                />
+              </label>
+            </div>
           </div>
 
           <label className="block">

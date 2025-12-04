@@ -95,14 +95,23 @@ const styles = StyleSheet.create({
 });
 
 export const MinimalTemplate = ({ data }: any) => {
-    // Get translated labels or use defaults
+    // Get translated labels or use Portuguese defaults
     const labels = data?.labels || {
-        aboutMe: 'About Me',
-        contact: 'Contact',
-        metrics: 'Metrics',
-        socialStats: 'Social Media',
-        followers: 'Followers',
-        engagement: 'Engagement Rate'
+        aboutMe: 'Sobre Mim',
+        contact: 'Contato',
+        metrics: 'Métricas de Alcance',
+        socialStats: 'Estatísticas Sociais',
+        followers: 'Seguidores',
+        engagement: 'Taxa de Engajamento',
+        audience: 'Demografia do Público',
+        ageRange: 'Faixa Etária',
+        male: 'Masculino',
+        female: 'Feminino',
+        frequency: 'Frequência',
+        views: 'Visualizações',
+        phone: 'Telefone',
+        location: 'Localização',
+        whatToExpect: 'O que esperar'
     };
 
     return (
@@ -126,9 +135,9 @@ export const MinimalTemplate = ({ data }: any) => {
                 {/* Contact Info */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>{labels.contact}</Text>
-                    <Text style={styles.text}>Email: {data?.email || 'N/A'}</Text>
-                    <Text style={styles.text}>{labels.phone || 'Phone'}: {data?.phone || 'N/A'}</Text>
-                    <Text style={styles.text}>{labels.location || 'Location'}: {data?.location || 'N/A'}</Text>
+                    <Text style={styles.text}>{labels.email || 'Email'}: {data?.email || 'N/A'}</Text>
+                    <Text style={styles.text}>{labels.phone || 'Telefone'}: {data?.phone || 'N/A'}</Text>
+                    <Text style={styles.text}>{labels.location || 'Localização'}: {data?.location || 'N/A'}</Text>
                 </View>
 
                 <View style={styles.divider} />
@@ -183,6 +192,29 @@ export const MinimalTemplate = ({ data }: any) => {
 
                 <View style={styles.divider} />
 
+                {/* Audience Demographics */}
+                {(data?.audienceAge || data?.audienceGenderMale !== undefined || data?.audienceGenderFemale !== undefined) && (
+                    <>
+                        <View style={styles.section}>
+                            <Text style={styles.sectionTitle}>{labels.audience || 'Audience Demographics'}</Text>
+                            {data?.audienceAge && (
+                                <Text style={styles.text}>{labels.ageRange || 'Age Range'}: {data.audienceAge}</Text>
+                            )}
+                            {(data?.audienceGenderMale !== undefined && data?.audienceGenderFemale !== undefined) && (
+                                <View style={styles.row}>
+                                    <View style={styles.col}>
+                                        <Text style={styles.text}>{labels.male || 'Male'}: {data.audienceGenderMale}%</Text>
+                                    </View>
+                                    <View style={styles.col}>
+                                        <Text style={styles.text}>{labels.female || 'Female'}: {data.audienceGenderFemale}%</Text>
+                                    </View>
+                                </View>
+                            )}
+                        </View>
+                        <View style={styles.divider} />
+                    </>
+                )}
+
                 {/* Social Media */}
                 {data?.socialMedia && data.socialMedia.length > 0 && (
                     <>
@@ -204,6 +236,11 @@ export const MinimalTemplate = ({ data }: any) => {
                                                 social.averageViews}
                                         </Text>
                                     )}
+                                    {social.postingFrequency && (
+                                        <Text style={styles.text}>
+                                            {labels.frequency || 'Posting Frequency'}: {social.postingFrequency}
+                                        </Text>
+                                    )}
                                 </View>
                             ))}
                         </View>
@@ -216,16 +253,16 @@ export const MinimalTemplate = ({ data }: any) => {
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>{labels.whatToExpect || 'Partnership Preferences'}</Text>
                         {data.partnershipPreferences.type && (
-                            <Text style={styles.text}>Type: {data.partnershipPreferences.type}</Text>
+                            <Text style={styles.text}>Tipo: {data.partnershipPreferences.type}</Text>
                         )}
                         {data.partnershipPreferences.minimumValue > 0 && (
                             <Text style={styles.text}>
-                                Minimum value: {data.partnershipPreferences.currency} {data.partnershipPreferences.minimumValue}
+                                Valor mínimo: {data.partnershipPreferences.currency} {data.partnershipPreferences.minimumValue}
                             </Text>
                         )}
                         {data.partnershipPreferences.categories && data.partnershipPreferences.categories.length > 0 && (
                             <Text style={styles.text}>
-                                Categories: {data.partnershipPreferences.categories.join(', ')}
+                                Categorias: {data.partnershipPreferences.categories.join(', ')}
                             </Text>
                         )}
                     </View>

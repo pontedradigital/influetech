@@ -8,6 +8,7 @@ export interface SocialNetwork {
     followers: number;
     url?: string;
     averageViews?: number;
+    postingFrequency?: string;
 }
 
 export interface InfluencerProfile {
@@ -20,7 +21,8 @@ export interface InfluencerProfile {
     bio: string;
     contentTypes: string[];
     audienceAge: string;
-    audienceGender: string;
+    audienceGenderMale: number;
+    audienceGenderFemale: number;
     engagementRate: number;
 }
 
@@ -66,13 +68,14 @@ const defaultData: InfluencerData = {
         bio: 'Apaixonada por tecnologia e setups minimalistas. Crio conteúdo focado em reviews honestos e dicas de produtividade.',
         contentTypes: ['Reviews', 'Unboxing', 'Setup Tours'],
         audienceAge: '18-34',
-        audienceGender: '70% Masculino',
+        audienceGenderMale: 70,
+        audienceGenderFemale: 30,
         engagementRate: 5.2,
     },
     socials: [
-        { id: '1', platform: 'Instagram', handle: 'ana.tech', followers: 45000, url: 'https://instagram.com/ana.tech' },
-        { id: '2', platform: 'TikTok', handle: '@anatech', followers: 120000, url: 'https://tiktok.com/@anatech' },
-        { id: '3', platform: 'YouTube', handle: 'Ana Tech Reviews', followers: 85000, url: 'https://youtube.com/@anatech' },
+        { id: '1', platform: 'Instagram', handle: 'ana.tech', followers: 45000, url: 'https://instagram.com/ana.tech', postingFrequency: 'Diário' },
+        { id: '2', platform: 'TikTok', handle: '@anatech', followers: 120000, url: 'https://tiktok.com/@anatech', postingFrequency: 'Diário' },
+        { id: '3', platform: 'YouTube', handle: 'Ana Tech Reviews', followers: 85000, url: 'https://youtube.com/@anatech', postingFrequency: '2x por semana' },
     ],
     partnerships: {
         categories: ['Periféricos', 'Hardware', 'Software', 'Desk Setup'],

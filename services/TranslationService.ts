@@ -30,6 +30,16 @@ const DICTIONARY: Record<string, Record<LanguageCode, string>> = {
     'Estatísticas Sociais': { pt: 'Estatísticas Sociais', en: 'Social Stats', es: 'Estadísticas Sociales', zh: '社交统计' },
     'O que esperar': { pt: 'O que esperar', en: 'What to Expect', es: 'Qué Esperar', zh: '期待什么' },
     'Métricas': { pt: 'Métricas', en: 'Metrics', es: 'Métricas', zh: '指标' },
+    'Total de Views Mensais': { pt: 'Total de Views Mensais', en: 'Total Monthly Views', es: 'Total de Vistas Mensuales', zh: '每月总观看次数' },
+    'Seguidores por Plataforma': { pt: 'Seguidores por Plataforma', en: 'Followers by Platform', es: 'Seguidores por Plataforma', zh: '各平台粉丝数' },
+    'Views por Plataforma': { pt: 'Views por Plataforma', en: 'Views by Platform', es: 'Vistas por Plataforma', zh: '各平台观看次数' },
+
+    // NEW: Demographics
+    'Demografia do Público': { pt: 'Demografia do Público', en: 'Audience Demographics', es: 'Demografía de la Audiencia', zh: '受众人口统计' },
+    'Faixa Etária': { pt: 'Faixa Etária', en: 'Age Range', es: 'Rango de Edad', zh: '年龄范围' },
+    'Masculino': { pt: 'Masculino', en: 'Male', es: 'Masculino', zh: '男性' },
+    'Feminino': { pt: 'Feminino', en: 'Female', es: 'Femenino', zh: '女性' },
+    'Frequência': { pt: 'Frequência', en: 'Posting Frequency', es: 'Frecuencia', zh: '发布频率' },
 
     // Partnership
     'Investimento Mínimo': { pt: 'Investimento Mínimo', en: 'Minimum Investment', es: 'Inversión Mínima', zh: '最低投资' },

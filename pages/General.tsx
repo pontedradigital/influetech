@@ -337,7 +337,12 @@ const AVAILABLE_COLORS = [
   { value: 'Prateado', label: 'Prateado' },
 ];
 
-const NewProductModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose: () => void; onSave: (product: Product) => void }) => {
+const NewProductModal = ({ isOpen, onClose, onSave, editingProduct }: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: () => void;
+  editingProduct?: any;
+}) => {
   const [name, setName] = useState('');
   const [category, setCategory] = useState(PRODUCT_CATEGORIES[0]);
   const [companyId, setCompanyId] = useState('');
@@ -365,6 +370,41 @@ const NewProductModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose
     icms: number;
     total: number;
   } | null>(null);
+
+  // Load editing data
+  React.useEffect(() => {
+    if (editingProduct) {
+      setName(editingProduct.name || '');
+      setCategory(editingProduct.category || PRODUCT_CATEGORIES[0]);
+      setCompanyId(editingProduct.companyId || '');
+
+      // Calculate base price from marketValue and shippingCost
+      const marketValue = parseFloat(editingProduct.marketValue) || 0;
+      const shipping = parseFloat(editingProduct.shippingCost) || 0;
+      const basePrice = marketValue - shipping;
+
+      setPrice(basePrice > 0 ? basePrice.toString() : marketValue.toString());
+      setShippingCost(shipping > 0 ? shipping.toString() : '');
+      setDate(editingProduct.createdAt ? new Date(editingProduct.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
+      setStatus(editingProduct.status || 'Em análise');
+      setPrimaryColor(editingProduct.primaryColor || '');
+      setSecondaryColor(editingProduct.secondaryColor || '');
+    } else {
+      // Reset form for new product
+      setName('');
+      setCategory(PRODUCT_CATEGORIES[0]);
+      setCompanyId('');
+      setPrice('');
+      setDate(new Date().toISOString().split('T')[0]);
+      setStatus('Em análise');
+      setPrimaryColor('');
+      setSecondaryColor('');
+      setShippingCost('');
+      setIsImported(false);
+      setPriceUSD('');
+      setShippingUSD('');
+    }
+  }, [editingProduct, isOpen]);
 
   // Calculate Import Costs
   React.useEffect(() => {
@@ -440,8 +480,14 @@ const NewProductModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose
       const shipping = parseFloat(shippingCost) || 0;
       const totalPrice = basePrice + shipping;
 
-      const response = await fetch('http://localhost:3001/api/products', {
-        method: 'POST',
+      const url = editingProduct
+        ? `http://localhost:3001/api/products/${editingProduct.id}`
+        : 'http://localhost:3001/api/products';
+
+      const method = editingProduct ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name,
@@ -452,31 +498,19 @@ const NewProductModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose
           secondaryColor: secondaryColor || null,
           shippingCost: shipping || null,
           condition: 'Novo',
+          status,
           userId: 'mock-id',
           companyId: companyId
         })
       });
 
       if (response.ok) {
-        const newProduct = await response.json();
-        const selectedCompany = companies.find(c => c.id === companyId);
-        onSave({
-          id: newProduct.id,
-          name: newProduct.name,
-          category: newProduct.category,
-          company: selectedCompany?.name || '',
-          price: totalPrice,
-          receiveDate: new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }),
-          status: 'Em análise',
-          image: `https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=300&q=80`
-        });
-        setName('');
-        setCompanyId('');
-        setPrice('');
-        setPrimaryColor('');
-        setSecondaryColor('');
-        setShippingCost('');
+        onSave();
         onClose();
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
+        console.error('Erro na resposta:', response.status, errorData);
+        alert(`Erro ao ${editingProduct ? 'atualizar' : 'criar'} produto: ${errorData.error || 'Erro desconhecido'}`);
       }
     } catch (error) {
       console.error('Erro ao criar produto:', error);
@@ -488,7 +522,7 @@ const NewProductModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="bg-white dark:bg-[#1A202C] w-full max-w-lg rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden transform transition-all scale-100">
         <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-700">
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white">Novo Produto</h3>
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white">{editingProduct ? 'Editar Produto' : 'Novo Produto'}</h3>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-500">
             <span className="material-symbols-outlined">close</span>
           </button>
@@ -649,7 +683,7 @@ const NewProductModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Data Recebimento</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Data de Registro</label>
               <input type="date" value={date} onChange={e => setDate(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" />
             </div>
           </div>
@@ -676,10 +710,170 @@ const NewProductModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose
   );
 };
 
+// Product Details Modal
+const ProductDetailsModal = ({ isOpen, onClose, product, onEdit, onDelete, onStatusChange }: {
+  isOpen: boolean;
+  onClose: () => void;
+  product: any | null;
+  onEdit: () => void;
+  onDelete: () => void;
+  onStatusChange: (newStatus: string) => void;
+}) => {
+  const [selectedStatus, setSelectedStatus] = useState('');
+
+  React.useEffect(() => {
+    if (product) {
+      setSelectedStatus(product.status || 'Em análise');
+    }
+  }, [product]);
+
+  if (!isOpen || !product) return null;
+
+  const handleStatusChange = async (newStatus: string) => {
+    setSelectedStatus(newStatus);
+    onStatusChange(newStatus);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="bg-white dark:bg-[#1A202C] w-full max-w-3xl rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-700">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white">Detalhes do Produto</h3>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-500">
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          {/* Product Header */}
+          <div className="flex items-start gap-4 pb-6 border-b border-gray-100 dark:border-gray-700">
+            <div className="h-20 w-20 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden">
+              {product.image ? (
+                <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+              ) : (
+                <span className="material-symbols-outlined text-4xl text-gray-400">inventory_2</span>
+              )}
+            </div>
+            <div className="flex-1">
+              <h4 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{product.name}</h4>
+              <p className="text-sm text-gray-500">{product.category}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-gray-500 mb-1">Preço</p>
+              <p className="text-2xl font-bold text-primary">
+                {product.price ? `R$ ${product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'N/A'}
+              </p>
+            </div>
+          </div>
+
+          {/* Quick Status Change */}
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              🚀 Alterar Status Rápido
+            </label>
+            <select
+              value={selectedStatus}
+              onChange={(e) => handleStatusChange(e.target.value)}
+              className="w-full h-11 px-4 rounded-lg bg-white dark:bg-gray-900 border border-blue-300 dark:border-blue-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-gray-900 dark:text-white font-medium"
+            >
+              <option value="Aguardando Recebimento">Aguardando Recebimento</option>
+              <option value="Em análise">Em análise</option>
+              <option value="Aguardando Envio">Aguardando Envio</option>
+              <option value="Post Agendado">Post Agendado</option>
+              <option value="Publicado">Publicado</option>
+              <option value="Vendido">Vendido</option>
+            </select>
+          </div>
+
+          {/* Product Information Grid */}
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Empresa</label>
+              <p className="text-gray-900 dark:text-white font-medium">{product.company || 'Não informado'}</p>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Categoria</label>
+              <p className="text-gray-900 dark:text-white font-medium">{product.category}</p>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Data de Registro</label>
+              <p className="text-gray-900 dark:text-white font-medium">{product.receiveDate}</p>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Status Atual</label>
+              <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${selectedStatus === 'Vendido' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                selectedStatus === 'Enviado' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' :
+                  selectedStatus === 'Publicado' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' :
+                    'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                }`}>
+                {selectedStatus}
+              </span>
+            </div>
+          </div>
+
+          {/* Colors and Shipping (if available) */}
+          {(product.primaryColor || product.secondaryColor || product.shippingCost) && (
+            <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
+              <label className="block text-xs font-medium text-gray-500 uppercase mb-3">Informações Adicionais</label>
+              <div className="grid grid-cols-3 gap-4">
+                {product.primaryColor && (
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Cor Primária</label>
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded border border-gray-300 dark:border-gray-600" style={{ backgroundColor: product.primaryColor.toLowerCase() }} />
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">{product.primaryColor}</span>
+                    </div>
+                  </div>
+                )}
+                {product.secondaryColor && (
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Cor Secundária</label>
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded border border-gray-300 dark:border-gray-600" style={{ backgroundColor: product.secondaryColor.toLowerCase() }} />
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">{product.secondaryColor}</span>
+                    </div>
+                  </div>
+                )}
+                {product.shippingCost && (
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Custo de Frete</label>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">
+                      R$ {parseFloat(product.shippingCost).toFixed(2)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="pt-6 flex gap-3 border-t border-gray-100 dark:border-gray-700">
+            <button
+              onClick={onEdit}
+              className="flex-1 flex items-center justify-center gap-2 h-11 rounded-lg bg-primary font-bold text-white hover:bg-primary-600 shadow-lg shadow-primary/20 transition-all"
+            >
+              <span className="material-symbols-outlined text-lg">edit</span>
+              Editar Produto
+            </button>
+            <button
+              onClick={onDelete}
+              className="flex items-center justify-center gap-2 h-11 px-6 rounded-lg border-2 border-red-500 font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+            >
+              <span className="material-symbols-outlined text-lg">delete</span>
+              Excluir
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function Products() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingProduct, setEditingProduct] = useState<any | null>(null);
+  const [viewingProduct, setViewingProduct] = useState<any | null>(null);
   const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
 
   // Filter states
@@ -688,14 +882,12 @@ export default function Products() {
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [selectedCompany, setSelectedCompany] = useState<string>('');
 
-  React.useEffect(() => {
+  const fetchProducts = () => {
     fetch('http://localhost:3001/api/products')
       .then(res => res.json())
       .then(data => {
         const mapped = data.map((p: any) => ({
-          id: p.id,
-          name: p.name,
-          category: p.category,
+          ...p,
           company: p.brand,
           receiveDate: new Date(p.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }),
           status: p.status === 'RECEIVED' ? 'Em análise' : p.status,
@@ -705,17 +897,61 @@ export default function Products() {
         setProducts(mapped);
       })
       .catch(err => console.error('Erro ao buscar produtos:', err));
+  };
+
+  React.useEffect(() => {
+    fetchProducts();
   }, []);
 
   const confirmDelete = async () => {
     if (!deletingProductId) return;
     try {
       const response = await fetch(`http://localhost:3001/api/products/${deletingProductId}`, { method: 'DELETE' });
-      if (response.ok) setProducts(products.filter(p => p.id !== deletingProductId));
+      if (response.ok) {
+        fetchProducts();
+        setViewingProduct(null);
+      }
     } catch (error) {
       console.error('Erro:', error);
     }
     setDeletingProductId(null);
+  };
+
+  const handleEdit = (product: any) => {
+    setEditingProduct(product);
+    setViewingProduct(null);
+    setIsModalOpen(true);
+  };
+
+  const handleSave = () => {
+    fetchProducts();
+    setIsModalOpen(false);
+    setEditingProduct(null);
+  };
+
+  const handleStatusChange = async (productId: string, newStatus: string) => {
+    try {
+      const product = products.find(p => p.id === productId);
+      if (!product) return;
+
+      const response = await fetch(`http://localhost:3001/api/products/${productId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...product,
+          status: newStatus
+        })
+      });
+
+      if (response.ok) {
+        fetchProducts();
+        if (viewingProduct && viewingProduct.id === productId) {
+          setViewingProduct({ ...viewingProduct, status: newStatus });
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar status:', error);
+    }
   };
 
   // Get unique values for filters
@@ -737,19 +973,35 @@ export default function Products() {
   return (
     <div className="flex flex-col gap-6">
       <DeleteConfirmModal isOpen={!!deletingProductId} onClose={() => setDeletingProductId(null)} onConfirm={confirmDelete} title="Excluir Produto" message="Tem certeza que deseja excluir este produto?" />
-      <EditProductModal isOpen={!!editingProduct} onClose={() => setEditingProduct(null)} onSave={(u) => { setProducts(products.map(p => p.id === u.id ? u : p)); setEditingProduct(null); }} product={editingProduct} />
+
+      <ProductDetailsModal
+        isOpen={!!viewingProduct}
+        onClose={() => setViewingProduct(null)}
+        product={viewingProduct}
+        onEdit={() => handleEdit(viewingProduct)}
+        onDelete={() => {
+          setDeletingProductId(viewingProduct?.id);
+          setViewingProduct(null);
+        }}
+        onStatusChange={(newStatus) => handleStatusChange(viewingProduct?.id, newStatus)}
+      />
+
       <NewProductModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={(product) => {
-          setProducts([product, ...products]);
+        onClose={() => {
           setIsModalOpen(false);
+          setEditingProduct(null);
         }}
+        onSave={handleSave}
+        editingProduct={editingProduct}
       />
       <div className="flex flex-wrap justify-between items-center gap-4">
         <h1 className="text-3xl font-black text-gray-900 dark:text-white">Produtos</h1>
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setEditingProduct(null);
+            setIsModalOpen(true);
+          }}
           className="flex items-center gap-2 bg-primary hover:bg-primary-600 text-white px-4 py-2.5 rounded-lg font-bold transition-all"
         >
           <span className="material-symbols-outlined">add</span>
@@ -816,7 +1068,7 @@ export default function Products() {
                 <th className="px-6 py-4">Categoria</th>
                 <th className="px-6 py-4">Empresa</th>
                 <th className="px-6 py-4">Preço</th>
-                <th className="px-6 py-4">Data Recebimento</th>
+                <th className="px-6 py-4">Data de Registro</th>
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4 text-right">Ações</th>
               </tr>
@@ -832,7 +1084,11 @@ export default function Products() {
                 </tr>
               ) : (
                 filteredProducts.map(product => (
-                  <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                  <tr
+                    key={product.id}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors cursor-pointer"
+                    onClick={() => setViewingProduct(product)}
+                  >
                     <td className="px-6 py-4">
                       <div>
                         <p className="font-bold text-gray-900 dark:text-white">{product.name}</p>
@@ -861,17 +1117,23 @@ export default function Products() {
                         {product.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-2">
                         <button
-                          onClick={() => setEditingProduct(product)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(product);
+                          }}
                           className="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
                           title="Editar"
                         >
                           <span className="material-symbols-outlined text-lg">edit</span>
                         </button>
                         <button
-                          onClick={() => setDeletingProductId(product.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeletingProductId(product.id);
+                          }}
                           className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                           title="Excluir"
                         >

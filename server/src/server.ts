@@ -5,6 +5,7 @@ import authRoutes from './routes/auth.routes';
 import productRoutes from './routes/product.routes';
 import companyRoutes from './routes/company.routes';
 import saleRoutes from './routes/sale.routes';
+import financialRoutes from './routes/financial.routes';
 // import shipmentRoutes from './routes/shipment.routes'; // Temporarily disabled
 
 dotenv.config();
@@ -20,6 +21,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/sales', saleRoutes);
+app.use('/api/financial', financialRoutes);
 // app.use('/api/shipments', shipmentRoutes); // Temporarily disabled
 
 app.get('/api/health', (req, res) => {

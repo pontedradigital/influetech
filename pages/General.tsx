@@ -448,6 +448,22 @@ const NewProductModal = ({ isOpen, onClose, onSave, editingProduct }: {
     }
   }, [isImported, priceUSD, shippingUSD, influencerData.importSettings]);
 
+  const resetForm = () => {
+    setName('');
+    setCategory(PRODUCT_CATEGORIES[0]);
+    setCompanyId('');
+    setPrice('');
+    setDate(new Date().toISOString().split('T')[0]);
+    setStatus('Em análise');
+    setPrimaryColor('');
+    setSecondaryColor('');
+    setShippingCost('');
+    setIsImported(false);
+    setPriceUSD('');
+    setShippingUSD('');
+    setCalculationResult(null);
+  };
+
   // Fetch companies when modal opens
   React.useEffect(() => {
     if (isOpen) {
@@ -523,7 +539,7 @@ const NewProductModal = ({ isOpen, onClose, onSave, editingProduct }: {
       <div className="bg-white dark:bg-[#1A202C] w-full max-w-lg rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden transform transition-all scale-100">
         <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-700">
           <h3 className="text-xl font-bold text-gray-900 dark:text-white">{editingProduct ? 'Editar Produto' : 'Novo Produto'}</h3>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-500">
+          <button onClick={() => { if (!editingProduct) resetForm(); onClose(); }} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-500">
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
@@ -701,7 +717,7 @@ const NewProductModal = ({ isOpen, onClose, onSave, editingProduct }: {
           </div>
 
           <div className="pt-4 flex gap-3">
-            <button type="button" onClick={onClose} className="flex-1 h-11 rounded-lg border border-gray-200 dark:border-gray-700 font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Cancelar</button>
+            <button type="button" onClick={() => { if (!editingProduct) resetForm(); onClose(); }} className="flex-1 h-11 rounded-lg border border-gray-200 dark:border-gray-700 font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Cancelar</button>
             <button type="submit" className="flex-1 h-11 rounded-lg bg-primary font-bold text-white hover:bg-primary-600 shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5">Salvar Produto</button>
           </div>
         </form>
@@ -1203,6 +1219,19 @@ const NewCompanyModal = ({ isOpen, onClose, onSave, editingCompany }: {
     }
   }, [editingCompany, isOpen]);
 
+  const resetForm = () => {
+    setName('');
+    setContact('');
+    setEmail('');
+    setPhone('');
+    setCountry('');
+    setWebsite('');
+    setPartnershipStatus('Solicitada');
+    setContactMethod('');
+    setContactValue('');
+    setPhoneError('');
+  };
+
   if (!isOpen) return null;
 
   const handlePhoneChange = (value: string) => {
@@ -1265,7 +1294,7 @@ const NewCompanyModal = ({ isOpen, onClose, onSave, editingCompany }: {
       <div className="bg-white dark:bg-[#1A202C] w-full max-w-lg rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden transform transition-all scale-100">
         <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-700">
           <h3 className="text-xl font-bold text-gray-900 dark:text-white">{editingCompany ? 'Editar Empresa' : 'Nova Empresa'}</h3>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-500">
+          <button onClick={() => { if (!editingCompany) resetForm(); onClose(); }} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-500">
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
@@ -1409,7 +1438,7 @@ const NewCompanyModal = ({ isOpen, onClose, onSave, editingCompany }: {
           </div>
 
           <div className="pt-4 flex gap-3">
-            <button type="button" onClick={onClose} className="flex-1 h-11 rounded-lg border border-gray-200 dark:border-gray-700 font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Cancelar</button>
+            <button type="button" onClick={() => { if (!editingCompany) resetForm(); onClose(); }} className="flex-1 h-11 rounded-lg border border-gray-200 dark:border-gray-700 font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Cancelar</button>
             <button type="submit" disabled={!!phoneError} className="flex-1 h-11 rounded-lg bg-primary font-bold text-white hover:bg-primary-600 shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed">Salvar Empresa</button>
           </div>
         </form>

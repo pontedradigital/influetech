@@ -9,10 +9,10 @@ import { useInfluencer, SocialNetwork } from '../context/InfluencerContext';
 const Nav = () => {
   const loc = useLocation();
   const tabs = [
-    { name: 'Perfil', path: '/configuracoes' },
-    { name: 'Notificações', path: '/configuracoes/notificacoes' },
-    { name: 'Segurança', path: '/configuracoes/seguranca' },
-    { name: 'Calculadora de Importação', path: '/configuracoes/importacao' }
+    { name: 'Perfil', path: '/meu-perfil' },
+    { name: 'Notificações', path: '/meu-perfil/notificacoes' },
+    { name: 'Segurança', path: '/meu-perfil/seguranca' },
+    { name: 'Calculadora de Importação', path: '/meu-perfil/importacao' }
   ];
 
   return (
@@ -730,7 +730,7 @@ const ImportCalculatorSettings = () => {
 export default function Settings() {
   return (
     <div>
-      <h1 className="text-3xl font-black text-gray-900 dark:text-white mb-2">Configurações</h1>
+      <h1 className="text-3xl font-black text-gray-900 dark:text-white mb-2">Meu Perfil</h1>
       <p className="text-gray-500 mb-8">Gerencie seu perfil e preferências.</p>
 
       <Nav />

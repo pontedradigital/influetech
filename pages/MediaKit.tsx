@@ -99,7 +99,7 @@ export default function MediaKit() {
                 {/* Profile Summary */}
                 <div className="mb-8 p-6 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700">
                     <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{influencerData.name}</h3>
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">{influencerData.bio || 'Adicione uma bio nas configurações...'}</p>
+                    <p className="text-gray-600 dark:text-gray-300 mb-4">{influencerData.bio || 'Adicione uma bio em Meu Perfil...'}</p>
                     <div className="flex flex-wrap gap-4 text-sm mb-4">
                         <span className="flex items-center gap-2">
                             <span className="material-symbols-outlined text-primary">location_on</span>

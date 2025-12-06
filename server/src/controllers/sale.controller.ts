@@ -1,10 +1,6 @@
 import { Request, Response } from 'express';
-import Database from 'better-sqlite3';
-import path from 'path';
+import db from '../db';
 import { v4 as uuidv4 } from 'uuid';
-
-const dbPath = path.resolve(__dirname, '../../prisma/dev.db');
-const db = new Database(dbPath);
 
 // List all sales
 export const listSales = (req: Request, res: Response) => {
@@ -120,13 +116,16 @@ export const createSale = (req: Request, res: Response) => {
       ) VALUES (?, 'INCOME', ?, ?, ?, 'Vendas', 'COMPLETED', ?, datetime('now'), datetime('now'))
     `).run(transactionId, salePrice, saleDate, description, userId || 'mock-id');
 
+        // Update product status to SOLD
+        db.prepare('UPDATE Product SET status = ? WHERE id = ?').run('SOLD', productId);
+
         res.status(201).json({
             id,
             productId,
             customerName,
             salePrice,
             status: 'PENDING',
-            message: 'Venda criada e registrada no financeiro com sucesso'
+            message: 'Venda criada, registrado no financeiro e status do produto atualizado para Vendido'
         });
     } catch (error) {
         console.error('Error creating sale:', error);

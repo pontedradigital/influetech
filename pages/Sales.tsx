@@ -82,6 +82,21 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
         }
     }, [selectedProductId, products]);
 
+    const resetForm = () => {
+        setSelectedProductId('');
+        setCustomerName('');
+        setContactChannel(CONTACT_CHANNELS[0]);
+        setContactValue('');
+        setCep('');
+        setStreet('');
+        setNumber('');
+        setComplement('');
+        setNeighborhood('');
+        setCity('');
+        setState('');
+        setSalePrice('');
+    };
+
     const fetchAddressByCEP = async (cepValue: string) => {
         const cleanCep = cepValue.replace(/\D/g, '');
         if (cleanCep.length !== 8) return;
@@ -122,6 +137,32 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
         }
     };
 
+    const handleContactValueChange = (value: string) => {
+        // If WhatsApp, format as phone number
+        if (contactChannel === 'WhatsApp') {
+            // Remove all non-numeric characters
+            const numbers = value.replace(/\D/g, '');
+
+            // Format as (00) 0000-0000 or (00) 00000-0000
+            let formatted = numbers;
+            if (numbers.length > 0) {
+                if (numbers.length <= 2) {
+                    formatted = `(${numbers}`;
+                } else if (numbers.length <= 6) {
+                    formatted = `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
+                } else if (numbers.length <= 10) {
+                    formatted = `(${numbers.slice(0, 2)}) ${numbers.slice(2, 6)}-${numbers.slice(6, 10)}`;
+                } else {
+                    // 11 digits (with 9 in front)
+                    formatted = `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
+                }
+            }
+            setContactValue(formatted);
+        } else {
+            setContactValue(value);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -153,18 +194,7 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
 
             if (response.ok) {
                 onSave();
-                setSelectedProductId('');
-                setCustomerName('');
-                setContactChannel(CONTACT_CHANNELS[0]);
-                setContactValue('');
-                setCep('');
-                setStreet('');
-                setNumber('');
-                setComplement('');
-                setNeighborhood('');
-                setCity('');
-                setState('');
-                setSalePrice('');
+                resetForm();
                 onClose();
             } else {
                 alert('Erro ao criar venda');
@@ -184,7 +214,7 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
             <div className="bg-white dark:bg-[#1A202C] w-full max-w-2xl rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-700 sticky top-0 bg-white dark:bg-[#1A202C] z-10">
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white">Nova Venda</h3>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-500">
+                    <button onClick={() => { resetForm(); onClose(); }} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-500">
                         <span className="material-symbols-outlined">close</span>
                     </button>
                 </div>
@@ -275,14 +305,15 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
                             <input
                                 type="text"
                                 value={contactValue}
-                                onChange={(e) => setContactValue(e.target.value)}
+                                onChange={(e) => handleContactValueChange(e.target.value)}
                                 required
                                 className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white"
                                 placeholder={
-                                    contactChannel === 'WhatsApp' ? '+55 (11) 98765-4321' :
+                                    contactChannel === 'WhatsApp' ? '(11) 98765-4321' :
                                         contactChannel === 'Discord' ? 'usuario#1234' :
                                             '@usuario'
                                 }
+                                maxLength={contactChannel === 'WhatsApp' ? 15 : undefined}
                             />
                         </div>
                     </div>
@@ -379,7 +410,7 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
                     </div>
 
                     <div className="pt-4 flex gap-3 border-t border-gray-100 dark:border-gray-700">
-                        <button type="button" onClick={onClose} className="flex-1 h-11 rounded-lg border border-gray-200 dark:border-gray-700 font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                        <button type="button" onClick={() => { resetForm(); onClose(); }} className="flex-1 h-11 rounded-lg border border-gray-200 dark:border-gray-700 font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                             Cancelar
                         </button>
                         <button type="submit" className="flex-1 h-11 rounded-lg bg-primary font-bold text-white hover:bg-primary-600 shadow-lg shadow-primary/20 transition-all">

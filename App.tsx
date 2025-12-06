@@ -45,7 +45,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const navItems = [
     { to: '/', icon: 'dashboard', label: 'Dashboard' },
-    { to: '/configuracoes', icon: 'settings', label: 'Configurações' },
+    { to: '/meu-perfil', icon: 'person', label: 'Meu Perfil' },
     { to: '/empresas', icon: 'domain', label: 'Empresas' },
     { to: '/produtos', icon: 'package_2', label: 'Produtos' },
     { to: '/agenda', icon: 'calendar_today', label: 'Agenda' },
@@ -153,7 +153,7 @@ const App: React.FC = () => {
             <Layout>
               <Routes>
                 <Route path="/" element={<Dashboard />} />
-                <Route path="/configuracoes/*" element={<Settings />} />
+                <Route path="/meu-perfil/*" element={<Settings />} />
                 <Route path="/empresas/*" element={<Companies />} />
                 <Route path="/produtos" element={<Products />} />
                 <Route path="/agenda" element={<Agenda />} />

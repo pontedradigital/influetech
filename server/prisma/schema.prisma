@@ -32,6 +32,8 @@ model Company {
   phone             String?
   country           String?
   website           String?
+  contactMethod     String?  // Email, Site, Forms
+  contactValue      String?  // Valor correspondente ao método de contato
   partnershipStatus String   @default("Solicitada") // Solicitada, Aceita, Iniciada, Finalizada, Rejeitada
   status            String   @default("ACTIVE") // ACTIVE, INACTIVE, PROSPECT
   rating            Int      @default(0)
@@ -44,20 +46,23 @@ model Company {
 }
 
 model Product {
-  id          String   @id @default(uuid())
-  name        String
-  category    String
-  brand       String?
-  model       String?
-  marketValue Decimal?
-  status      String   @default("RECEIVED") // RECEIVED, ANALYZING, PUBLISHED, SOLD, SHIPPED
-  condition   String?  // NEW, USED, OPEN_BOX
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  companyId   String?
-  company     Company? @relation(fields: [companyId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(uuid())
+  name          String
+  category      String
+  brand         String?
+  model         String?
+  marketValue   Decimal?
+  primaryColor  String?  // Cor primária do produto
+  secondaryColor String? // Cor secundária do produto
+  shippingCost  Decimal? // Custo de frete
+  status        String   @default("RECEIVED") // RECEIVED, ANALYZING, PUBLISHED, SOLD, SHIPPED
+  condition     String?  // NEW, USED, OPEN_BOX
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  companyId     String?
+  company       Company? @relation(fields: [companyId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Shipment {

@@ -199,79 +199,104 @@ const EditProductModal = ({ isOpen, onClose, onSave, product }: { isOpen: boolea
 };
 
 // Modal de Editar Empresa
-const EditCompanyModal = ({ isOpen, onClose, onSave, company }: { isOpen: boolean; onClose: () => void; onSave: (company: Company) => void; company: Company | null }) => {
-  const [name, setName] = useState('');
-  const [contact, setContact] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [country, setCountry] = useState('');
-  const [phoneError, setPhoneError] = useState('');
-
-  React.useEffect(() => {
-    if (company) {
-      setName(company.name);
-      setContact(company.contact || '');
-      setEmail(company.email || '');
-    }
-  }, [company]);
-
+// Company Details Modal
+const CompanyDetailsModal = ({ isOpen, onClose, company, onEdit, onDelete }: {
+  isOpen: boolean;
+  onClose: () => void;
+  company: any | null;
+  onEdit: () => void;
+  onDelete: () => void;
+}) => {
   if (!isOpen || !company) return null;
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    try {
-      const response = await fetch(`http://localhost:3001/api/companies/${company.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          contactName: contact,
-          email,
-          phone,
-          country,
-          status: 'ACTIVE',
-          rating: 0
-        })
-      });
-
-      if (response.ok) {
-        onSave({ ...company, name, contact, email });
-        onClose();
-      }
-    } catch (error) {
-      console.error('Erro:', error);
-      alert('Erro ao atualizar empresa');
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-[#1A202C] w-full max-w-lg rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+      <div className="bg-white dark:bg-[#1A202C] w-full max-w-2xl rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
         <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-700">
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white">Editar Empresa</h3>
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white">Detalhes da Empresa</h3>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-500">
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Nome da Empresa</label>
-            <input required type="text" value={name} onChange={e => setName(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" />
+
+        <div className="p-6 space-y-6">
+          {/* Company Header */}
+          <div className="flex items-center gap-4 pb-6 border-b border-gray-100 dark:border-gray-700">
+            <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-3xl text-primary">business</span>
+            </div>
+            <div>
+              <h4 className="text-2xl font-bold text-gray-900 dark:text-white">{company.name}</h4>
+              <p className="text-sm text-gray-500">{company.country || 'País não informado'}</p>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Contato</label>
-            <input required type="text" value={contact} onChange={e => setContact(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" />
+
+          {/* Company Information Grid */}
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Nome do Contato</label>
+              <p className="text-gray-900 dark:text-white font-medium">{company.contactName || 'Não informado'}</p>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Email</label>
+              <p className="text-gray-900 dark:text-white font-medium">{company.email || 'Não informado'}</p>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Telefone</label>
+              <p className="text-gray-900 dark:text-white font-medium">{company.phone || 'Não informado'}</p>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 uppercase mb-1">País de Origem</label>
+              <p className="text-gray-900 dark:text-white font-medium">{company.country || 'Não informado'}</p>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 uppercase mb-1">URL do Site</label>
+              <p className="text-gray-900 dark:text-white font-medium">{company.website || 'Não informado'}</p>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Status da Parceria</label>
+              <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${company.partnershipStatus === 'Aceita' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                company.partnershipStatus === 'Iniciada' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
+                  company.partnershipStatus === 'Finalizada' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' :
+                    company.partnershipStatus === 'Rejeitada' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' :
+                      'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                }`}>
+                {company.partnershipStatus || 'Solicitada'}
+              </span>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email *</label>
-            <input required type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" />
+
+          {/* Contact Method */}
+          {company.contactMethod && (
+            <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
+              <label className="block text-xs font-medium text-gray-500 uppercase mb-2">Forma de Contato</label>
+              <div className="flex items-center gap-3">
+                <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm font-medium text-gray-900 dark:text-white">
+                  {company.contactMethod}
+                </span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">{company.contactValue}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="pt-6 flex gap-3 border-t border-gray-100 dark:border-gray-700">
+            <button
+              onClick={onEdit}
+              className="flex-1 flex items-center justify-center gap-2 h-11 rounded-lg bg-primary font-bold text-white hover:bg-primary-600 shadow-lg shadow-primary/20 transition-all"
+            >
+              <span className="material-symbols-outlined text-lg">edit</span>
+              Editar Empresa
+            </button>
+            <button
+              onClick={onDelete}
+              className="flex items-center justify-center gap-2 h-11 px-6 rounded-lg border-2 border-red-500 font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+            >
+              <span className="material-symbols-outlined text-lg">delete</span>
+              Excluir
+            </button>
           </div>
-          <div className="pt-4 flex gap-3">
-            <button type="button" onClick={onClose} className="flex-1 h-11 rounded-lg border border-gray-200 dark:border-gray-700 font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Cancelar</button>
-            <button type="submit" className="flex-1 h-11 rounded-lg bg-primary font-bold text-white hover:bg-primary-600 shadow-lg shadow-primary/20 transition-all">Salvar</button>
-          </div>
-        </form>
+        </div>
       </div>
     </div>
   );
@@ -294,6 +319,24 @@ const companies: Company[] = [
   { id: '4', name: 'Amazon', contact: 'Andy Jassy', status: 'Pendente', email: 'contact@amazon.com' },
 ];
 
+const AVAILABLE_COLORS = [
+  { value: '', label: 'Nenhuma' },
+  { value: 'Preto', label: 'Preto' },
+  { value: 'Branco', label: 'Branco' },
+  { value: 'Cinza', label: 'Cinza' },
+  { value: 'Vermelho', label: 'Vermelho' },
+  { value: 'Azul', label: 'Azul' },
+  { value: 'Verde', label: 'Verde' },
+  { value: 'Amarelo', label: 'Amarelo' },
+  { value: 'Laranja', label: 'Laranja' },
+  { value: 'Rosa', label: 'Rosa' },
+  { value: 'Roxo', label: 'Roxo' },
+  { value: 'Marrom', label: 'Marrom' },
+  { value: 'Bege', label: 'Bege' },
+  { value: 'Dourado', label: 'Dourado' },
+  { value: 'Prateado', label: 'Prateado' },
+];
+
 const NewProductModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose: () => void; onSave: (product: Product) => void }) => {
   const [name, setName] = useState('');
   const [category, setCategory] = useState(PRODUCT_CATEGORIES[0]);
@@ -302,6 +345,11 @@ const NewProductModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [status, setStatus] = useState<Product['status']>('Em análise');
   const [companies, setCompanies] = useState<Array<{ id: string; name: string }>>([]);
+
+  // New fields
+  const [primaryColor, setPrimaryColor] = useState('');
+  const [secondaryColor, setSecondaryColor] = useState('');
+  const [shippingCost, setShippingCost] = useState('');
 
   const [loadingCompanies, setLoadingCompanies] = useState(false);
 
@@ -388,6 +436,10 @@ const NewProductModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose
     }
 
     try {
+      const basePrice = parseFloat(price) || 0;
+      const shipping = parseFloat(shippingCost) || 0;
+      const totalPrice = basePrice + shipping;
+
       const response = await fetch('http://localhost:3001/api/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -395,7 +447,10 @@ const NewProductModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose
           name,
           category,
           brand: companies.find(c => c.id === companyId)?.name || '',
-          marketValue: parseFloat(price) || 0,
+          marketValue: totalPrice,
+          primaryColor: primaryColor || null,
+          secondaryColor: secondaryColor || null,
+          shippingCost: shipping || null,
           condition: 'Novo',
           userId: 'mock-id',
           companyId: companyId
@@ -410,7 +465,7 @@ const NewProductModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose
           name: newProduct.name,
           category: newProduct.category,
           company: selectedCompany?.name || '',
-          price: parseFloat(price) || 0,
+          price: totalPrice,
           receiveDate: new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }),
           status: 'Em análise',
           image: `https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=300&q=80`
@@ -418,6 +473,9 @@ const NewProductModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose
         setName('');
         setCompanyId('');
         setPrice('');
+        setPrimaryColor('');
+        setSecondaryColor('');
+        setShippingCost('');
         onClose();
       }
     } catch (error) {
@@ -513,8 +571,60 @@ const NewProductModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Preço (R$)</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Preço Base (R$)</label>
               <input type="number" value={price} onChange={e => setPrice(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-400" placeholder="0.00" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Frete (R$) <span className="text-gray-400 text-xs">(opcional)</span>
+              </label>
+              <input
+                type="number"
+                value={shippingCost}
+                onChange={e => setShippingCost(e.target.value)}
+                className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-400"
+                placeholder="0.00"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Preço Total</label>
+              <div className="w-full h-11 px-4 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center text-gray-900 dark:text-white font-bold">
+                R$ {((parseFloat(price) || 0) + (parseFloat(shippingCost) || 0)).toFixed(2)}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Cor Primária <span className="text-gray-400 text-xs">(opcional)</span>
+              </label>
+              <select
+                value={primaryColor}
+                onChange={e => setPrimaryColor(e.target.value)}
+                className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white"
+              >
+                {AVAILABLE_COLORS.map(color => (
+                  <option key={color.value} value={color.value}>{color.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Cor Secundária <span className="text-gray-400 text-xs">(opcional)</span>
+              </label>
+              <select
+                value={secondaryColor}
+                onChange={e => setSecondaryColor(e.target.value)}
+                className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white"
+              >
+                {AVAILABLE_COLORS.map(color => (
+                  <option key={color.value} value={color.value}>{color.label}</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -547,6 +657,7 @@ const NewProductModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Status Inicial</label>
             <select value={status} onChange={e => setStatus(e.target.value as Product['status'])} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white">
+              <option value="Aguardando Recebimento">Aguardando Recebimento</option>
               <option value="Em análise">Em análise</option>
               <option value="Aguardando Envio">Aguardando Envio</option>
               <option value="Post Agendado">Post Agendado</option>
@@ -786,7 +897,12 @@ export default function Products() {
   );
 }
 
-const NewCompanyModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose: () => void; onSave: (company: Company) => void }) => {
+const NewCompanyModal = ({ isOpen, onClose, onSave, editingCompany }: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: () => void;
+  editingCompany?: any;
+}) => {
   const [name, setName] = useState('');
   const [contact, setContact] = useState('');
   const [email, setEmail] = useState('');
@@ -794,7 +910,36 @@ const NewCompanyModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose
   const [country, setCountry] = useState('');
   const [website, setWebsite] = useState('');
   const [partnershipStatus, setPartnershipStatus] = useState('Solicitada');
+  const [contactMethod, setContactMethod] = useState('');
+  const [contactValue, setContactValue] = useState('');
   const [phoneError, setPhoneError] = useState('');
+
+  // Load editing data
+  React.useEffect(() => {
+    if (editingCompany) {
+      setName(editingCompany.name || '');
+      setContact(editingCompany.contactName || '');
+      setEmail(editingCompany.email || '');
+      setPhone(editingCompany.phone || '');
+      setCountry(editingCompany.country || '');
+      setWebsite(editingCompany.website || '');
+      setPartnershipStatus(editingCompany.partnershipStatus || 'Solicitada');
+      setContactMethod(editingCompany.contactMethod || '');
+      setContactValue(editingCompany.contactValue || '');
+    } else {
+      // Reset form for new company
+      setName('');
+      setContact('');
+      setEmail('');
+      setPhone('');
+      setCountry('');
+      setWebsite('');
+      setPartnershipStatus('Solicitada');
+      setContactMethod('');
+      setContactValue('');
+      setPhoneError('');
+    }
+  }, [editingCompany, isOpen]);
 
   if (!isOpen) return null;
 
@@ -816,8 +961,14 @@ const NewCompanyModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose
     }
 
     try {
-      const response = await fetch('http://localhost:3001/api/companies', {
-        method: 'POST',
+      const url = editingCompany
+        ? `http://localhost:3001/api/companies/${editingCompany.id}`
+        : 'http://localhost:3001/api/companies';
+
+      const method = editingCompany ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name,
@@ -826,33 +977,20 @@ const NewCompanyModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose
           phone,
           country,
           website,
+          contactMethod,
+          contactValue,
           partnershipStatus,
           userId: 'mock-id'
         })
       });
 
       if (response.ok) {
-        const newCompany = await response.json();
-        onSave({
-          id: newCompany.id,
-          name: newCompany.name,
-          contact: newCompany.contactName,
-          email: newCompany.email,
-          status: 'Ativo'
-        });
-        setName('');
-        setContact('');
-        setEmail('');
-        setPhone('');
-        setCountry('');
-        setWebsite('');
-        setPartnershipStatus('Solicitada');
-        setPhoneError('');
+        onSave();
         onClose();
       } else {
         const errorData = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
         console.error('Erro na resposta:', response.status, errorData);
-        alert(`Erro ao criar empresa: ${errorData.error || 'Erro desconhecido'}`);
+        alert(`Erro ao ${editingCompany ? 'atualizar' : 'criar'} empresa: ${errorData.error || 'Erro desconhecido'}`);
       }
     } catch (error) {
       console.error('Erro ao criar empresa:', error);
@@ -864,7 +1002,7 @@ const NewCompanyModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="bg-white dark:bg-[#1A202C] w-full max-w-lg rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden transform transition-all scale-100">
         <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-700">
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white">Nova Empresa</h3>
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white">{editingCompany ? 'Editar Empresa' : 'Nova Empresa'}</h3>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-500">
             <span className="material-symbols-outlined">close</span>
           </button>
@@ -883,9 +1021,74 @@ const NewCompanyModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              Email <span className="text-red-500">*</span>
+              Forma de Contato <span className="text-gray-400 text-xs">(opcional)</span>
             </label>
-            <input required type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" placeholder="contato@empresa.com" />
+            <select
+              value={contactMethod}
+              onChange={(e) => {
+                setContactMethod(e.target.value);
+                setContactValue('');
+              }}
+              className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white"
+            >
+              <option value="">Selecione uma forma de contato</option>
+              <option value="Email">Email</option>
+              <option value="Site">Diretamente do Site</option>
+              <option value="Forms">Forms</option>
+            </select>
+          </div>
+
+          {/* Campo condicional baseado na forma de contato */}
+          {contactMethod === 'Email' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Email de Contato
+              </label>
+              <input
+                type="email"
+                value={contactValue}
+                onChange={e => setContactValue(e.target.value)}
+                className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white"
+                placeholder="contato@empresa.com"
+              />
+            </div>
+          )}
+
+          {contactMethod === 'Site' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                URL do Site de Contato
+              </label>
+              <input
+                type="url"
+                value={contactValue}
+                onChange={e => setContactValue(e.target.value)}
+                className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white"
+                placeholder="https://www.empresa.com/contato"
+              />
+            </div>
+          )}
+
+          {contactMethod === 'Forms' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Link do Formulário
+              </label>
+              <input
+                type="url"
+                value={contactValue}
+                onChange={e => setContactValue(e.target.value)}
+                className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white"
+                placeholder="https://forms.google.com/..."
+              />
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              Email <span className="text-gray-400 text-xs">(opcional)</span>
+            </label>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" placeholder="contato@empresa.com" />
           </div>
 
           <div>
@@ -955,26 +1158,42 @@ const NewCompanyModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose
 
 
 export function Companies() {
-  const [companies, setCompanies] = useState<Company[]>([]);
+  const [companies, setCompanies] = useState<any[]>([]);
+  const [filteredCompanies, setFilteredCompanies] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingCompany, setEditingCompany] = useState<Company | null>(null);
+  const [editingCompany, setEditingCompany] = useState<any | null>(null);
+  const [viewingCompany, setViewingCompany] = useState<any | null>(null);
   const [deletingCompanyId, setDeletingCompanyId] = useState<string | null>(null);
 
-  React.useEffect(() => {
+  const fetchCompanies = () => {
     fetch('http://localhost:3001/api/companies')
       .then(res => res.json())
       .then(data => {
-        const mapped = data.map((c: any) => ({
-          id: c.id,
-          name: c.name,
-          contact: c.contactName,
-          status: c.status === 'ACTIVE' ? 'Ativo' : 'Inativo',
-          email: c.email
-        }));
-        setCompanies(mapped);
+        setCompanies(data);
+        setFilteredCompanies(data);
       })
       .catch(err => console.error('Erro ao buscar empresas:', err));
+  };
+
+  React.useEffect(() => {
+    fetchCompanies();
   }, []);
+
+  // Search filter
+  React.useEffect(() => {
+    if (!searchTerm) {
+      setFilteredCompanies(companies);
+    } else {
+      const filtered = companies.filter(company =>
+        company.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        company.contactName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        company.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        company.country?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredCompanies(filtered);
+    }
+  }, [searchTerm, companies]);
 
   const confirmDelete = async () => {
     if (!deletingCompanyId) return;
@@ -985,7 +1204,8 @@ export function Companies() {
       });
 
       if (response.ok) {
-        setCompanies(companies.filter(c => c.id !== deletingCompanyId));
+        fetchCompanies();
+        setViewingCompany(null);
       } else {
         alert('Erro ao excluir empresa');
       }
@@ -994,6 +1214,18 @@ export function Companies() {
       alert('Erro ao excluir empresa');
     }
     setDeletingCompanyId(null);
+  };
+
+  const handleEdit = (company: any) => {
+    setEditingCompany(company);
+    setViewingCompany(null);
+    setIsModalOpen(true);
+  };
+
+  const handleSave = () => {
+    fetchCompanies();
+    setIsModalOpen(false);
+    setEditingCompany(null);
   };
 
   return (
@@ -1005,32 +1237,52 @@ export function Companies() {
         title="Excluir Empresa"
         message="Tem certeza que deseja excluir esta empresa?"
       />
-      <EditCompanyModal
-        isOpen={!!editingCompany}
-        onClose={() => setEditingCompany(null)}
-        onSave={(updatedCompany) => {
-          setCompanies(companies.map(c => c.id === updatedCompany.id ? updatedCompany : c));
-          setEditingCompany(null);
+
+      <CompanyDetailsModal
+        isOpen={!!viewingCompany}
+        onClose={() => setViewingCompany(null)}
+        company={viewingCompany}
+        onEdit={() => handleEdit(viewingCompany)}
+        onDelete={() => {
+          setDeletingCompanyId(viewingCompany?.id);
+          setViewingCompany(null);
         }}
-        company={editingCompany}
       />
+
       <NewCompanyModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={(c) => {
-          setCompanies([c, ...companies]);
+        onClose={() => {
           setIsModalOpen(false);
+          setEditingCompany(null);
         }}
+        onSave={handleSave}
+        editingCompany={editingCompany}
       />
+
       <div className="flex flex-wrap justify-between items-center gap-4">
         <h1 className="text-3xl font-black text-gray-900 dark:text-white">Empresas</h1>
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setEditingCompany(null);
+            setIsModalOpen(true);
+          }}
           className="flex items-center gap-2 bg-primary hover:bg-primary-600 text-white px-4 py-2.5 rounded-lg font-bold transition-all"
         >
           <span className="material-symbols-outlined">add</span>
           Adicionar Empresa
         </button>
+      </div>
+
+      {/* Search Bar */}
+      <div className="relative">
+        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+        <input
+          type="text"
+          placeholder="Pesquisar empresas por nome, contato, email ou país..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full h-12 pl-12 pr-4 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white"
+        />
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
@@ -1040,48 +1292,72 @@ export function Companies() {
               <tr>
                 <th className="px-6 py-4">Empresa</th>
                 <th className="px-6 py-4">Contato</th>
-                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">País</th>
+                <th className="px-6 py-4">Status da Parceria</th>
                 <th className="px-6 py-4 text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {companies.map(company => (
-                <tr key={company.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center p-2">
-                        <span className="material-symbols-outlined text-gray-500">business</span>
-                      </div>
-                      <span className="font-medium text-gray-900 dark:text-white">{company.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{company.contact}</td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold
-                      ${company.status === 'Ativo' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
-                        company.status === 'Inativo' ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' :
-                          'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'}`}>
-                      {company.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => setEditingCompany(company)}
-                        className="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
-                      >
-                        <span className="material-symbols-outlined text-lg">edit</span>
-                      </button>
-                      <button
-                        onClick={() => setDeletingCompanyId(company.id)}
-                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                      >
-                        <span className="material-symbols-outlined text-lg">delete</span>
-                      </button>
-                    </div>
+              {filteredCompanies.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                    {searchTerm ? 'Nenhuma empresa encontrada' : 'Nenhuma empresa cadastrada'}
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredCompanies.map(company => (
+                  <tr
+                    key={company.id}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700/30 cursor-pointer"
+                    onClick={() => setViewingCompany(company)}
+                  >
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <span className="material-symbols-outlined text-primary">business</span>
+                        </div>
+                        <span className="font-medium text-gray-900 dark:text-white">{company.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{company.contactName || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{company.country || '-'}</td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${company.partnershipStatus === 'Aceita' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                        company.partnershipStatus === 'Iniciada' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
+                          company.partnershipStatus === 'Finalizada' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' :
+                            company.partnershipStatus === 'Rejeitada' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' :
+                              'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                        }`}>
+                        {company.partnershipStatus || 'Solicitada'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(company);
+                          }}
+                          className="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+                          title="Editar"
+                        >
+                          <span className="material-symbols-outlined text-lg">edit</span>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeletingCompanyId(company.id);
+                          }}
+                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          title="Excluir"
+                        >
+                          <span className="material-symbols-outlined text-lg">delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

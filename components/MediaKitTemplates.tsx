@@ -465,10 +465,200 @@ const Layout5 = ({ data }: { data: MediaKitData }) => (
     </Page>
 );
 
+// --- LAYOUT 6: CORPORATE PROFESSIONAL (Based on HTML template) ---
+const stylesCorporate = StyleSheet.create({
+    page: { backgroundColor: '#fafafa', fontFamily: 'Helvetica' },
+    header: { backgroundColor: '#2c3e50', color: '#fff', padding: '60px 40px' },
+    headerTitle: { fontSize: 42, fontWeight: 300, marginBottom: 15, lineHeight: 1.2 },
+    divider: { width: 60, height: 3, backgroundColor: '#c9a961', marginVertical: 20 },
+    subtitle: { fontSize: 16, opacity: 0.9, fontWeight: 300, fontStyle: 'italic' },
+    content: { padding: '40px 40px' },
+    section: { marginBottom: 50 },
+    sectionTitle: { fontSize: 24, marginBottom: 10, color: '#2c3e50', fontWeight: 400, borderBottom: '2px solid #c9a961', paddingBottom: 10 },
+    sectionSubtitle: { fontSize: 12, color: '#7f8c8d', marginBottom: 25, fontStyle: 'italic' },
+    introText: { fontSize: 14, lineHeight: 1.8, color: '#34495e', marginBottom: 20 },
+    bioText: { fontSize: 12, lineHeight: 1.9, color: '#555', textAlign: 'justify' },
+    statsContainer: { flexDirection: 'row', justifyContent: 'space-between', border: '1px solid #e0e0e0', marginVertical: 30 },
+    statItem: { flex: 1, padding: '25px 20px', textAlign: 'center', borderRight: '1px solid #e0e0e0' },
+    statPlatform: { fontSize: 10, color: '#95a5a6', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 15 },
+    statNumber: { fontSize: 36, color: '#2c3e50', fontWeight: 300, marginBottom: 8 },
+    statLabel: { fontSize: 10, color: '#7f8c8d' },
+    metricsLayout: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginVertical: 30 },
+    metricBox: { width: '48%', padding: 25, backgroundColor: '#f8f9fa', borderLeft: '4px solid #c9a961', marginBottom: 15 },
+    metricTitle: { fontSize: 10, color: '#95a5a6', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 },
+    metricValue: { fontSize: 28, color: '#2c3e50', fontWeight: 300 },
+    metricDescription: { fontSize: 10, color: '#7f8c8d', marginTop: 8, lineHeight: 1.6 },
+    audienceGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginVertical: 30 },
+    audienceCard: { width: '31%', textAlign: 'center', padding: '25px 15px', border: '1px solid #e0e0e0', marginBottom: 15 },
+    audienceIcon: { fontSize: 32, marginBottom: 15 },
+    audienceLabel: { fontSize: 10, color: '#95a5a6', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 },
+    audienceValue: { fontSize: 16, color: '#2c3e50', fontWeight: 400 },
+    contactSection: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 30, paddingVertical: 30, borderTop: '1px solid #e0e0e0', borderBottom: '1px solid #e0e0e0' },
+    contactItem: { flex: 1, textAlign: 'center' },
+    contactIcon: { fontSize: 24, marginBottom: 15, color: '#c9a961' },
+    contactLabel: { fontSize: 9, color: '#95a5a6', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 8 },
+    contactValue: { fontSize: 12, color: '#2c3e50' },
+    testimonialSection: { backgroundColor: '#2c3e50', color: '#fff', padding: '40px 35px', textAlign: 'center', marginHorizontal: -40, marginTop: 40 },
+    testimonialQuote: { fontSize: 16, lineHeight: 1.7, fontStyle: 'italic', marginBottom: 20, fontWeight: 300 },
+    testimonialAuthor: { fontSize: 12, color: '#c9a961', textTransform: 'uppercase', letterSpacing: 2 },
+    footer: { backgroundColor: '#2c3e50', color: '#fff', padding: '25px 40px', textAlign: 'center', fontSize: 10, opacity: 0.8, marginHorizontal: -40 },
+});
+
+const LayoutCorporate = ({ data }: { data: MediaKitData }) => (
+    <Document>
+        <Page size="A4" style={stylesCorporate.page}>
+            <View style={stylesCorporate.header}>
+                <Text style={stylesCorporate.headerTitle}>{data.name}</Text>
+                <View style={stylesCorporate.divider} />
+                <Text style={stylesCorporate.subtitle}>Digital Content Creator & {data.niche} Specialist</Text>
+            </View>
+
+            <View style={stylesCorporate.content}>
+                <View style={stylesCorporate.section}>
+                    <Text style={stylesCorporate.introText}>
+                        Profissional especializado em criação de conteúdo digital, com foco em {data.niche.toLowerCase()}.
+                        Experiência comprovada em análises técnicas e engajamento de audiências qualificadas.
+                    </Text>
+                    <Text style={stylesCorporate.bioText}>{data.bio || ''}</Text>
+                </View>
+
+                <View style={stylesCorporate.section}>
+                    <Text style={stylesCorporate.sectionTitle}>Alcance nas Plataformas</Text>
+                    <Text style={stylesCorporate.sectionSubtitle}>Audiência consolidada e crescimento consistente</Text>
+
+                    <View style={stylesCorporate.statsContainer}>
+                        {(data.socialMedia || []).slice(0, 4).map((social, index) => (
+                            <View key={index} style={[stylesCorporate.statItem, index === 3 && { borderRight: 'none' }]}>
+                                <Text style={stylesCorporate.statPlatform}>{social.platform}</Text>
+                                <Text style={stylesCorporate.statNumber}>{(social.followers / 1000).toFixed(0)}K</Text>
+                                <Text style={stylesCorporate.statLabel}>{social.followers >= 1000 ? 'Seguidores' : 'Conexões'}</Text>
+                            </View>
+                        ))}
+                    </View>
+                </View>
+
+                <View style={stylesCorporate.section}>
+                    <Text style={stylesCorporate.sectionTitle}>Métricas de Performance</Text>
+                    <Text style={stylesCorporate.sectionSubtitle}>Resultados mensuráveis e engajamento qualificado</Text>
+
+                    <View style={stylesCorporate.metricsLayout}>
+                        <View style={stylesCorporate.metricBox}>
+                            <Text style={stylesCorporate.metricTitle}>Taxa de Engajamento</Text>
+                            <Text style={stylesCorporate.metricValue}>{data.metrics.engagementRate}%</Text>
+                            <Text style={stylesCorporate.metricDescription}>
+                                Acima da média da indústria, demonstrando conexão genuína com a audiência
+                            </Text>
+                        </View>
+                        <View style={stylesCorporate.metricBox}>
+                            <Text style={stylesCorporate.metricTitle}>Alcance Mensal</Text>
+                            <Text style={stylesCorporate.metricValue}>{(data.metrics.totalFollowers / 1000).toFixed(0)}K</Text>
+                            <Text style={stylesCorporate.metricDescription}>
+                                Impressões mensais médias em todas as plataformas combinadas
+                            </Text>
+                        </View>
+                        <View style={stylesCorporate.metricBox}>
+                            <Text style={stylesCorporate.metricTitle}>Visualizações Médias</Text>
+                            <Text style={stylesCorporate.metricValue}>{(data.metrics.averageViews / 1000).toFixed(0)}K</Text>
+                            <Text style={stylesCorporate.metricDescription}>
+                                Por vídeo nos últimos 90 dias, com tendência de crescimento
+                            </Text>
+                        </View>
+                        <View style={stylesCorporate.metricBox}>
+                            <Text style={stylesCorporate.metricTitle}>Frequência de Conteúdo</Text>
+                            <Text style={stylesCorporate.metricValue}>{data.metrics.contentFrequency}</Text>
+                            <Text style={stylesCorporate.metricDescription}>
+                                Publicações regulares mantendo audiência engajada
+                            </Text>
+                        </View>
+                    </View>
+                </View>
+            </View>
+        </Page>
+
+        <Page size="A4" style={stylesCorporate.page}>
+            <View style={stylesCorporate.content}>
+                <View style={stylesCorporate.section}>
+                    <Text style={stylesCorporate.sectionTitle}>Perfil da Audiência</Text>
+                    <Text style={stylesCorporate.sectionSubtitle}>Demografia detalhada e insights comportamentais</Text>
+
+                    <View style={stylesCorporate.audienceGrid}>
+                        <View style={stylesCorporate.audienceCard}>
+                            <Text style={stylesCorporate.audienceIcon}>👥</Text>
+                            <Text style={stylesCorporate.audienceLabel}>Faixa Etária</Text>
+                            <Text style={stylesCorporate.audienceValue}>25-40 anos</Text>
+                        </View>
+                        <View style={stylesCorporate.audienceCard}>
+                            <Text style={stylesCorporate.audienceIcon}>💼</Text>
+                            <Text style={stylesCorporate.audienceLabel}>Perfil Profissional</Text>
+                            <Text style={stylesCorporate.audienceValue}>Classe A/B</Text>
+                        </View>
+                        <View style={stylesCorporate.audienceCard}>
+                            <Text style={stylesCorporate.audienceIcon}>🌍</Text>
+                            <Text style={stylesCorporate.audienceLabel}>Localização</Text>
+                            <Text style={stylesCorporate.audienceValue}>{data.location}</Text>
+                        </View>
+                        <View style={stylesCorporate.audienceCard}>
+                            <Text style={stylesCorporate.audienceIcon}>🎯</Text>
+                            <Text style={stylesCorporate.audienceLabel}>Interesse Principal</Text>
+                            <Text style={stylesCorporate.audienceValue}>{data.niche}</Text>
+                        </View>
+                        <View style={stylesCorporate.audienceCard}>
+                            <Text style={stylesCorporate.audienceIcon}>💳</Text>
+                            <Text style={stylesCorporate.audienceLabel}>Poder Aquisitivo</Text>
+                            <Text style={stylesCorporate.audienceValue}>Alto (72%)</Text>
+                        </View>
+                        <View style={stylesCorporate.audienceCard}>
+                            <Text style={stylesCorporate.audienceIcon}>⚖️</Text>
+                            <Text style={stylesCorporate.audienceLabel}>Engajamento</Text>
+                            <Text style={stylesCorporate.audienceValue}>{data.metrics.engagementRate}%</Text>
+                        </View>
+                    </View>
+                </View>
+
+                <View style={stylesCorporate.section}>
+                    <Text style={stylesCorporate.sectionTitle}>Entre em Contato</Text>
+                    <Text style={stylesCorporate.sectionSubtitle}>Vamos construir algo extraordinário juntos</Text>
+
+                    <View style={stylesCorporate.contactSection}>
+                        <View style={stylesCorporate.contactItem}>
+                            <Text style={stylesCorporate.contactIcon}>📧</Text>
+                            <Text style={stylesCorporate.contactLabel}>E-mail Profissional</Text>
+                            <Text style={stylesCorporate.contactValue}>{data.email}</Text>
+                        </View>
+                        <View style={stylesCorporate.contactItem}>
+                            <Text style={stylesCorporate.contactIcon}>📱</Text>
+                            <Text style={stylesCorporate.contactLabel}>WhatsApp Business</Text>
+                            <Text style={stylesCorporate.contactValue}>{data.phone}</Text>
+                        </View>
+                        <View style={stylesCorporate.contactItem}>
+                            <Text style={stylesCorporate.contactIcon}>🌐</Text>
+                            <Text style={stylesCorporate.contactLabel}>Redes Sociais</Text>
+                            <Text style={stylesCorporate.contactValue}>{(data.socialMedia || [])[0]?.handle || 'N/A'}</Text>
+                        </View>
+                    </View>
+                </View>
+            </View>
+
+            <View style={stylesCorporate.testimonialSection}>
+                <Text style={stylesCorporate.testimonialQuote}>
+                    "Profissional excepcional, com análises técnicas precisas e apresentação impecável.
+                    A parceria resultou em engajamento acima das expectativas e ROI mensurável."
+                </Text>
+                <Text style={stylesCorporate.testimonialAuthor}>— Gerente de Marketing, Empresa Tech</Text>
+            </View>
+
+            <View style={stylesCorporate.footer}>
+                <Text>© 2025 {data.name}. Todos os direitos reservados.</Text>
+            </View>
+        </Page>
+    </Document>
+);
+
 export const MediaKitTemplates = {
     Layout1,
     Layout2,
     Layout3,
     Layout4,
-    Layout5
+    Layout5,
+    LayoutCorporate
 };

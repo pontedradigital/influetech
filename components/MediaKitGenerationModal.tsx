@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import { TranslationService } from '../services/TranslationService';
-import { MinimalTemplate } from './MinimalTemplate';
+import { MediaKitTemplates } from './MediaKitTemplates';
 
 interface MediaKitGenerationModalProps {
     isOpen: boolean;
@@ -137,8 +137,8 @@ export default function MediaKitGenerationModal({ isOpen, onClose, initialData }
     const getSelectedTemplate = () => {
         if (!translatedData) return null;
 
-        // Return the MinimalTemplate which is already a Document
-        return <MinimalTemplate data={translatedData} />;
+        // Return the LayoutCorporate template
+        return <MediaKitTemplates.LayoutCorporate data={translatedData} />;
     };
 
     if (!isOpen) return null;

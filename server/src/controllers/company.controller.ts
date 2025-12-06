@@ -14,15 +14,15 @@ export const listCompanies = (req: Request, res: Response) => {
 };
 
 export const createCompany = (req: Request, res: Response) => {
-    const { name, contactName, email, phone, country, website, partnershipStatus, userId } = req.body;
+    const { name, contactName, email, phone, country, website, contactMethod, contactValue, partnershipStatus, userId } = req.body;
     try {
         const id = uuidv4();
         const stmt = db.prepare(`
-      INSERT INTO Company (id, name, contactName, email, phone, country, website, partnershipStatus, status, rating, userId, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE', 0, ?, datetime('now'), datetime('now'))
+      INSERT INTO Company (id, name, contactName, email, phone, country, website, contactMethod, contactValue, partnershipStatus, status, rating, userId, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE', 0, ?, datetime('now'), datetime('now'))
     `);
-        stmt.run(id, name, contactName, email, phone, country, website, partnershipStatus || 'Solicitada', userId || 'mock-id');
-        res.status(201).json({ id, name, contactName, email, phone, country, website, partnershipStatus });
+        stmt.run(id, name, contactName, email, phone, country, website, contactMethod, contactValue, partnershipStatus || 'Solicitada', userId || 'mock-id');
+        res.status(201).json({ id, name, contactName, email, phone, country, website, contactMethod, contactValue, partnershipStatus });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Erro ao criar empresa' });
@@ -31,14 +31,14 @@ export const createCompany = (req: Request, res: Response) => {
 
 export const updateCompany = (req: Request, res: Response) => {
     const { id } = req.params;
-    const { name, contactName, email, phone, country, website, partnershipStatus, status, rating } = req.body;
+    const { name, contactName, email, phone, country, website, contactMethod, contactValue, partnershipStatus, status, rating } = req.body;
     try {
         const stmt = db.prepare(`
       UPDATE Company 
-      SET name = ?, contactName = ?, email = ?, phone = ?, country = ?, website = ?, partnershipStatus = ?, status = ?, rating = ?, updatedAt = datetime('now')
+      SET name = ?, contactName = ?, email = ?, phone = ?, country = ?, website = ?, contactMethod = ?, contactValue = ?, partnershipStatus = ?, status = ?, rating = ?, updatedAt = datetime('now')
       WHERE id = ?
     `);
-        const result = stmt.run(name, contactName, email, phone, country, website, partnershipStatus, status, rating, id);
+        const result = stmt.run(name, contactName, email, phone, country, website, contactMethod, contactValue, partnershipStatus, status, rating, id);
         if (result.changes === 0) return res.status(404).json({ error: 'Empresa não encontrada' });
         res.json({ message: 'Empresa atualizada' });
     } catch (error) {

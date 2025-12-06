@@ -22,6 +22,7 @@ model User {
   companies Company[]
   products  Product[]
   shipments Shipment[]
+  sales     Sale[]
 }
 
 model Company {
@@ -63,6 +64,39 @@ model Product {
   company       Company? @relation(fields: [companyId], references: [id])
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  sales         Sale[]
+}
+
+model Sale {
+  id              String   @id @default(uuid())
+  productId       String
+  product         Product  @relation(fields: [productId], references: [id])
+  
+  // Customer Information
+  customerName    String
+  contactChannel  String   // WhatsApp, Discord, Instagram, TikTok, Facebook
+  contactValue    String   // Phone, email, or username
+  
+  // Shipping Address
+  cep             String?
+  street          String?
+  number          String?
+  complement      String?
+  neighborhood    String?
+  city            String?
+  state           String?
+  
+  // Sale Information
+  salePrice       Decimal
+  saleDate        DateTime @default(now())
+  status          String   @default("PENDING") // PENDING, SHIPPED, DELIVERED, CANCELLED
+  
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model Shipment {

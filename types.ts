@@ -20,11 +20,33 @@ export interface Company {
 
 export interface Shipment {
   id: string;
-  trackingCode: string;
-  productName: string;
-  buyer: string;
-  date: string;
-  status: 'Entregue' | 'Em trânsito' | 'Enviado' | 'Cancelado';
+  userId?: string;
+  senderName: string;
+  senderAddress: string;
+  senderCity: string;
+  senderState: string;
+  senderCep: string;
+  senderCpfCnpj?: string;
+  recipientName: string;
+  recipientAddress: string;
+  recipientCity: string;
+  recipientState: string;
+  recipientCep: string;
+  recipientCpfCnpj?: string;
+  weight: number;
+  height: number;
+  width: number;
+  length: number;
+  declaredValue?: number;
+  carrier: string;
+  price: number;
+  deliveryTime: number;
+  contentDescription?: string;
+  contentQuantity?: number;
+  trackingCode?: string;
+  status: string;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 export interface BazarRecommendation {
@@ -43,4 +65,23 @@ export interface Transaction {
   category: string;
   type: 'Receita' | 'Despesa';
   amount: number;
+}
+
+export interface AffiliateProduct {
+  id: string;
+  name: string;
+  category: string;
+  affiliateLink: string;
+  shortLink?: string;
+  commission: number; // Percentage
+  price: number;
+  description?: string;
+  imageUrl?: string;
+  tags?: string[];
+  clicks: number;
+  conversions: number;
+  revenue: number;
+  isFavorite: boolean;
+  createdAt: string;
+  updatedAt?: string;
 }

@@ -150,15 +150,12 @@ const Profile = () => {
           </label>
           <label className="block">
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">E-mail *</span>
-            <div className="relative">
-              <input
-                type="email"
-                value={data.profile.email}
-                disabled
-                className="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 h-12 px-4 text-gray-500"
-              />
-              <span className="material-symbols-outlined absolute right-3 top-3.5 text-gray-400 text-lg">lock</span>
-            </div>
+            <input
+              type="email"
+              value={data.profile.email}
+              onChange={e => updateProfile({ email: e.target.value })}
+              className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary/50"
+            />
           </label>
           <label className="block">
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Telefone</span>
@@ -183,12 +180,18 @@ const Profile = () => {
             <input
               type="text"
               value={data.profile.cep}
-              onChange={e => updateProfile({ cep: e.target.value })}
+              onChange={e => {
+                const value = e.target.value.replace(/\D/g, '');
+                const formatted = value.replace(/^(\d{5})(\d)/, '$1-$2').substr(0, 9);
+                updateProfile({ cep: formatted });
+              }}
               placeholder="00000-000"
               maxLength={9}
-              className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary/50"
+              className={`mt-1 block w-full rounded-lg border ${data.profile.cep && data.profile.cep.length < 9 ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 dark:border-gray-700 focus:ring-primary/50'} bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2`}
             />
-            <p className="text-xs text-gray-500 mt-1">Usado para cálculo de frete nos envios</p>
+            <p className={`text-xs mt-1 ${data.profile.cep && data.profile.cep.length < 9 ? 'text-red-500' : 'text-gray-500'}`}>
+              {data.profile.cep && data.profile.cep.length < 9 ? 'Formato inválido. Use 00000-000' : 'Usado para cálculo de frete nos envios'}
+            </p>
           </label>
         </div>
       </div>

@@ -21,21 +21,24 @@ model User {
 
   companies Company[]
   products  Product[]
+  shipments Shipment[]
 }
 
 model Company {
-  id          String   @id @default(uuid())
-  name        String
-  contactName String?
-  email       String?
-  phone       String?
-  country     String?
-  status      String   @default("ACTIVE") // ACTIVE, INACTIVE, PROSPECT
-  rating      Int      @default(0)
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                String   @id @default(uuid())
+  name              String
+  contactName       String?
+  email             String?
+  phone             String?
+  country           String?
+  website           String?
+  partnershipStatus String   @default("Solicitada") // Solicitada, Aceita, Iniciada, Finalizada, Rejeitada
+  status            String   @default("ACTIVE") // ACTIVE, INACTIVE, PROSPECT
+  rating            Int      @default(0)
+  userId            String
+  user              User     @relation(fields: [userId], references: [id])
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   products Product[]
 }
@@ -55,4 +58,49 @@ model Product {
   company     Company? @relation(fields: [companyId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Shipment {
+  id              String   @id @default(uuid())
+  userId          String
+  
+  // Dados do Remetente
+  senderName      String
+  senderAddress   String
+  senderCity      String
+  senderState     String
+  senderCep       String
+  senderCpfCnpj   String?
+  
+  // Dados do Destinatário
+  recipientName   String
+  recipientAddress String
+  recipientCity   String
+  recipientState  String
+  recipientCep    String
+  recipientCpfCnpj String?
+  
+  // Dados do Pacote
+  weight          Float
+  height          Float
+  width           Float
+  length          Float
+  declaredValue   Float?
+  
+  // Dados do Frete
+  carrier         String    // PAC, SEDEX, Jadlog, Loggi
+  price           Float
+  deliveryTime    Int
+  
+  // Dados do Conteúdo
+  contentDescription String?
+  contentQuantity    Int      @default(1)
+  
+  // Metadados
+  trackingCode    String?   @unique
+  status          String    @default("pending") // pending, shipped, delivered
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  user            User      @relation(fields: [userId], references: [id])
 }

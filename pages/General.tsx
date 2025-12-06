@@ -792,6 +792,8 @@ const NewCompanyModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [country, setCountry] = useState('');
+  const [website, setWebsite] = useState('');
+  const [partnershipStatus, setPartnershipStatus] = useState('Solicitada');
   const [phoneError, setPhoneError] = useState('');
 
   if (!isOpen) return null;
@@ -823,6 +825,8 @@ const NewCompanyModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose
           email,
           phone,
           country,
+          website,
+          partnershipStatus,
           userId: 'mock-id'
         })
       });
@@ -841,6 +845,8 @@ const NewCompanyModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose
         setEmail('');
         setPhone('');
         setCountry('');
+        setWebsite('');
+        setPartnershipStatus('Solicitada');
         setPhoneError('');
         onClose();
       } else {
@@ -905,6 +911,36 @@ const NewCompanyModal = ({ isOpen, onClose, onSave }: { isOpen: boolean; onClose
             />
             {phoneError && <p className="text-red-500 text-xs mt-1">{phoneError}</p>}
             <p className="text-gray-400 text-xs mt-1">Formato: +[DDI] ([DDD]) [Número]</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              URL do Site <span className="text-gray-400 text-xs">(opcional)</span>
+            </label>
+            <input
+              type="url"
+              value={website}
+              onChange={e => setWebsite(e.target.value)}
+              className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white"
+              placeholder="https://www.exemplo.com"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              Status da Parceria
+            </label>
+            <select
+              value={partnershipStatus}
+              onChange={e => setPartnershipStatus(e.target.value)}
+              className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white"
+            >
+              <option value="Solicitada">Solicitada</option>
+              <option value="Aceita">Aceita</option>
+              <option value="Iniciada">Iniciada</option>
+              <option value="Finalizada">Finalizada</option>
+              <option value="Rejeitada">Rejeitada</option>
+            </select>
           </div>
 
           <div className="pt-4 flex gap-3">

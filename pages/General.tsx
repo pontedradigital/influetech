@@ -73,7 +73,7 @@ const EditProductModal = ({ isOpen, onClose, onSave, product }: { isOpen: boolea
 
   React.useEffect(() => {
     if (isOpen) {
-      fetch('http://localhost:3001/api/companies')
+      fetch('/api/companies')
         .then(res => res.json())
         .then(data => setCompanies(data.map((c: any) => ({ id: c.id, name: c.name }))))
         .catch(err => console.error('Erro ao carregar empresas:', err));
@@ -100,7 +100,7 @@ const EditProductModal = ({ isOpen, onClose, onSave, product }: { isOpen: boolea
     e.preventDefault();
 
     try {
-      const response = await fetch(`http://localhost:3001/api/products/${product.id}`, {
+      const response = await fetch(`/api/products/${product.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -468,7 +468,7 @@ const NewProductModal = ({ isOpen, onClose, onSave, editingProduct }: {
   React.useEffect(() => {
     if (isOpen) {
       setLoadingCompanies(true);
-      fetch('http://localhost:3001/api/companies')
+      fetch('/api/companies')
         .then(res => res.json())
         .then(data => {
           setCompanies(data.map((c: any) => ({ id: c.id, name: c.name })));
@@ -497,8 +497,8 @@ const NewProductModal = ({ isOpen, onClose, onSave, editingProduct }: {
       const totalPrice = basePrice + shipping;
 
       const url = editingProduct
-        ? `http://localhost:3001/api/products/${editingProduct.id}`
-        : 'http://localhost:3001/api/products';
+        ? `/api/products/${editingProduct.id}`
+        : '/api/products';
 
       const method = editingProduct ? 'PUT' : 'POST';
 
@@ -922,7 +922,7 @@ export default function Products() {
   const confirmDelete = async () => {
     if (!deletingProductId) return;
     try {
-      const response = await fetch(`http://localhost:3001/api/products/${deletingProductId}`, { method: 'DELETE' });
+      const response = await fetch(`/api/products/${deletingProductId}`, { method: 'DELETE' });
       if (response.ok) {
         fetchProducts();
         setViewingProduct(null);
@@ -950,7 +950,7 @@ export default function Products() {
       const product = products.find(p => p.id === productId);
       if (!product) return;
 
-      const response = await fetch(`http://localhost:3001/api/products/${productId}`, {
+      const response = await fetch(`/api/products/${productId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1253,8 +1253,8 @@ const NewCompanyModal = ({ isOpen, onClose, onSave, editingCompany }: {
 
     try {
       const url = editingCompany
-        ? `http://localhost:3001/api/companies/${editingCompany.id}`
-        : 'http://localhost:3001/api/companies';
+        ? `/api/companies/${editingCompany.id}`
+        : '/api/companies';
 
       const method = editingCompany ? 'PUT' : 'POST';
 
@@ -1458,7 +1458,7 @@ export function Companies() {
   const [deletingCompanyId, setDeletingCompanyId] = useState<string | null>(null);
 
   const fetchCompanies = () => {
-    fetch('http://localhost:3001/api/companies')
+    fetch('/api/companies')
       .then(res => res.json())
       .then(data => {
         setCompanies(data);
@@ -1490,7 +1490,7 @@ export function Companies() {
     if (!deletingCompanyId) return;
 
     try {
-      const response = await fetch(`http://localhost:3001/api/companies/${deletingCompanyId}`, {
+      const response = await fetch(`/api/companies/${deletingCompanyId}`, {
         method: 'DELETE'
       });
 

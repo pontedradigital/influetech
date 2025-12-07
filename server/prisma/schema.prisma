@@ -31,6 +31,8 @@ model FinancialTransaction {
   type        String   // INCOME, EXPENSE
   amount      Decimal
   description String
+  name        String?  // Nome/Titulo da transação
+  currency    String   @default("BRL") // BRL, USD
   date        DateTime
   category    String   // Vendas, Afiliações, Frete, Compras em Geral, Serviços, Impostos, Outras
   status      String   @default("COMPLETED") // COMPLETED, PENDING, CANCELLED

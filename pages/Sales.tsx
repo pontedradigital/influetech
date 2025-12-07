@@ -66,7 +66,7 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
 
     React.useEffect(() => {
         if (isOpen) {
-            fetch('http://localhost:3001/api/products')
+            fetch('/api/products')
                 .then(res => res.json())
                 .then(data => setProducts(data))
                 .catch(err => console.error('Erro ao buscar produtos:', err));
@@ -172,7 +172,7 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
         }
 
         try {
-            const response = await fetch('http://localhost:3001/api/sales', {
+            const response = await fetch('/api/sales', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -552,7 +552,7 @@ export default function Sales() {
     const [searchTerm, setSearchTerm] = useState('');
 
     const fetchSales = () => {
-        fetch(`http://localhost:3001/api/sales${searchTerm ? `?search=${searchTerm}` : ''}`)
+        fetch(`/api/sales${searchTerm ? `?search=${searchTerm}` : ''}`)
             .then(res => res.json())
             .then(data => setSales(data))
             .catch(err => console.error('Erro ao buscar vendas:', err));
@@ -570,7 +570,7 @@ export default function Sales() {
     const confirmDelete = async () => {
         if (!deletingSaleId) return;
         try {
-            const response = await fetch(`http://localhost:3001/api/sales/${deletingSaleId}`, { method: 'DELETE' });
+            const response = await fetch(`/api/sales/${deletingSaleId}`, { method: 'DELETE' });
             if (response.ok) {
                 fetchSales();
                 setViewingSale(null);

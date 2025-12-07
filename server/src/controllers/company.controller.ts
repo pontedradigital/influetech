@@ -21,11 +21,11 @@ export const createCompany = (req: Request, res: Response) => {
       INSERT INTO Company (id, name, contactName, email, phone, country, website, contactMethod, contactValue, partnershipStatus, status, rating, userId, createdAt, updatedAt)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE', 0, ?, datetime('now'), datetime('now'))
     `);
-        stmt.run(id, name, contactName, email, phone, country, website, contactMethod, contactValue, partnershipStatus || 'Solicitada', userId || 'mock-id');
+        stmt.run(id, name, contactName, email, phone, country, website, contactMethod, contactValue, partnershipStatus || 'Solicitada', userId === 'mock-id' ? '327aa8c1-7c26-41c2-95d7-b375c25eb896' : (userId || '327aa8c1-7c26-41c2-95d7-b375c25eb896'));
         res.status(201).json({ id, name, contactName, email, phone, country, website, contactMethod, contactValue, partnershipStatus });
-    } catch (error) {
+    } catch (error: any) {
         console.error(error);
-        res.status(500).json({ error: 'Erro ao criar empresa' });
+        res.status(500).json({ error: `Erro ao criar empresa: ${error.message}` });
     }
 };
 

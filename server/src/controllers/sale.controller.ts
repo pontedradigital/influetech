@@ -100,7 +100,7 @@ export const createSale = (req: Request, res: Response) => {
             id, productId, customerName, contactChannel, contactValue,
             cep || null, street || null, number || null, complement || null,
             neighborhood || null, city || null, state || null,
-            salePrice, saleDate, userId || 'mock-id'
+            salePrice, saleDate, userId === 'mock-id' ? '327aa8c1-7c26-41c2-95d7-b375c25eb896' : (userId || '327aa8c1-7c26-41c2-95d7-b375c25eb896')
         );
 
         // Get product info for financial transaction
@@ -114,7 +114,7 @@ export const createSale = (req: Request, res: Response) => {
       INSERT INTO FinancialTransaction (
         id, type, amount, description, date, category, status, userId, createdAt, updatedAt
       ) VALUES (?, 'INCOME', ?, ?, ?, 'Vendas', 'COMPLETED', ?, datetime('now'), datetime('now'))
-    `).run(transactionId, salePrice, saleDate, description, userId || 'mock-id');
+    `).run(transactionId, salePrice, description, saleDate, userId === 'mock-id' ? '327aa8c1-7c26-41c2-95d7-b375c25eb896' : (userId || '327aa8c1-7c26-41c2-95d7-b375c25eb896'));
 
         // Update product status to SOLD
         db.prepare('UPDATE Product SET status = ? WHERE id = ?').run('SOLD', productId);

@@ -22,6 +22,11 @@ export default defineConfig(({ mode }) => {
               proxyReq.setHeader('User-Agent', `${env.VITE_APP_NAME || 'InflueTech'} (${env.VITE_APP_EMAIL || 'contato@influetech.com.br'})`);
             });
           }
+        },
+        '/api': {
+          target: 'http://localhost:3001',
+          changeOrigin: true,
+          secure: false,
         }
       }
     },

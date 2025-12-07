@@ -54,6 +54,8 @@ export const createTransaction = (req: Request, res: Response) => {
         type,
         amount,
         description,
+        name,
+        currency,
         date,
         category,
         status,
@@ -66,8 +68,8 @@ export const createTransaction = (req: Request, res: Response) => {
 
         const stmt = db.prepare(`
       INSERT INTO FinancialTransaction (
-        id, type, amount, description, date, category, status, userId, createdAt, updatedAt
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+        id, type, amount, description, name, currency, date, category, status, userId, createdAt, updatedAt
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
     `);
 
         stmt.run(
@@ -75,10 +77,12 @@ export const createTransaction = (req: Request, res: Response) => {
             type,
             amount,
             description,
+            name || null,
+            currency || 'BRL',
             date || now,
             category,
             status || 'COMPLETED',
-            userId || 'mock-id'
+            userId === 'mock-id' ? '327aa8c1-7c26-41c2-95d7-b375c25eb896' : (userId || '327aa8c1-7c26-41c2-95d7-b375c25eb896')
         );
 
         res.status(201).json({
@@ -98,16 +102,16 @@ export const createTransaction = (req: Request, res: Response) => {
 // Update transaction
 export const updateTransaction = (req: Request, res: Response) => {
     const { id } = req.params;
-    const { type, amount, description, date, category, status } = req.body;
+    const { type, amount, description, name, currency, date, category, status } = req.body;
 
     try {
         const stmt = db.prepare(`
       UPDATE FinancialTransaction 
-      SET type = ?, amount = ?, description = ?, date = ?, category = ?, status = ?, updatedAt = datetime('now')
+      SET type = ?, amount = ?, description = ?, name = ?, currency = ?, date = ?, category = ?, status = ?, updatedAt = datetime('now')
       WHERE id = ?
     `);
 
-        const result = stmt.run(type, amount, description, date, category, status, id);
+        const result = stmt.run(type, amount, description, name || null, currency || 'BRL', date, category, status, id);
 
         if (result.changes === 0) {
             return res.status(404).json({ error: 'Transação não encontrada' });

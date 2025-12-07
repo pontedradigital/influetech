@@ -21,7 +21,7 @@ export const createProduct = (req: Request, res: Response) => {
       INSERT INTO Product (id, name, category, brand, model, marketValue, primaryColor, secondaryColor, shippingCost, condition, status, userId, createdAt, updatedAt)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'RECEIVED', ?, datetime('now'), datetime('now'))
     `);
-        stmt.run(id, name, category, brand, model, marketValue, primaryColor, secondaryColor, shippingCost, condition, userId || 'mock-id');
+        stmt.run(id, name, category, brand, model, marketValue, primaryColor, secondaryColor, shippingCost, condition, userId === 'mock-id' ? '327aa8c1-7c26-41c2-95d7-b375c25eb896' : (userId || '327aa8c1-7c26-41c2-95d7-b375c25eb896'));
         res.status(201).json({ id, name, category, status: 'RECEIVED' });
     } catch (error) {
         console.error(error);

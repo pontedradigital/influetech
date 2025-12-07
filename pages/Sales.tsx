@@ -239,9 +239,38 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
                             ))}
                         </select>
                         {selectedProduct && (
-                            <p className="mt-1 text-sm text-gray-500">
-                                {selectedProduct.brand} | {selectedProduct.category}
-                            </p>
+                            <div className="mt-2 space-y-3">
+                                <p className="text-sm text-gray-500">
+                                    {selectedProduct.brand} | {selectedProduct.category}
+                                </p>
+
+                                <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-lg text-primary">price_check</span>
+                                        Sugestão de Preços
+                                    </h4>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <div className="p-2.5 bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm text-center group hover:border-red-200 transition-colors cursor-help" title="50% do valor base">
+                                            <span className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">Mínimo (50%)</span>
+                                            <span className="font-bold text-gray-900 dark:text-white">
+                                                R$ {(parseFloat(selectedProduct.marketValue) * 0.5).toFixed(2)}
+                                            </span>
+                                        </div>
+                                        <div className="p-2.5 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-800 shadow-sm text-center group hover:border-blue-300 transition-colors cursor-help" title="80% do valor base">
+                                            <span className="block text-[10px] uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-1 font-bold">Máximo (80%)</span>
+                                            <span className="font-bold text-blue-700 dark:text-blue-300 text-lg">
+                                                R$ {(parseFloat(selectedProduct.marketValue) * 0.8).toFixed(2)}
+                                            </span>
+                                        </div>
+                                        <div className="p-2.5 bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm text-center">
+                                            <span className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">Valor Base</span>
+                                            <span className="font-bold text-gray-900 dark:text-white">
+                                                R$ {parseFloat(selectedProduct.marketValue).toFixed(2)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         )}
                     </div>
 

@@ -161,6 +161,35 @@ const EditProductModal = ({ isOpen, onClose, onSave, product }: { isOpen: boolea
             </div>
           </div>
 
+          {(parseFloat(price) > 0) && (
+            <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                <span className="material-symbols-outlined text-lg text-primary">price_check</span>
+                Sugestão de Venda
+              </h4>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="p-2.5 bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm text-center" title="50% do valor base">
+                  <span className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">Mínimo (50%)</span>
+                  <span className="font-bold text-gray-900 dark:text-white">
+                    R$ {(parseFloat(price) * 0.5).toFixed(2)}
+                  </span>
+                </div>
+                <div className="p-2.5 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-800 shadow-sm text-center">
+                  <span className="block text-[10px] uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-1 font-bold">Máximo (80%)</span>
+                  <span className="font-bold text-blue-700 dark:text-blue-300 text-lg">
+                    R$ {(parseFloat(price) * 0.8).toFixed(2)}
+                  </span>
+                </div>
+                <div className="p-2.5 bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm text-center">
+                  <span className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">Valor Base</span>
+                  <span className="font-bold text-gray-900 dark:text-white">
+                    R$ {parseFloat(price).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Empresa</label>
             <select
@@ -647,6 +676,35 @@ const NewProductModal = ({ isOpen, onClose, onSave, editingProduct }: {
             </div>
           </div>
 
+          {(parseFloat(price) > 0) && (
+            <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 animate-in fade-in slide-in-from-top-2 duration-200">
+              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                <span className="material-symbols-outlined text-lg text-primary">price_check</span>
+                Sugestão de Venda
+              </h4>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="p-2.5 bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm text-center" title="50% do valor base">
+                  <span className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">Mínimo (50%)</span>
+                  <span className="font-bold text-gray-900 dark:text-white">
+                    R$ {(parseFloat(price) * 0.5).toFixed(2)}
+                  </span>
+                </div>
+                <div className="p-2.5 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-800 shadow-sm text-center">
+                  <span className="block text-[10px] uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-1 font-bold">Máximo (80%)</span>
+                  <span className="font-bold text-blue-700 dark:text-blue-300 text-lg">
+                    R$ {(parseFloat(price) * 0.8).toFixed(2)}
+                  </span>
+                </div>
+                <div className="p-2.5 bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm text-center">
+                  <span className="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">Valor Base</span>
+                  <span className="font-bold text-gray-900 dark:text-white">
+                    R$ {parseFloat(price).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
@@ -1083,6 +1141,7 @@ export default function Products() {
                 <th className="px-6 py-4">Produto</th>
                 <th className="px-6 py-4">Categoria</th>
                 <th className="px-6 py-4">Empresa</th>
+                <th className="px-6 py-4 text-center">Sugestão (50% - 80%)</th>
                 <th className="px-6 py-4">Preço</th>
                 <th className="px-6 py-4">Data de Registro</th>
                 <th className="px-6 py-4">Status</th>
@@ -1115,6 +1174,13 @@ export default function Products() {
                     </td>
                     <td className="px-6 py-4">
                       <span className="text-sm text-gray-600 dark:text-gray-300">{product.company || '-'}</span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                          R$ {(parseFloat(product.price) * 0.5).toFixed(2)} - R$ {(parseFloat(product.price) * 0.8).toFixed(2)}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <span className="font-bold text-primary">

@@ -56,6 +56,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     { to: '/envios', icon: 'local_shipping', label: 'Envios' },
     { to: '/media-kit', icon: 'picture_as_pdf', label: 'Media Kit' },
     { to: '/networking', icon: 'hub', label: 'Networking' },
+    { to: '/radar-marcas', icon: 'radar', label: 'Radar de Marcas' },
     { to: '/planejador-produtos', icon: 'trending_up', label: 'Planejador de Produtos' },
     { to: '/bazar', icon: 'auto_awesome', label: 'Planejador de Bazares' },
   ];
@@ -144,6 +145,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 import { InfluencerProvider } from './context/InfluencerContext';
+import BrandRadar from './pages/BrandRadar';
 
 const App: React.FC = () => {
   return (
@@ -165,6 +167,7 @@ const App: React.FC = () => {
                 <Route path="/envios/*" element={<Logistics />} />
                 <Route path="/media-kit" element={<MediaKit />} />
                 <Route path="/networking" element={<Networking />} />
+                <Route path="/radar-marcas" element={<BrandRadar />} />
                 <Route path="/planejador-produtos" element={<ProductPlanner />} />
                 <Route path="/bazar/*" element={<Bazar />} />
                 <Route path="*" element={<Navigate to="/" replace />} />

@@ -19,11 +19,53 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Networking / Public Profile
+  isPublicProfile Boolean @default(false)
+  bio             String? // Short description or "About Me"
+  niche           String? // e.g., "Tech, Beauty, Gamer"
+  location        String? // e.g., "São Paulo, SP"
+  socialInstagram String?
+  socialLinkedin  String?
+  socialYoutube   String?
+  socialTikTok    String?
+  socialWhatsapp  String? // For direct contact
+
   companies Company[]
   products  Product[]
   shipments Shipment[]
   sales     Sale[]
   transactions FinancialTransaction[]
+  
+  // Phase 2: Networking Advanced
+  opportunities Opportunity[]
+  likesGiven    ProfileLike[] @relation("LikesGiven")
+  likesReceived ProfileLike[] @relation("LikesReceived")
+}
+
+model Opportunity {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  type        String   // COLLAB, JOB, EVENT, PARTNERSHIP
+  status      String   @default("OPEN") // OPEN, CLOSED, FILLED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model ProfileLike {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  
+  fromUserId  String
+  toUserId    String
+  
+  fromUser    User     @relation("LikesGiven", fields: [fromUserId], references: [id])
+  toUser      User     @relation("LikesReceived", fields: [toUserId], references: [id])
+
+  @@unique([fromUserId, toUserId])
 }
 
 model FinancialTransaction {

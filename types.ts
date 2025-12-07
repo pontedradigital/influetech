@@ -85,3 +85,31 @@ export interface AffiliateProduct {
   createdAt: string;
   updatedAt?: string;
 }
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  plan: string;
+  isPublicProfile: boolean;
+  bio?: string;
+  niche?: string;
+  location?: string;
+  socialInstagram?: string;
+  socialLinkedin?: string;
+  socialYoutube?: string;
+  socialTikTok?: string;
+  socialWhatsapp?: string;
+}
+
+export interface Opportunity {
+  id: string;
+  title: string;
+  description: string;
+  type: 'COLLAB' | 'JOB' | 'EVENT' | 'PARTNERSHIP';
+  status: 'OPEN' | 'CLOSED';
+  createdAt: string;
+  userId: string;
+  userName?: string;
+  userIsPublic?: boolean;
+}

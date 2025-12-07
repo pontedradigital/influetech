@@ -13,6 +13,7 @@ import Auth from './pages/Auth';
 import Sales from './pages/Sales';
 import MediaKit from './pages/MediaKit';
 import Affiliates from './pages/Affiliates';
+import Networking from './pages/Networking';
 
 const SidebarItem: React.FC<{ to: string; icon: string; label: string; active: boolean }> = ({ to, icon, label, active }) => (
   <Link
@@ -54,6 +55,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     { to: '/afiliados', icon: 'link', label: 'Afiliações' },
     { to: '/envios', icon: 'local_shipping', label: 'Envios' },
     { to: '/media-kit', icon: 'picture_as_pdf', label: 'Media Kit' },
+    { to: '/networking', icon: 'hub', label: 'Networking' },
     { to: '/planejador-produtos', icon: 'trending_up', label: 'Planejador de Produtos' },
     { to: '/bazar', icon: 'auto_awesome', label: 'Planejador de Bazares' },
   ];
@@ -162,6 +164,7 @@ const App: React.FC = () => {
                 <Route path="/afiliados" element={<Affiliates />} />
                 <Route path="/envios/*" element={<Logistics />} />
                 <Route path="/media-kit" element={<MediaKit />} />
+                <Route path="/networking" element={<Networking />} />
                 <Route path="/planejador-produtos" element={<ProductPlanner />} />
                 <Route path="/bazar/*" element={<Bazar />} />
                 <Route path="*" element={<Navigate to="/" replace />} />

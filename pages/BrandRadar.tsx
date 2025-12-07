@@ -279,8 +279,8 @@ const BrandRadar = () => {
     const activeTiers = selectedTier ? [selectedTier] : tiers;
 
     return (
-        <div className="min-h-screen bg-transparent text-gray-900 dark:text-gray-100 font-sans overflow-hidden relative">
-            <div className="flex flex-col h-screen">
+        <div className="min-h-screen bg-transparent text-gray-900 dark:text-gray-100 font-sans relative">
+            <div className="flex flex-col">
 
                 {/* Header */}
                 <div className="p-6 md:p-8 flex-shrink-0 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm z-10 sticky top-0 border-b border-gray-200 dark:border-gray-800">
@@ -353,7 +353,7 @@ const BrandRadar = () => {
                 </div>
 
                 {/* Feed Content */}
-                <div className="flex-1 overflow-y-auto px-6 md:px-8 pb-32 pt-6 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent">
+                <div className="px-6 md:px-8 pb-32 pt-6">
                     <div className="max-w-7xl mx-auto space-y-10">
 
                         {/* Tier Info Module (Only on Overview) */}

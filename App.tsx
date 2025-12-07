@@ -101,20 +101,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             </nav>
           </div>
 
-          {/* Bottom Actions */}
-          <div className="flex flex-col gap-2">
-            <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5"
-            >
-              <span className="material-symbols-outlined text-lg">{isDarkMode ? 'light_mode' : 'dark_mode'}</span>
-              <span className="text-sm font-medium">{isDarkMode ? 'Modo Claro' : 'Modo Escuro'}</span>
-            </button>
-            <Link to="/auth/login" className="flex items-center gap-3 px-3 py-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10">
-              <span className="material-symbols-outlined text-lg">logout</span>
-              <span className="text-sm font-medium">Sair</span>
-            </Link>
-          </div>
+          {/* Bottom Actions - Removed (moved to header) */}
         </div>
       </aside>
 
@@ -131,7 +118,26 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             </button>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            {/* Theme Toggle */}
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors"
+              title={isDarkMode ? 'Modo Claro' : 'Modo Escuro'}
+            >
+              <span className="material-symbols-outlined text-lg">{isDarkMode ? 'light_mode' : 'dark_mode'}</span>
+              <span className="text-sm font-medium hidden md:inline">{isDarkMode ? 'Modo Claro' : 'Modo Escuro'}</span>
+            </button>
+
+            {/* Logout */}
+            <Link
+              to="/auth/login"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
+              title="Sair"
+            >
+              <span className="material-symbols-outlined text-lg">logout</span>
+              <span className="text-sm font-medium hidden md:inline">Sair</span>
+            </Link>
           </div>
         </header>
 

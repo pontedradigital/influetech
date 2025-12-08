@@ -1,0 +1,34 @@
+// Patch para adicionar modal de explicação do score
+// Este arquivo contém as instruções para implementar o modal
+
+/**
+ * ETAPA 1: Adicionar estados (linha 30)
+ * Adicionar após `const [selectedSuggestion, setSelectedSuggestion] = useState<BazarSuggestion | null>(null);`:
+ * 
+ * const [showScoreModal, setShowScoreModal] = useState(false);
+ * const [scoreModalData, setScoreModalData] = useState<BazarSuggestion | null>(null);
+ */
+
+/**
+ * ETAPA 2: Adicionar botão (linha 230, após Score Label)
+ * Adicionar após o </div> do Score Label:
+ * 
+ * {/* Botão para Entender o Score *\/}
+ * <button
+ *   onClick={() => {
+ *     setScoreModalData(suggestion);
+ *     setShowScoreModal(true);
+ *   }}
+ *   className="mb-4 w-full px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-purple-500/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+ * >
+ *   <span className="material-symbols-outlined">help</span>
+ *   Entenda o Score dessa Data
+ * </button>
+ */
+
+/**
+ * ETAPA 3: Adicionar modal (linha 358, ANTES do modal de agendamento)
+ * Adicionar ANTES da linha `const BazarModal = ...`:
+ * 
+ * Ver arquivo modal_score.txt para o código completo do modal
+ */

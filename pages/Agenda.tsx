@@ -1,14 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { ScheduledPost, Task, Alert, Product } from '../types';
 
+interface BazarEvent {
+    id: string;
+    title: string;
+    description?: string;
+    date: string;
+    location?: string;
+    productIds: string;
+    status: string;
+}
+
 export default function Agenda() {
     const [view, setView] = useState<'calendar' | 'list'>('calendar');
     const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([]);
     const [tasks, setTasks] = useState<Task[]>([]);
     const [alerts, setAlerts] = useState<Alert[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
+    const [bazarEvents, setBazarEvents] = useState<BazarEvent[]>([]);
     const [showPostModal, setShowPostModal] = useState(false);
     const [showTaskModal, setShowTaskModal] = useState(false);
+    const [showDetailModal, setShowDetailModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [selectedEvent, setSelectedEvent] = useState<any>(null);
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [currentMonth, setCurrentMonth] = useState(new Date());
 
@@ -18,17 +32,19 @@ export default function Agenda() {
 
     const fetchData = async () => {
         try {
-            const [postsRes, tasksRes, alertsRes, productsRes] = await Promise.all([
+            const [postsRes, tasksRes, alertsRes, productsRes, bazaresRes] = await Promise.all([
                 fetch('/api/scheduled-posts'),
                 fetch('/api/tasks'),
                 fetch('/api/alerts'),
-                fetch('/api/products')
+                fetch('/api/products'),
+                fetch('/api/bazares')
             ]);
 
             setScheduledPosts(await postsRes.json());
             setTasks(await tasksRes.json());
             setAlerts(await alertsRes.json());
             setProducts(await productsRes.json());
+            setBazarEvents(await bazaresRes.json());
         } catch (error) {
             console.error('Error fetching data:', error);
         }
@@ -69,13 +85,14 @@ export default function Agenda() {
     };
 
     const getEventsForDate = (date: Date | null) => {
-        if (!date) return { posts: [], tasks: [] };
+        if (!date) return { posts: [], tasks: [], bazares: [] };
 
         const dateStr = date.toISOString().split('T')[0];
         const posts = scheduledPosts.filter(p => p.scheduledFor.split('T')[0] === dateStr);
         const taskList = tasks.filter(t => t.dueDate && t.dueDate.split('T')[0] === dateStr);
+        const bazares = bazarEvents.filter(b => b.date.split('T')[0] === dateStr);
 
-        return { posts, tasks: taskList };
+        return { posts, tasks: taskList, bazares };
     };
 
     const isToday = (date: Date | null) => {
@@ -201,8 +218,8 @@ export default function Agenda() {
                         key={v}
                         onClick={() => setView(v)}
                         className={`px-6 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${view === v
-                                ? 'bg-primary text-white shadow-lg'
-                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                            ? 'bg-primary text-white shadow-lg'
+                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                             }`}
                     >
                         <span className="material-symbols-outlined text-lg">{v === 'calendar' ? 'calendar_month' : 'list'}</span>
@@ -259,12 +276,12 @@ export default function Agenda() {
                                 <div
                                     key={index}
                                     className={`min-h-[100px] p-2 rounded-lg border transition-all ${date
-                                            ? isToday(date)
-                                                ? 'bg-primary/10 border-primary shadow-lg'
-                                                : hasEvents
-                                                    ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800 hover:shadow-md cursor-pointer'
-                                                    : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer'
-                                            : 'bg-transparent border-transparent'
+                                        ? isToday(date)
+                                            ? 'bg-primary/10 border-primary shadow-lg'
+                                            : hasEvents
+                                                ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800 hover:shadow-md cursor-pointer'
+                                                : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer'
+                                        : 'bg-transparent border-transparent'
                                         }`}
                                     onClick={() => date && setSelectedDate(date)}
                                 >
@@ -275,19 +292,51 @@ export default function Agenda() {
                                                 {date.getDate()}
                                             </div>
                                             <div className="space-y-1">
-                                                {events.posts.slice(0, 2).map(post => (
-                                                    <div key={post.id} className="text-xs bg-blue-500 text-white px-2 py-1 rounded truncate" title={post.title}>
+                                                {events.posts.slice(0, 1).map(post => (
+                                                    <div
+                                                        key={post.id}
+                                                        className="text-xs bg-blue-500 text-white px-2 py-1 rounded truncate cursor-pointer hover:bg-blue-600 transition-colors"
+                                                        title={post.title}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setSelectedEvent({ ...post, type: 'post' });
+                                                            setShowDetailModal(true);
+                                                        }}
+                                                    >
                                                         📸 {post.title}
                                                     </div>
                                                 ))}
-                                                {events.tasks.slice(0, 2).map(task => (
-                                                    <div key={task.id} className="text-xs bg-purple-500 text-white px-2 py-1 rounded truncate" title={task.title}>
+                                                {events.tasks.slice(0, 1).map(task => (
+                                                    <div
+                                                        key={task.id}
+                                                        className="text-xs bg-purple-500 text-white px-2 py-1 rounded truncate cursor-pointer hover:bg-purple-600 transition-colors"
+                                                        title={task.title}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setSelectedEvent({ ...task, type: 'task' });
+                                                            setShowDetailModal(true);
+                                                        }}
+                                                    >
                                                         ✅ {task.title}
                                                     </div>
                                                 ))}
-                                                {(events.posts.length + events.tasks.length) > 2 && (
+                                                {events.bazares.slice(0, 1).map(bazar => (
+                                                    <div
+                                                        key={bazar.id}
+                                                        className="text-xs bg-green-500 text-white px-2 py-1 rounded truncate cursor-pointer hover:bg-green-600 transition-colors"
+                                                        title={bazar.title}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setSelectedEvent({ ...bazar, type: 'bazar' });
+                                                            setShowDetailModal(true);
+                                                        }}
+                                                    >
+                                                        🛍️ {bazar.title}
+                                                    </div>
+                                                ))}
+                                                {(events.posts.length + events.tasks.length + events.bazares.length) > 3 && (
                                                     <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                                                        +{events.posts.length + events.tasks.length - 2} mais
+                                                        +{events.posts.length + events.tasks.length + events.bazares.length - 3} mais
                                                     </div>
                                                 )}
                                             </div>
@@ -309,6 +358,10 @@ export default function Agenda() {
                             <span className="text-sm text-gray-600 dark:text-gray-400">Tarefa</span>
                         </div>
                         <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 bg-green-500 rounded"></div>
+                            <span className="text-sm text-gray-600 dark:text-gray-400">Bazar</span>
+                        </div>
+                        <div className="flex items-center gap-2">
                             <div className="w-4 h-4 bg-primary rounded"></div>
                             <span className="text-sm text-gray-600 dark:text-gray-400">Hoje</span>
                         </div>
@@ -326,7 +379,14 @@ export default function Agenda() {
                         ) : (
                             <>
                                 {scheduledPosts.map(post => (
-                                    <div key={post.id} className="flex gap-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/10 dark:to-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 hover:shadow-md transition-shadow">
+                                    <div
+                                        key={post.id}
+                                        className="flex gap-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/10 dark:to-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 hover:shadow-md transition-shadow cursor-pointer"
+                                        onClick={() => {
+                                            setSelectedEvent({ ...post, type: 'post' });
+                                            setShowDetailModal(true);
+                                        }}
+                                    >
                                         <span className="material-symbols-outlined text-blue-600 dark:text-blue-400 text-3xl">photo_camera</span>
                                         <div className="flex-1">
                                             <h3 className="font-bold text-gray-900 dark:text-white">{post.title}</h3>
@@ -351,7 +411,14 @@ export default function Agenda() {
                                     </div>
                                 ))}
                                 {tasks.map(task => (
-                                    <div key={task.id} className="flex gap-4 p-4 bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/10 dark:to-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800 hover:shadow-md transition-shadow">
+                                    <div
+                                        key={task.id}
+                                        className="flex gap-4 p-4 bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/10 dark:to-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800 hover:shadow-md transition-shadow cursor-pointer"
+                                        onClick={() => {
+                                            setSelectedEvent({ ...task, type: 'task' });
+                                            setShowDetailModal(true);
+                                        }}
+                                    >
                                         <span className="material-symbols-outlined text-purple-600 dark:text-purple-400 text-3xl">task_alt</span>
                                         <div className="flex-1">
                                             <h3 className="font-bold text-gray-900 dark:text-white">{task.title}</h3>
@@ -366,8 +433,8 @@ export default function Agenda() {
                                             </div>
                                         </div>
                                         <span className={`px-3 py-1 rounded-full text-xs font-bold h-fit ${task.priority === 'HIGH' ? 'bg-red-500 text-white' :
-                                                task.priority === 'MEDIUM' ? 'bg-yellow-500 text-white' :
-                                                    'bg-green-500 text-white'
+                                            task.priority === 'MEDIUM' ? 'bg-yellow-500 text-white' :
+                                                'bg-green-500 text-white'
                                             }`}>
                                             {task.priority === 'HIGH' ? '🔴 Alta' : task.priority === 'MEDIUM' ? '🟡 Média' : '🟢 Baixa'}
                                         </span>
@@ -380,6 +447,58 @@ export default function Agenda() {
             )}
 
             {/* Modals */}
+            {showDetailModal && selectedEvent && (
+                <AgendamentoDetailModal
+                    event={selectedEvent}
+                    onClose={() => {
+                        setShowDetailModal(false);
+                        setSelectedEvent(null);
+                    }}
+                    onEdit={() => {
+                        setShowDetailModal(false);
+                        setShowEditModal(true);
+                    }}
+                    onDelete={async () => {
+                        if (!confirm('Tem certeza que deseja excluir este agendamento?')) return;
+
+                        const endpoint = selectedEvent.type === 'post' ? '/api/scheduled-posts' :
+                            selectedEvent.type === 'task' ? '/api/tasks' :
+                                '/api/bazares';
+
+                        try {
+                            await fetch(`${endpoint}/${selectedEvent.id}`, { method: 'DELETE' });
+                            setShowDetailModal(false);
+                            setSelectedEvent(null);
+                            fetchData();
+                        } catch (error) {
+                            console.error('Error deleting:', error);
+                            alert('Erro ao excluir agendamento');
+                        }
+                    }}
+                    products={products}
+                />
+            )}
+            {showEditModal && selectedEvent && selectedEvent.type === 'post' && (
+                <EditPostModal
+                    post={selectedEvent}
+                    onClose={() => {
+                        setShowEditModal(false);
+                        setSelectedEvent(null);
+                        fetchData();
+                    }}
+                    products={products}
+                />
+            )}
+            {showEditModal && selectedEvent && selectedEvent.type === 'task' && (
+                <EditTaskModal
+                    task={selectedEvent}
+                    onClose={() => {
+                        setShowEditModal(false);
+                        setSelectedEvent(null);
+                        fetchData();
+                    }}
+                />
+            )}
             {showPostModal && <NewPostModal onClose={() => { setShowPostModal(false); fetchData(); }} products={products} />}
             {showTaskModal && <NewTaskModal onClose={() => { setShowTaskModal(false); fetchData(); }} />}
         </div>
@@ -477,8 +596,8 @@ function NewPostModal({ onClose, products }: { onClose: () => void; products: Pr
                         <div className="flex flex-wrap gap-2">
                             {['Instagram', 'TikTok', 'YouTube'].map(platform => (
                                 <label key={platform} className={`flex items-center gap-2 px-4 py-3 rounded-lg cursor-pointer transition-all ${platforms.includes(platform)
-                                        ? 'bg-primary text-white shadow-lg'
-                                        : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                    ? 'bg-primary text-white shadow-lg'
+                                    : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
                                     }`}>
                                     <input
                                         type="checkbox"
@@ -629,6 +748,250 @@ function NewTaskModal({ onClose }: { onClose: () => void }) {
                             className="px-6 py-2.5 font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-lg shadow-purple-500/20 transition-all active:scale-95"
                         >
                             ✅ Criar Tarefa
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+
+// Modal de Detalhes do Agendamento
+function AgendamentoDetailModal({ event, onClose, onEdit, onDelete, products }: { 
+    event: any; 
+    onClose: () => void; 
+    onEdit: () => void;
+    onDelete: () => void;
+    products: Product[];
+}) {
+    const getEventIcon = () => {
+        if (event.type === 'post') return 'photo_camera';
+        if (event.type === 'task') return 'task_alt';
+        return 'shopping_bag';
+    };
+
+    const color = event.type === 'post' ? 'blue' : event.type === 'task' ? 'purple' : 'green';
+    const linkedProducts = event.productIds ? 
+        products.filter(p => JSON.parse(event.productIds || '[]').includes(p.id)) : 
+        event.productId ? products.filter(p => p.id === event.productId) : [];
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-[#1A202C] w-full max-w-2xl rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden max-h-[90vh] overflow-y-auto">
+                <div className={`p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gradient-to-r from-${color}-500/10 to-${color}-600/10`}>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        <span className="material-symbols-outlined">{getEventIcon()}</span>
+                        {event.type === 'post' ? 'Post Agendado' : event.type === 'task' ? 'Tarefa' : 'Bazar'}
+                    </h2>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+                        <span className="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <div className="p-6 space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-1">Título</label>
+                        <p className="text-lg font-bold text-gray-900 dark:text-white">{event.title}</p>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-1">
+                            {event.type === 'post' ? 'Data de Publicação' : event.type === 'task' ? 'Deadline' : 'Data do Bazar'}
+                        </label>
+                        <p className="text-gray-900 dark:text-white flex items-center gap-2">
+                            <span className="material-symbols-outlined text-primary">calendar_today</span>
+                            {event.type === 'post' && new Date(event.scheduledFor).toLocaleString('pt-BR')}
+                            {event.type === 'task' && event.dueDate && new Date(event.dueDate).toLocaleDateString('pt-BR')}
+                            {event.type === 'bazar' && new Date(event.date).toLocaleDateString('pt-BR')}
+                        </p>
+                    </div>
+                    {(event.caption || event.description) && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-400 mb-1">
+                                {event.type === 'post' ? 'Caption' : 'Descrição'}
+                            </label>
+                            <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                                {event.caption || event.description}
+                            </p>
+                        </div>
+                    )}
+                    {linkedProducts.length > 0 && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-400 mb-2">
+                                Produtos Vinculados ({linkedProducts.length})
+                            </label>
+                            <div className="space-y-2">
+                                {linkedProducts.map(product => (
+                                    <div key={product.id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                        <span className="material-symbols-outlined text-primary">inventory_2</span>
+                                        <div className="flex-1">
+                                            <p className="font-medium text-gray-900 dark:text-white">{product.name}</p>
+                                            <p className="text-sm text-gray-500">R$ {product.price?.toFixed(2)}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+                <div className="p-6 border-t border-gray-100 dark:border-gray-800 flex justify-between gap-3">
+                    <button
+                        onClick={onDelete}
+                        className="px-6 py-2.5 font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-lg shadow-red-500/20 transition-all active:scale-95 flex items-center gap-2"
+                    >
+                        <span className="material-symbols-outlined">delete</span>
+                        Excluir
+                    </button>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={onClose}
+                            className="px-6 py-2.5 font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                        >
+                            Fechar
+                        </button>
+                        {event.type !== 'bazar' && (
+                            <button
+                                onClick={onEdit}
+                                className={`px-6 py-2.5 font-bold text-white rounded-lg shadow-lg transition-all active:scale-95 flex items-center gap-2 ${
+                                    event.type === 'post' ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20' :
+                                    'bg-purple-600 hover:bg-purple-700 shadow-purple-500/20'
+                                }`}
+                            >
+                                <span className="material-symbols-outlined">edit</span>
+                                Editar
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// Modal de Edição de Post
+function EditPostModal({ post, onClose, products }: { post: any; onClose: () => void; products: Product[] }) {
+    const [title, setTitle] = useState(post.title || '');
+    const [caption, setCaption] = useState(post.caption || '');
+    const [productId, setProductId] = useState(post.productId || '');
+    const [scheduledFor, setScheduledFor] = useState(post.scheduledFor ? post.scheduledFor.slice(0, 16) : '');
+    const [platforms, setPlatforms] = useState<string[]>(post.platforms ? JSON.parse(post.platforms) : []);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await fetch(`/api/scheduled-posts/${post.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title,
+                    caption,
+                    productId: productId || null,
+                    scheduledFor,
+                    platforms: JSON.stringify(platforms)
+                })
+            });
+            onClose();
+        } catch (error) {
+            console.error('Error updating post:', error);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="bg-white dark:bg-[#1A202C] w-full max-w-2xl rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden max-h-[90vh] overflow-y-auto">
+                <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gradient-to-r from-blue-500/10 to-blue-600/10">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        <span className="material-symbols-outlined">edit</span>
+                        Editar Post
+                    </h2>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+                        <span className="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Título *</label>
+                        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required
+                            className="w-full h-11 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/50 outline-none" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Caption</label>
+                        <textarea value={caption} onChange={(e) => setCaption(e.target.value)} rows={3}
+                            className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/50 outline-none resize-none" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Data e Hora *</label>
+                        <input type="datetime-local" value={scheduledFor} onChange={(e) => setScheduledFor(e.target.value)} required
+                            className="w-full h-11 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/50 outline-none" />
+                    </div>
+                    <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
+                        <button type="button" onClick={onClose} className="px-6 py-2.5 font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg">
+                            Cancelar
+                        </button>
+                        <button type="submit" className="px-6 py-2.5 font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg shadow-blue-500/20">
+                            💾 Salvar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+
+// Modal de Edição de Tarefa
+function EditTaskModal({ task, onClose }: { task: any; onClose: () => void }) {
+    const [title, setTitle] = useState(task.title || '');
+    const [description, setDescription] = useState(task.description || '');
+    const [category, setCategory] = useState<'CONTENT' | 'EDITING' | 'RESPOND' | 'OTHER'>(task.category || 'CONTENT');
+    const [priority, setPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH'>(task.priority || 'MEDIUM');
+    const [dueDate, setDueDate] = useState(task.dueDate ? task.dueDate.split('T')[0] : '');
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await fetch(`/api/tasks/${task.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, description, category, priority, dueDate: dueDate || null })
+            });
+            onClose();
+        } catch (error) {
+            console.error('Error updating task:', error);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="bg-white dark:bg-[#1A202C] w-full max-w-2xl rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+                <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gradient-to-r from-purple-500/10 to-pink-500/10">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        <span className="material-symbols-outlined">edit</span>
+                        Editar Tarefa
+                    </h2>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+                        <span className="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Título *</label>
+                        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required
+                            className="w-full h-11 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/50 outline-none" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Descrição</label>
+                        <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3}
+                            className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/50 outline-none resize-none" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Deadline</label>
+                        <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)}
+                            className="w-full h-11 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/50 outline-none" />
+                    </div>
+                    <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
+                        <button type="button" onClick={onClose} className="px-6 py-2.5 font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg">
+                            Cancelar
+                        </button>
+                        <button type="submit" className="px-6 py-2.5 font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-lg shadow-purple-500/20">
+                            💾 Salvar
                         </button>
                     </div>
                 </form>

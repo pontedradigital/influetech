@@ -28,6 +28,8 @@ export default function Bazar() {
   const [bazarEvents, setBazarEvents] = useState<BazarEvent[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedSuggestion, setSelectedSuggestion] = useState<BazarSuggestion | null>(null);
+  const [showScoreModal, setShowScoreModal] = useState(false);
+  const [scoreModalData, setScoreModalData] = useState<BazarSuggestion | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -129,7 +131,7 @@ export default function Bazar() {
         </div>
       ) : (
         <div className="space-y-8">
-          {Object.entries(groupedSuggestions).map(([monthKey, monthSuggestions]) => {
+          {Object.entries(groupedSuggestions).map(([monthKey, monthSuggestions]: [string, BazarSuggestion[]]) => {
             const [year, month] = monthKey.split('-');
             const monthIndex = parseInt(month) - 1;
 
@@ -204,9 +206,9 @@ export default function Bazar() {
                             {/* Score number in center */}
                             <div className="absolute inset-0 flex flex-col items-center justify-center">
                               <span className={`text-3xl font-black ${suggestion.score >= 90 ? 'text-green-600' :
-                                  suggestion.score >= 80 ? 'text-blue-600' :
-                                    suggestion.score >= 70 ? 'text-yellow-600' :
-                                      'text-red-600'
+                                suggestion.score >= 80 ? 'text-blue-600' :
+                                  suggestion.score >= 70 ? 'text-yellow-600' :
+                                    'text-red-600'
                                 }`}>
                                 {suggestion.score}
                               </span>
@@ -218,9 +220,9 @@ export default function Bazar() {
                         {/* Score Label */}
                         <div className="mb-4">
                           <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ${suggestion.score >= 90 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
-                              suggestion.score >= 80 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
-                                suggestion.score >= 70 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' :
-                                  'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                            suggestion.score >= 80 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
+                              suggestion.score >= 70 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' :
+                                'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
                             }`}>
                             <span className="material-symbols-outlined text-base">
                               {suggestion.score >= 90 ? 'star' : suggestion.score >= 80 ? 'thumb_up' : 'info'}
@@ -228,6 +230,18 @@ export default function Bazar() {
                             {suggestion.score >= 90 ? 'Excelente' : suggestion.score >= 80 ? 'Muito Bom' : suggestion.score >= 70 ? 'Bom' : 'Regular'}
                           </div>
                         </div>
+
+                        {/* Botão para Entender o Score */}
+                        <button
+                          onClick={() => {
+                            setScoreModalData(suggestion);
+                            setShowScoreModal(true);
+                          }}
+                          className="mb-4 w-full px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-purple-500/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+                        >
+                          <span className="material-symbols-outlined">help</span>
+                          Entenda o Score dessa Data
+                        </button>
 
                         {/* Razões */}
                         <div className="space-y-2 mb-4">
@@ -290,6 +304,135 @@ export default function Bazar() {
             setSelectedSuggestion(null);
           }}
         />
+      )}
+
+      {/* Modal de Explicação do Score */}
+      {showScoreModal && scoreModalData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-[#1A202C] w-full max-w-2xl rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gradient-to-r from-purple-500/10 to-pink-500/10">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <span className="material-symbols-outlined">analytics</span>
+                Como Calculamos o Score
+              </h2>
+              <button onClick={() => setShowScoreModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Score desta data:</p>
+                <div className="flex items-center justify-center gap-3">
+                  <span className={`text-5xl font-black ${scoreModalData.score >= 90 ? 'text-green-600' :
+                    scoreModalData.score >= 80 ? 'text-blue-600' :
+                      scoreModalData.score >= 70 ? 'text-yellow-600' :
+                        'text-red-600'
+                    }`}>
+                    {scoreModalData.score}
+                  </span>
+                  <div className="text-left">
+                    <p className="text-xs text-gray-500">/ 100</p>
+                    <p className={`text-sm font-bold ${scoreModalData.score >= 90 ? 'text-green-600' :
+                      scoreModalData.score >= 80 ? 'text-blue-600' :
+                        scoreModalData.score >= 70 ? 'text-yellow-600' :
+                          'text-red-600'
+                      }`}>
+                      {scoreModalData.score >= 90 ? '🌟 Excelente' :
+                        scoreModalData.score >= 80 ? '👍 Muito Bom' :
+                          scoreModalData.score >= 70 ? '✅ Bom' :
+                            '📊 Regular'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Faixas de Classificação</h3>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <span className="text-2xl">🌟</span>
+                    <div className="flex-1">
+                      <p className="font-bold text-green-700 dark:text-green-300">Excelente (90-100 pontos)</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Melhor momento para realizar seu bazar</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <span className="text-2xl">👍</span>
+                    <div className="flex-1">
+                      <p className="font-bold text-blue-700 dark:text-blue-300">Muito Bom (80-89 pontos)</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Ótima data com alto potencial de vendas</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                    <span className="text-2xl">✅</span>
+                    <div className="flex-1">
+                      <p className="font-bold text-yellow-700 dark:text-yellow-300">Bom (70-79 pontos)</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Data favorável para vendas</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <span className="text-2xl">📊</span>
+                    <div className="flex-1">
+                      <p className="font-bold text-gray-700 dark:text-gray-300">Regular (abaixo de 70)</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Considere outras datas se possível</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Fatores que Influenciam o Score</h3>
+                <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
+                  <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <span className="text-xl">📅</span>
+                    <div>
+                      <p className="font-bold">Fim de semana: <span className="text-green-600">+25 pontos</span></p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Pessoas têm mais tempo livre para compras</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <span className="text-xl">💰</span>
+                    <div>
+                      <p className="font-bold">Dia de pagamento: <span className="text-green-600">+20 pontos</span></p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">5º, 15º ou 25º dia do mês - maior poder de compra</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <span className="text-xl">🎉</span>
+                    <div>
+                      <p className="font-bold">Evento comercial próximo: <span className="text-green-600">até +35 pontos</span></p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">10-12 dias antes é o sweet spot ideal para pré-venda</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <span className="text-xl">⚠️</span>
+                    <div>
+                      <p className="font-bold">Feriado prolongado: <span className="text-red-600">-15 pontos</span></p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Pessoas viajam, movimento reduzido</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                <p className="text-sm text-blue-900 dark:text-blue-100">
+                  <strong>💡 Dica Importante:</strong> Datas com score acima de 80 têm maior potencial de vendas.
+                  Combine o score alto com as dicas personalizadas para maximizar seus resultados!
+                </p>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-gray-100 dark:border-gray-800 flex justify-end">
+              <button
+                onClick={() => setShowScoreModal(false)}
+                className="px-6 py-2.5 font-bold text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-lg shadow-lg shadow-purple-500/20 transition-all active:scale-95"
+              >
+                Entendi!
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

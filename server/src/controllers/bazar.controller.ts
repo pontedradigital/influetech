@@ -509,14 +509,19 @@ export const updateBazarEvent = (req: Request, res: Response) => {
     }
 };
 
-// Exclui evento de bazar
+// Exclui evento de bazar e alertas relacionados
 export const deleteBazarEvent = (req: Request, res: Response) => {
     const { id } = req.params;
     try {
+        // Primeiro, exclui os alertas relacionados ao bazar
+        const deleteAlertsStmt = db.prepare('DELETE FROM Alert WHERE relatedId = ?');
+        deleteAlertsStmt.run(id);
+
+        // Depois, exclui o bazar
         const stmt = db.prepare('DELETE FROM BazarEvent WHERE id = ?');
         const result = stmt.run(id);
         if (result.changes === 0) return res.status(404).json({ error: 'Bazar não encontrado' });
-        res.json({ message: 'Bazar excluído' });
+        res.json({ message: 'Bazar e alertas relacionados excluídos' });
     } catch (error) {
         console.error('Error deleting bazar event:', error);
         res.status(500).json({ error: 'Erro ao excluir bazar' });

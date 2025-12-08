@@ -71,6 +71,7 @@ export const createSale = (req: Request, res: Response) => {
     const {
         productId,
         customerName,
+        customerCpf,
         contactChannel,
         contactValue,
         cep,
@@ -87,24 +88,26 @@ export const createSale = (req: Request, res: Response) => {
     try {
         const id = uuidv4();
         const saleDate = new Date().toISOString();
+        const finalUserId = userId === 'mock-id' ? '327aa8c1-7c26-41c2-95d7-b375c25eb896' : (userId || '327aa8c1-7c26-41c2-95d7-b375c25eb896');
 
+        // Insert sale with CPF
         const stmt = db.prepare(`
       INSERT INTO Sale (
-        id, productId, customerName, contactChannel, contactValue,
+        id, productId, customerName, customerCpf, contactChannel, contactValue,
         cep, street, number, complement, neighborhood, city, state,
         salePrice, saleDate, status, userId, createdAt, updatedAt
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?, datetime('now'), datetime('now'))
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?, datetime('now'), datetime('now'))
     `);
 
         stmt.run(
-            id, productId, customerName, contactChannel, contactValue,
+            id, productId, customerName, customerCpf || null, contactChannel, contactValue,
             cep || null, street || null, number || null, complement || null,
             neighborhood || null, city || null, state || null,
-            salePrice, saleDate, userId === 'mock-id' ? '327aa8c1-7c26-41c2-95d7-b375c25eb896' : (userId || '327aa8c1-7c26-41c2-95d7-b375c25eb896')
+            salePrice, saleDate, finalUserId
         );
 
-        // Get product info for financial transaction
-        const product = db.prepare('SELECT name FROM Product WHERE id = ?').get(productId) as any;
+        // Get product info for financial transaction and shipment
+        const product = db.prepare('SELECT name, category, brand FROM Product WHERE id = ?').get(productId) as any;
 
         // Create financial transaction (income)
         const transactionId = uuidv4();
@@ -114,10 +117,67 @@ export const createSale = (req: Request, res: Response) => {
       INSERT INTO FinancialTransaction (
         id, type, amount, description, date, category, status, userId, createdAt, updatedAt
       ) VALUES (?, 'INCOME', ?, ?, ?, 'Vendas', 'COMPLETED', ?, datetime('now'), datetime('now'))
-    `).run(transactionId, salePrice, description, saleDate, userId === 'mock-id' ? '327aa8c1-7c26-41c2-95d7-b375c25eb896' : (userId || '327aa8c1-7c26-41c2-95d7-b375c25eb896'));
+    `).run(transactionId, salePrice, description, saleDate, finalUserId);
 
         // Update product status to SOLD
         db.prepare('UPDATE Product SET status = ? WHERE id = ?').run('SOLD', productId);
+
+        // Get user profile for sender information (usando dados mock por enquanto)
+        // TODO: Buscar dados reais do perfil do usuário
+        const senderName = 'InflueTech'; // Placeholder
+        const senderCep = '01310-100'; // Placeholder
+        const senderAddress = 'Av. Paulista, 1000'; // Placeholder
+        const senderCity = 'São Paulo'; // Placeholder
+        const senderState = 'SP'; // Placeholder
+
+        // Create shipment automatically
+        const shipmentId = uuidv4();
+        const shipmentStmt = db.prepare(`
+      INSERT INTO Shipment (
+        id, userId, saleId,
+        senderName, senderAddress, senderCity, senderState, senderCep, senderCpfCnpj,
+        recipientName, recipientAddress, recipientCity, recipientState, recipientCep, recipientCpfCnpj,
+        weight, height, width, length, declaredValue,
+        carrier, price, deliveryTime,
+        contentDescription, contentQuantity,
+        trackingCode, status, labelGenerated, declarationGenerated,
+        createdAt, updatedAt
+      ) VALUES (
+        ?, ?, ?,
+        ?, ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?,
+        ?, ?, ?,
+        ?, ?,
+        ?, ?, ?, ?,
+        datetime('now'), datetime('now')
+      )
+    `);
+
+        // Gerar código de rastreamento temporário
+        const trackingCode = `AG${Date.now().toString().slice(-8)}`;
+
+        shipmentStmt.run(
+            shipmentId, finalUserId, id,
+            // Sender
+            senderName, senderAddress, senderCity, senderState, senderCep, null,
+            // Recipient
+            customerName,
+            street && number ? `${street}, ${number}${complement ? ', ' + complement : ''}` : (street || ''),
+            city || '',
+            state || '',
+            cep || '',
+            customerCpf || null,
+            // Package
+            0.5, 10, 10, 10, salePrice,
+            // Freight
+            'A definir', 0, 0,
+            // Content
+            `${product?.brand || ''} ${product?.name || 'Produto'}`.trim(),
+            1,
+            // Metadata
+            trackingCode, 'pending', 0, 0
+        );
 
         res.status(201).json({
             id,
@@ -125,7 +185,8 @@ export const createSale = (req: Request, res: Response) => {
             customerName,
             salePrice,
             status: 'PENDING',
-            message: 'Venda criada, registrado no financeiro e status do produto atualizado para Vendido'
+            shipmentId,
+            message: 'Venda criada, envio gerado automaticamente, registrado no financeiro e status do produto atualizado para Vendido'
         });
     } catch (error) {
         console.error('Error creating sale:', error);
@@ -158,21 +219,55 @@ export const updateSale = (req: Request, res: Response) => {
     }
 };
 
-// Delete sale
+// Delete sale (with cascade delete for related records)
 export const deleteSale = (req: Request, res: Response) => {
     const { id } = req.params;
 
     try {
-        const stmt = db.prepare('DELETE FROM Sale WHERE id = ?');
-        const result = stmt.run(id);
+        // 1. Verificar se a venda existe e obter informações
+        const sale = db.prepare('SELECT * FROM Sale WHERE id = ?').get(id) as any;
 
-        if (result.changes === 0) {
+        if (!sale) {
             return res.status(404).json({ error: 'Venda não encontrada' });
         }
 
-        res.json({ message: 'Venda excluída' });
+        // 2. Excluir transações financeiras relacionadas à venda
+        // Identificamos pela descrição que contém o nome do cliente e categoria "Vendas"
+        const deleteTransactions = db.prepare(`
+            DELETE FROM FinancialTransaction 
+            WHERE description LIKE ? 
+            AND type = 'INCOME' 
+            AND category = 'Vendas'
+            AND userId = ?
+        `);
+
+        const transactionPattern = `%${sale.customerName}%`;
+        const transactionsResult = deleteTransactions.run(transactionPattern, sale.userId);
+
+        // 3. Excluir envios relacionados à venda (vinculados por saleId)
+        const deleteShipments = db.prepare('DELETE FROM Shipment WHERE saleId = ?');
+        const shipmentsResult = deleteShipments.run(id);
+
+        // 4. Excluir a venda
+        const deleteSaleStmt = db.prepare('DELETE FROM Sale WHERE id = ?');
+        const saleResult = deleteSaleStmt.run(id);
+
+        console.log(`Venda ${id} excluída com sucesso:`, {
+            venda: saleResult.changes,
+            envios: shipmentsResult.changes,
+            transacoes: transactionsResult.changes
+        });
+
+        res.json({
+            message: 'Venda e registros relacionados excluídos com sucesso',
+            excluidos: {
+                venda: saleResult.changes,
+                envios: shipmentsResult.changes,
+                transacoes: transactionsResult.changes
+            }
+        });
     } catch (error) {
-        console.error('Error deleting sale:', error);
+        console.error('Erro ao excluir venda:', error);
         res.status(500).json({ error: 'Erro ao excluir venda' });
     }
 };

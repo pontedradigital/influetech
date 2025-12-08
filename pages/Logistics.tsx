@@ -529,6 +529,63 @@ const ShipmentList = () => {
     }
   };
 
+  const handleGenerateDocuments = async (shipment: Shipment) => {
+    try {
+      // Gerar PDF (etiqueta + declaração)
+      const { LabelGenerator } = await import('../services/LabelGenerator');
+      LabelGenerator.generate(shipment);
+
+      // Marcar ambos como gerados no backend
+      await fetch(`/api/shipments/${shipment.id}/mark-document`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ documentType: 'both' })
+      });
+
+      // Recarregar lista
+      loadShipments();
+
+      alert('Documentos gerados com sucesso!');
+    } catch (error) {
+      console.error('Erro ao gerar documentos:', error);
+      alert('Erro ao gerar documentos');
+    }
+  };
+
+  const handleMarkAsShipped = async (shipment: Shipment) => {
+    // Validar se documentos foram gerados
+    if (!shipment.labelGenerated || !shipment.declarationGenerated) {
+      alert('Você precisa gerar a Etiqueta e a Declaração de Conteúdo antes de marcar como enviado!');
+      return;
+    }
+
+    // Validar dados obrigatórios
+    if (!shipment.recipientName || !shipment.recipientCep || !shipment.recipientAddress) {
+      alert('Dados do destinatário incompletos! Complete os dados antes de enviar.');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/shipments/${shipment.id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'shipped' })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        alert(error.error || 'Erro ao atualizar status');
+        return;
+      }
+
+      loadShipments();
+      alert('Envio marcado como enviado!');
+    } catch (error) {
+      console.error('Erro:', error);
+      alert('Erro ao atualizar status');
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex justify-between items-center flex-wrap gap-4">
@@ -622,15 +679,63 @@ const ShipmentList = () => {
                   <td className="px-6 py-4 font-medium">{s.contentDescription}</td>
                   <td className="px-6 py-4 text-gray-500">{s.recipientName}</td>
                   <td className="px-6 py-4">
-                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold
-                      ${s.status === 'Entregue' ? 'bg-green-100 text-green-800' :
-                        s.status === 'Em trânsito' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-blue-100 text-blue-800'}`}>
-                      {s.status}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {/* Status do envio */}
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold
+                        ${s.status === 'shipped' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                          s.status === 'delivered' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
+                            'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'}`}>
+                        {s.status === 'shipped' ? 'Enviado' : s.status === 'delivered' ? 'Entregue' : 'Pendente'}
+                      </span>
+
+                      {/* Indicadores de documentos */}
+                      <div className="flex gap-1">
+                        {s.labelGenerated ? (
+                          <span className="text-green-600 dark:text-green-400" title="Etiqueta gerada">
+                            <span className="material-symbols-outlined text-sm">check_circle</span>
+                          </span>
+                        ) : (
+                          <span className="text-gray-400" title="Etiqueta não gerada">
+                            <span className="material-symbols-outlined text-sm">cancel</span>
+                          </span>
+                        )}
+
+                        {s.declarationGenerated ? (
+                          <span className="text-green-600 dark:text-green-400" title="Declaração gerada">
+                            <span className="material-symbols-outlined text-sm">description</span>
+                          </span>
+                        ) : (
+                          <span className="text-gray-400" title="Declaração não gerada">
+                            <span className="material-symbols-outlined text-sm">description</span>
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-1">
+                      {/* Botão Gerar Documentos */}
+                      {(!s.labelGenerated || !s.declarationGenerated) && (
+                        <button
+                          onClick={() => handleGenerateDocuments(s)}
+                          title="Gerar Etiqueta e Declaração"
+                          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[20px]">print</span>
+                        </button>
+                      )}
+
+                      {/* Botão Marcar como Enviado */}
+                      {s.labelGenerated && s.declarationGenerated && s.status === 'pending' && (
+                        <button
+                          onClick={() => handleMarkAsShipped(s)}
+                          title="Marcar como Enviado"
+                          className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[20px]">local_shipping</span>
+                        </button>
+                      )}
+
                       <button
                         onClick={() => handleTrackingClick(s)}
                         title="Adicionar/Editar Rastreio"

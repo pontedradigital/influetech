@@ -175,9 +175,9 @@ const EditProductModal = ({ isOpen, onClose, onSave, product }: { isOpen: boolea
                   </span>
                 </div>
                 <div className="p-2.5 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-800 shadow-sm text-center">
-                  <span className="block text-[10px] uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-1 font-bold">Máximo (80%)</span>
+                  <span className="block text-[10px] uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-1 font-bold">Máximo (100%)</span>
                   <span className="font-bold text-blue-700 dark:text-blue-300 text-lg">
-                    R$ {(parseFloat(price) * 0.8).toFixed(2)}
+                    R$ {(parseFloat(price) * 1.0).toFixed(2)}
                   </span>
                 </div>
                 <div className="p-2.5 bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm text-center">
@@ -690,9 +690,9 @@ const NewProductModal = ({ isOpen, onClose, onSave, editingProduct }: {
                   </span>
                 </div>
                 <div className="p-2.5 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-800 shadow-sm text-center">
-                  <span className="block text-[10px] uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-1 font-bold">Máximo (80%)</span>
+                  <span className="block text-[10px] uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-1 font-bold">Máximo (100%)</span>
                   <span className="font-bold text-blue-700 dark:text-blue-300 text-lg">
-                    R$ {(parseFloat(price) * 0.8).toFixed(2)}
+                    R$ {(parseFloat(price) * 1.0).toFixed(2)}
                   </span>
                 </div>
                 <div className="p-2.5 bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm text-center">
@@ -1141,7 +1141,7 @@ export default function Products() {
                 <th className="px-6 py-4">Produto</th>
                 <th className="px-6 py-4">Categoria</th>
                 <th className="px-6 py-4">Empresa</th>
-                <th className="px-6 py-4 text-center">Sugestão (50% - 80%)</th>
+                <th className="px-6 py-4 text-center">Sugestão (50% - 100%)</th>
                 <th className="px-6 py-4">Preço</th>
                 <th className="px-6 py-4">Data de Registro</th>
                 <th className="px-6 py-4">Status</th>
@@ -1178,7 +1178,7 @@ export default function Products() {
                     <td className="px-6 py-4 text-center">
                       <div className="flex flex-col items-center gap-1">
                         <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                          R$ {(parseFloat(product.price) * 0.5).toFixed(2)} - R$ {(parseFloat(product.price) * 0.8).toFixed(2)}
+                          R$ {(parseFloat(product.price) * 0.5).toFixed(2)} - R$ {(parseFloat(product.price) * 1.0).toFixed(2)}
                         </span>
                       </div>
                     </td>

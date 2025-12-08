@@ -162,7 +162,24 @@ const Profile = () => {
             <input
               type="tel"
               value={data.profile.phone}
-              onChange={e => updateProfile({ phone: e.target.value })}
+              onChange={e => {
+                const value = e.target.value.replace(/\D/g, '');
+                let formatted = '';
+
+                if (value.length > 0) {
+                  formatted = '(' + value.substring(0, 2);
+                  if (value.length > 2) {
+                    formatted += ') ' + value.substring(2, value.length <= 10 ? 6 : 7);
+                    if (value.length > (value.length <= 10 ? 6 : 7)) {
+                      formatted += '-' + value.substring(value.length <= 10 ? 6 : 7, value.length <= 10 ? 10 : 11);
+                    }
+                  }
+                }
+
+                updateProfile({ phone: formatted });
+              }}
+              placeholder="(00) 00000-0000"
+              maxLength={15}
               className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary/50"
             />
           </label>

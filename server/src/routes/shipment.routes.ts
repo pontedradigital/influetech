@@ -10,4 +10,8 @@ router.get('/:id', shipmentController.getById);
 router.put('/:id', shipmentController.update);
 router.delete('/:id', shipmentController.delete);
 
+// Document and status routes
+router.post('/:id/mark-document', shipmentController.markDocumentGenerated);
+router.put('/:id/status', shipmentController.updateShipmentStatus);
+
 export default router;

@@ -52,6 +52,7 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
     const [products, setProducts] = useState<any[]>([]);
     const [selectedProductId, setSelectedProductId] = useState('');
     const [customerName, setCustomerName] = useState('');
+    const [customerCpf, setCustomerCpf] = useState('');
     const [contactChannel, setContactChannel] = useState(CONTACT_CHANNELS[0]);
     const [contactValue, setContactValue] = useState('');
     const [cep, setCep] = useState('');
@@ -85,6 +86,7 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
     const resetForm = () => {
         setSelectedProductId('');
         setCustomerName('');
+        setCustomerCpf('');
         setContactChannel(CONTACT_CHANNELS[0]);
         setContactValue('');
         setCep('');
@@ -163,6 +165,23 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
         }
     };
 
+    const handleCpfChange = (value: string) => {
+        // Remove all non-numeric characters
+        const numbers = value.replace(/\D/g, '');
+        let formatted = numbers;
+
+        // Format as 000.000.000-00
+        if (numbers.length > 3 && numbers.length <= 6) {
+            formatted = `${numbers.slice(0, 3)}.${numbers.slice(3)}`;
+        } else if (numbers.length > 6 && numbers.length <= 9) {
+            formatted = `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6)}`;
+        } else if (numbers.length > 9) {
+            formatted = `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6, 9)}-${numbers.slice(9, 11)}`;
+        }
+
+        setCustomerCpf(formatted);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -178,6 +197,7 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
                 body: JSON.stringify({
                     productId: selectedProductId,
                     customerName,
+                    customerCpf: customerCpf || null,
                     contactChannel,
                     contactValue,
                     cep: cep || null,
@@ -256,10 +276,10 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
                                                 R$ {(parseFloat(selectedProduct.marketValue) * 0.5).toFixed(2)}
                                             </span>
                                         </div>
-                                        <div className="p-2.5 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-800 shadow-sm text-center group hover:border-blue-300 transition-colors cursor-help" title="80% do valor base">
-                                            <span className="block text-[10px] uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-1 font-bold">Máximo (80%)</span>
+                                        <div className="p-2.5 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-800 shadow-sm text-center group hover:border-blue-300 transition-colors cursor-help" title="100% do valor base">
+                                            <span className="block text-[10px] uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-1 font-bold">Máximo (100%)</span>
                                             <span className="font-bold text-blue-700 dark:text-blue-300 text-lg">
-                                                R$ {(parseFloat(selectedProduct.marketValue) * 0.8).toFixed(2)}
+                                                R$ {(parseFloat(selectedProduct.marketValue) * 1.0).toFixed(2)}
                                             </span>
                                         </div>
                                         <div className="p-2.5 bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm text-center">
@@ -290,6 +310,22 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
                             />
                         </div>
 
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                                CPF do Cliente
+                            </label>
+                            <input
+                                type="text"
+                                value={customerCpf}
+                                onChange={(e) => handleCpfChange(e.target.value)}
+                                className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white"
+                                placeholder="000.000.000-00"
+                                maxLength={14}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                                 Preço de Venda <span className="text-red-500">*</span>
@@ -447,8 +483,8 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };
 

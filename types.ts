@@ -21,6 +21,7 @@ export interface Company {
 export interface Shipment {
   id: string;
   userId?: string;
+  saleId?: string;
   senderName: string;
   senderAddress: string;
   senderCity: string;
@@ -45,6 +46,8 @@ export interface Shipment {
   contentQuantity?: number;
   trackingCode?: string;
   status: string;
+  labelGenerated?: boolean;
+  declarationGenerated?: boolean;
   createdAt: string;
   updatedAt?: string;
 }

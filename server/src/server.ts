@@ -11,6 +11,7 @@ import opportunityRoutes from './routes/opportunity.routes';
 import scheduledPostRoutes from './routes/scheduledPost.routes';
 import taskRoutes from './routes/task.routes';
 import alertRoutes from './routes/alert.routes';
+import bazarRoutes from './routes/bazar.routes';
 // import shipmentRoutes from './routes/shipment.routes'; // Temporarily disabled
 
 dotenv.config();
@@ -32,6 +33,7 @@ app.use('/api/opportunities', opportunityRoutes);
 app.use('/api/scheduled-posts', scheduledPostRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/alerts', alertRoutes);
+app.use('/api/bazares', bazarRoutes);
 // app.use('/api/shipments', shipmentRoutes); // Temporarily disabled
 
 app.get('/api/health', (req, res) => {

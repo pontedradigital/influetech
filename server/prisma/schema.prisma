@@ -40,6 +40,7 @@ model User {
   scheduledPosts ScheduledPost[]
   tasks          Task[]
   alerts         Alert[]
+  bazarEvents    BazarEvent[]
   
   // Phase 2: Networking Advanced
   opportunities Opportunity[]
@@ -266,4 +267,20 @@ model Alert {
   
   isRead      Boolean  @default(false)
   createdAt   DateTime @default(now())
+}
+
+model BazarEvent {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  title       String
+  description String?
+  date        DateTime
+  location    String?
+  status      String   @default("PLANNED") // PLANNED, CONFIRMED, COMPLETED, CANCELLED
+  productIds  String   // JSON array of product IDs
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

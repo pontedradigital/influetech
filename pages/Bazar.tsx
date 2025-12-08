@@ -1,253 +1,484 @@
+import React, { useState, useEffect } from 'react';
+import { Product } from '../types';
 
-import React, { useState } from 'react';
-import { Routes, Route, Link, useNavigate } from 'react-router-dom';
-import { BazarRecommendation } from '../types';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+interface BazarSuggestion {
+  date: string;
+  score: number;
+  reasons: string[];
+  nearbyEvent?: string;
+  dayOfWeek: string;
+  isWeekend: boolean;
+  isPayday: boolean;
+  tips: string[];
+}
 
-const recommendations: BazarRecommendation[] = [
-  {
-    id: '1',
-    title: '15 de Março - Dia do Consumidor',
-    score: 92,
-    revenueRange: 'R$ 9.500 - R$ 12.800',
-    date: '15 Mar',
-    insights: ['Data comercial de alto impacto', 'Estoque: 12 produtos', 'Competição: Média']
-  },
-  {
-    id: '2',
-    title: '28 de Novembro - Black Friday',
-    score: 88,
-    revenueRange: 'R$ 15.000 - R$ 22.500',
-    date: '28 Nov',
-    insights: ['Maior data comercial', 'Tendências em alta', 'Competição: Muito Alta']
-  }
-];
+interface BazarEvent {
+  id: string;
+  title: string;
+  description?: string;
+  date: string;
+  location?: string;
+  productIds: string;
+  status: string;
+}
 
-const BazarList = () => {
-  const navigate = useNavigate();
+export default function Bazar() {
+  const [suggestions, setSuggestions] = useState<BazarSuggestion[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [bazarEvents, setBazarEvents] = useState<BazarEvent[]>([]);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedSuggestion, setSelectedSuggestion] = useState<BazarSuggestion | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [suggestionsRes, productsRes, eventsRes] = await Promise.all([
+        fetch('/api/bazares/suggestions'),
+        fetch('/api/products'),
+        fetch('/api/bazares')
+      ]);
+
+      setSuggestions(await suggestionsRes.json());
+      const allProducts = await productsRes.json();
+      // Filtra apenas produtos não vendidos
+      setProducts(allProducts.filter((p: Product) => p.status !== 'Vendido' && p.status !== 'Enviado'));
+      setBazarEvents(await eventsRes.json());
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Agrupa sugestões por mês
+  const groupedSuggestions = suggestions.reduce((acc, suggestion) => {
+    const date = new Date(suggestion.date);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    if (!acc[monthKey]) acc[monthKey] = [];
+    acc[monthKey].push(suggestion);
+    return acc;
+  }, {} as Record<string, BazarSuggestion[]>);
+
+  const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex justify-between items-center flex-wrap gap-4">
+    <div className="space-y-8 pb-20">
+      {/* Header */}
+      <div className="flex justify-between items-start flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-black text-gray-900 dark:text-white">Inteligência de Bazares</h1>
-          <p className="text-gray-500">Recomendações para os próximos 90 dias</p>
+          <h1 className="text-3xl font-black text-gray-900 dark:text-white flex items-center gap-3">
+            <span className="material-symbols-outlined text-4xl">storefront</span>
+            Planejador de Bazares
+          </h1>
+          <p className="text-gray-500 mt-1">Sugestões inteligentes para os próximos 6 meses</p>
         </div>
-        <div className="bg-gray-100 dark:bg-gray-800 p-1 rounded-lg flex gap-1">
-          {['30 dias', '60 dias', '90 dias'].map((t, i) => (
-            <button key={t} className={`px-4 py-1.5 text-sm font-medium rounded-md ${i === 2 ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500'}`}>{t}</button>
-          ))}
+        <div className="flex gap-3">
+          <div className="bg-primary/10 px-4 py-2 rounded-lg border border-primary/20">
+            <p className="text-xs text-gray-600 dark:text-gray-400">Produtos Disponíveis</p>
+            <p className="text-2xl font-black text-primary">{products.length}</p>
+          </div>
+          <div className="bg-green-500/10 px-4 py-2 rounded-lg border border-green-500/20">
+            <p className="text-xs text-gray-600 dark:text-gray-400">Bazares Agendados</p>
+            <p className="text-2xl font-black text-green-600">{bazarEvents.length}</p>
+          </div>
         </div>
       </div>
 
-      <div className="grid gap-6">
-        {recommendations.map(rec => (
-          <div key={rec.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm hover:border-primary/50 transition-colors">
-            <div className="flex flex-wrap justify-between items-start gap-6">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{rec.title}</p>
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="flex text-yellow-400 text-xl">{'★'.repeat(5)}</div>
-                  <span className="text-2xl font-bold text-gray-900 dark:text-white">{rec.score}/100</span>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <h3 className="text-xs font-bold uppercase text-gray-400 tracking-wider">KEY INSIGHTS</h3>
-                  {rec.insights.map((insight, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                      <span className={`material-symbols-outlined text-base ${insight.includes('Alta') ? 'text-red-500' : 'text-green-500'}`}>
-                        {insight.includes('Alta') ? 'warning' : 'check_circle'}
-                      </span>
-                      {insight}
-                    </div>
-                  ))}
+      {/* Vantagens */}
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-6 rounded-xl border border-blue-200 dark:border-blue-800">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <span className="material-symbols-outlined text-blue-600">lightbulb</span>
+          Por que planejar seus bazares?
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="flex gap-3">
+            <span className="material-symbols-outlined text-blue-600 text-2xl">trending_up</span>
+            <div>
+              <h3 className="font-bold text-gray-900 dark:text-white text-sm">Maximize Vendas</h3>
+              <p className="text-xs text-gray-600 dark:text-gray-400">Venda em datas estratégicas com maior demanda</p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <span className="material-symbols-outlined text-purple-600 text-2xl">calendar_clock</span>
+            <div>
+              <h3 className="font-bold text-gray-900 dark:text-white text-sm">Organize-se Melhor</h3>
+              <p className="text-xs text-gray-600 dark:text-gray-400">Planeje com antecedência e evite correria</p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <span className="material-symbols-outlined text-green-600 text-2xl">psychology</span>
+            <div>
+              <h3 className="font-bold text-gray-900 dark:text-white text-sm">Insights Inteligentes</h3>
+              <p className="text-xs text-gray-600 dark:text-gray-400">Dicas personalizadas para cada data</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Sugestões por Mês */}
+      {loading ? (
+        <div className="text-center py-12">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+          <p className="text-gray-500 mt-4">Analisando melhores datas...</p>
+        </div>
+      ) : (
+        <div className="space-y-8">
+          {Object.entries(groupedSuggestions).map(([monthKey, monthSuggestions]) => {
+            const [year, month] = monthKey.split('-');
+            const monthIndex = parseInt(month) - 1;
+
+            return (
+              <div key={monthKey} className="space-y-4">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary">calendar_month</span>
+                  {monthNames[monthIndex]} {year}
+                </h2>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {monthSuggestions.map((suggestion, index) => {
+                    const date = new Date(suggestion.date);
+                    const formattedDate = date.toLocaleDateString('pt-BR', {
+                      day: '2-digit',
+                      month: 'short'
+                    });
+
+                    return (
+                      <div
+                        key={suggestion.date}
+                        className="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 p-6 hover:border-primary transition-all hover:shadow-xl"
+                      >
+                        {/* Header do Card */}
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              {suggestion.isWeekend && (
+                                <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-bold rounded">
+                                  FIM DE SEMANA
+                                </span>
+                              )}
+                              {suggestion.nearbyEvent && (
+                                <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-bold rounded">
+                                  {suggestion.nearbyEvent}
+                                </span>
+                              )}
+                            </div>
+                            <h3 className="text-2xl font-black text-gray-900 dark:text-white">
+                              {formattedDate}
+                            </h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">{suggestion.dayOfWeek}</p>
+                          </div>
+                          {/* Score Circular Gauge */}
+                          <div className="relative flex items-center justify-center">
+                            <svg className="transform -rotate-90" width="90" height="90">
+                              {/* Background circle */}
+                              <circle
+                                cx="45"
+                                cy="45"
+                                r="36"
+                                stroke="currentColor"
+                                strokeWidth="7"
+                                fill="none"
+                                className="text-gray-200 dark:text-gray-700"
+                              />
+                              {/* Progress circle */}
+                              <circle
+                                cx="45"
+                                cy="45"
+                                r="36"
+                                stroke={suggestion.score >= 90 ? '#10b981' : suggestion.score >= 80 ? '#3b82f6' : suggestion.score >= 70 ? '#f59e0b' : '#ef4444'}
+                                strokeWidth="7"
+                                fill="none"
+                                strokeDasharray={`${2 * Math.PI * 36}`}
+                                strokeDashoffset={`${2 * Math.PI * 36 * (1 - suggestion.score / 100)}`}
+                                strokeLinecap="round"
+                                className="transition-all duration-1000 ease-out"
+                                style={{ filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))' }}
+                              />
+                            </svg>
+                            {/* Score number in center */}
+                            <div className="absolute inset-0 flex flex-col items-center justify-center">
+                              <span className={`text-3xl font-black ${suggestion.score >= 90 ? 'text-green-600' :
+                                  suggestion.score >= 80 ? 'text-blue-600' :
+                                    suggestion.score >= 70 ? 'text-yellow-600' :
+                                      'text-red-600'
+                                }`}>
+                                {suggestion.score}
+                              </span>
+                              <span className="text-[10px] text-gray-500 font-medium">/ 100</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Score Label */}
+                        <div className="mb-4">
+                          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ${suggestion.score >= 90 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
+                              suggestion.score >= 80 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
+                                suggestion.score >= 70 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' :
+                                  'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                            }`}>
+                            <span className="material-symbols-outlined text-base">
+                              {suggestion.score >= 90 ? 'star' : suggestion.score >= 80 ? 'thumb_up' : 'info'}
+                            </span>
+                            {suggestion.score >= 90 ? 'Excelente' : suggestion.score >= 80 ? 'Muito Bom' : suggestion.score >= 70 ? 'Bom' : 'Regular'}
+                          </div>
+                        </div>
+
+                        {/* Razões */}
+                        <div className="space-y-2 mb-4">
+                          <h4 className="text-xs font-bold uppercase text-gray-400">Por que esta data?</h4>
+                          {suggestion.reasons.map((reason, idx) => (
+                            <div key={idx} className="flex items-start gap-2">
+                              <span className="material-symbols-outlined text-green-600 text-sm mt-0.5">check_circle</span>
+                              <p className="text-sm text-gray-700 dark:text-gray-300">{reason}</p>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Dicas */}
+                        <div className="space-y-2 mb-4 p-3 bg-blue-50 dark:bg-blue-900/10 rounded-lg">
+                          <h4 className="text-xs font-bold uppercase text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                            <span className="material-symbols-outlined text-sm">tips_and_updates</span>
+                            Dicas para Aumentar Vendas
+                          </h4>
+                          {suggestion.tips.slice(0, 2).map((tip, idx) => (
+                            <div key={idx} className="flex items-start gap-2">
+                              <span className="text-blue-600 dark:text-blue-400 text-xs">💡</span>
+                              <p className="text-xs text-gray-700 dark:text-gray-300">{tip}</p>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Botão */}
+                        <button
+                          onClick={() => {
+                            setSelectedSuggestion(suggestion);
+                            setShowModal(true);
+                          }}
+                          className="w-full py-3 bg-primary hover:bg-primary-600 text-white font-bold rounded-lg transition-all active:scale-95 shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
+                        >
+                          <span className="material-symbols-outlined">add_circle</span>
+                          Agendar Bazar
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-sm font-bold text-gray-900 dark:text-white">Previsão</p>
-                <p className="text-xl font-bold text-green-600 dark:text-green-400 mt-1">{rec.revenueRange}</p>
-                
-                <div className="flex gap-3 mt-6 justify-end">
-                  <button onClick={() => navigate(`${rec.id}`)} className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-white rounded-lg text-sm font-bold hover:bg-gray-200">VER ANÁLISE</button>
-                  <button onClick={() => navigate('criar')} className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary-600">PLANEJAR BAZAR</button>
-                </div>
-              </div>
-            </div>
-            
-            <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700 grid grid-cols-1 md:grid-cols-2 gap-4">
-               {/* Mock Breakdown Bars */}
-               <div className="space-y-3">
-                 <h4 className="text-xs font-bold text-gray-400 uppercase">Breakdown</h4>
-                 {[
-                   { l: 'Data Comercial', v: 90, c: 'bg-primary' },
-                   { l: 'Estoque', v: 95, c: 'bg-primary' },
-                   { l: 'Competição', v: 60, c: 'bg-yellow-500' }
-                 ].map(item => (
-                   <div key={item.l}>
-                     <div className="flex justify-between text-xs mb-1 text-gray-600 dark:text-gray-300"><span>{item.l}</span><span>{item.v}/100</span></div>
-                     <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                       <div className={`h-full rounded-full ${item.c}`} style={{ width: `${item.v}%` }}></div>
-                     </div>
-                   </div>
-                 ))}
-               </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const BazarAnalysis = () => {
-  const data = [
-    { name: 'Sem 1', value: 4000 },
-    { name: 'Sem 2', value: 7000 },
-    { name: 'Sem 3', value: 5000 },
-    { name: 'Sem 4', value: 9000 },
-  ];
-
-  return (
-    <div className="space-y-8">
-      <div className="flex items-center gap-4">
-        <Link to="/bazar" className="p-2 hover:bg-gray-100 rounded-full"><span className="material-symbols-outlined">arrow_back</span></Link>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Análise Detalhada: Bazar de Inverno</h1>
-          <p className="text-gray-500">Previsão baseada em dados históricos e tendências.</p>
+            );
+          })}
         </div>
-      </div>
+      )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[
-          { l: 'Potencial de Venda', v: 'R$ 25.000', sub: '+15.2%', c: 'text-green-500' },
-          { l: 'Público Alvo', v: '~15.7k seguidores', sub: '+2.1%', c: 'text-blue-500' },
-          { l: 'Itens Sugeridos', v: '42', sub: '+8.0%', c: 'text-green-500' }
-        ].map(stat => (
-          <div key={stat.l} className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
-            <p className="text-gray-500 text-sm font-medium">{stat.l}</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stat.v}</p>
-            <p className={`text-sm font-bold mt-1 ${stat.c}`}>{stat.sub}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
-        <h3 className="text-lg font-bold mb-6 text-gray-900 dark:text-white">Projeção de Receita</h3>
-        <div className="h-64 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6B7280' }} dy={10} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6B7280' }} />
-              <Tooltip 
-                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
-              />
-              <Line type="monotone" dataKey="value" stroke="#2463eb" strokeWidth={3} dot={{ r: 4, fill: '#2463eb', strokeWidth: 2, stroke: '#fff' }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Recomendações da IA</h3>
-        <div className="grid gap-4">
-          <div className="flex items-start gap-4 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-            <div className="p-2 bg-blue-100 text-blue-600 rounded-lg"><span className="material-symbols-outlined">category</span></div>
-            <div>
-              <h4 className="font-bold text-gray-900 dark:text-white">Focar em produtos de inverno</h4>
-              <p className="text-sm text-gray-500">Casacos, botas e acessórios de lã tem alta performance nesta época.</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-4 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-            <div className="p-2 bg-green-100 text-green-600 rounded-lg"><span className="material-symbols-outlined">local_shipping</span></div>
-            <div>
-              <h4 className="font-bold text-gray-900 dark:text-white">Oferecer frete grátis</h4>
-              <p className="text-sm text-gray-500">Aumenta conversão em 35% para compras acima de R$ 150.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const CreateBazar = () => {
-  return (
-    <div className="max-w-2xl mx-auto space-y-8 pb-20">
-      <h1 className="text-3xl font-black text-gray-900 dark:text-white">Criar Bazar</h1>
-      
-      <div className="bg-primary/10 border border-primary/20 p-4 rounded-xl flex gap-4 items-start">
-        <span className="material-symbols-outlined text-primary mt-1">auto_awesome</span>
-        <div>
-          <p className="font-bold text-gray-900 dark:text-white">Sugestão da IA</p>
-          <p className="text-sm text-gray-600 dark:text-gray-300">Formulário pré-preenchido com dados otimizados para maximizar suas vendas.</p>
-        </div>
-      </div>
-
-      <div className="space-y-6">
-        <section className="space-y-4">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Detalhes</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome do Bazar</label>
-              <input type="text" className="w-full h-12 px-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary/50 outline-none" defaultValue="Bazar de Inverno Tech" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descrição</label>
-              <textarea className="w-full h-32 p-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary/50 outline-none" defaultValue="Uma seleção exclusiva dos melhores gadgets..." />
-            </div>
-          </div>
-        </section>
-
-        <section className="space-y-4">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Cronograma</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Início</label>
-              <input type="date" className="w-full h-12 px-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800" defaultValue="2024-07-25" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fim</label>
-              <input type="date" className="w-full h-12 px-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800" defaultValue="2024-08-05" />
-            </div>
-          </div>
-        </section>
-
-        <section className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Produtos</h2>
-            <span className="text-sm text-primary font-bold">32 selecionados</span>
-          </div>
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 space-y-4">
-             <input type="text" placeholder="Buscar produtos..." className="w-full h-10 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border-none focus:ring-1 focus:ring-primary" />
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto pr-2">
-                {[1, 2, 3, 4].map(i => (
-                  <div key={i} className="flex items-center gap-3 p-2 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer">
-                    <div className="w-12 h-12 bg-gray-200 rounded-md"></div>
-                    <div className="flex-1">
-                      <p className="text-sm font-bold text-gray-900 dark:text-white">Produto {i}</p>
-                      <p className="text-xs text-gray-500">Categoria</p>
-                    </div>
-                    <input type="checkbox" defaultChecked className="w-5 h-5 text-primary rounded focus:ring-primary" />
-                  </div>
-                ))}
-             </div>
-          </div>
-        </section>
-      </div>
-
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 lg:pl-64 flex justify-end gap-4 z-20">
-        <button className="px-6 py-2.5 font-bold text-gray-600 hover:bg-gray-100 rounded-lg">Cancelar</button>
-        <button className="px-6 py-2.5 font-bold text-white bg-primary hover:bg-primary-600 rounded-lg shadow-lg shadow-primary/30">Confirmar Bazar</button>
-      </div>
+      {/* Modal de Agendamento */}
+      {showModal && selectedSuggestion && (
+        <BazarModal
+          suggestion={selectedSuggestion}
+          products={products}
+          onClose={() => {
+            setShowModal(false);
+            setSelectedSuggestion(null);
+          }}
+          onSuccess={() => {
+            fetchData();
+            setShowModal(false);
+            setSelectedSuggestion(null);
+          }}
+        />
+      )}
     </div>
   );
 }
 
-export default function Bazar() {
+// Modal de Agendamento
+function BazarModal({ suggestion, products, onClose, onSuccess }: {
+  suggestion: BazarSuggestion;
+  products: Product[];
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [location, setLocation] = useState('');
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredProducts = products.filter(p =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await fetch('/api/bazares', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          description,
+          date: suggestion.date,
+          location,
+          productIds: JSON.stringify(selectedProducts),
+          userId: 'mock-id'
+        })
+      });
+      onSuccess();
+    } catch (error) {
+      console.error('Error creating bazar:', error);
+    }
+  };
+
+  const date = new Date(suggestion.date);
+  const formattedDate = date.toLocaleDateString('pt-BR', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric'
+  });
+
   return (
-    <Routes>
-      <Route path="/" element={<BazarList />} />
-      <Route path="/criar" element={<CreateBazar />} />
-      <Route path="/:id" element={<BazarAnalysis />} />
-    </Routes>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-[#1A202C] w-full max-w-3xl rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-r from-primary/10 to-purple-500/10">
+          <div className="flex justify-between items-start">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <span className="material-symbols-outlined">storefront</span>
+                Agendar Bazar
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 capitalize">{formattedDate}</p>
+              <div className="flex gap-2 mt-2">
+                <span className="px-3 py-1 bg-primary text-white text-xs font-bold rounded-full">
+                  Score: {suggestion.score}/100
+                </span>
+                {suggestion.nearbyEvent && (
+                  <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-bold rounded-full">
+                    {suggestion.nearbyEvent}
+                  </span>
+                )}
+              </div>
+            </div>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+              <span className="material-symbols-outlined">close</span>
+            </button>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Nome do Bazar *</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              className="w-full h-11 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/50 outline-none"
+              placeholder="Ex: Bazar de Primavera"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Descrição</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/50 outline-none resize-none"
+              placeholder="Descreva seu bazar..."
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Local (opcional)</label>
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="w-full h-11 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/50 outline-none"
+              placeholder="Ex: Instagram, Loja Física, etc."
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+              Produtos ({selectedProducts.length} selecionados)
+            </label>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full h-10 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/50 outline-none mb-3"
+              placeholder="Buscar produtos..."
+            />
+            <div className="grid grid-cols-2 gap-3 max-h-60 overflow-y-auto p-2 bg-gray-50 dark:bg-gray-900 rounded-lg">
+              {filteredProducts.map(product => (
+                <label
+                  key={product.id}
+                  className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${selectedProducts.includes(product.id)
+                    ? 'bg-primary/10 border-2 border-primary'
+                    : 'bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 hover:border-primary/50'
+                    }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedProducts.includes(product.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedProducts([...selectedProducts, product.id]);
+                      } else {
+                        setSelectedProducts(selectedProducts.filter(id => id !== product.id));
+                      }
+                    }}
+                    className="w-5 h-5 text-primary rounded focus:ring-primary"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm text-gray-900 dark:text-white truncate">{product.name}</p>
+                    <p className="text-xs text-gray-500">{product.category}</p>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Dicas */}
+          <div className="bg-blue-50 dark:bg-blue-900/10 p-4 rounded-lg">
+            <h4 className="font-bold text-blue-900 dark:text-blue-300 mb-2 flex items-center gap-2">
+              <span className="material-symbols-outlined">tips_and_updates</span>
+              Dicas para este Bazar
+            </h4>
+            <ul className="space-y-1">
+              {suggestion.tips.map((tip, idx) => (
+                <li key={idx} className="text-sm text-blue-800 dark:text-blue-200 flex items-start gap-2">
+                  <span>•</span>
+                  <span>{tip}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-2.5 font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-2.5 font-bold text-white bg-primary hover:bg-primary-600 rounded-lg shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center gap-2"
+            >
+              <span className="material-symbols-outlined">check_circle</span>
+              Confirmar Bazar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }

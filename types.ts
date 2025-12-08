@@ -116,3 +116,45 @@ export interface Opportunity {
   userName?: string;
   userIsPublic?: boolean;
 }
+
+export interface ScheduledPost {
+  id: string;
+  userId: string;
+  productId?: string;
+  product?: Product;
+  title: string;
+  caption?: string;
+  platforms: string; // JSON array
+  scheduledFor: string;
+  status: 'SCHEDULED' | 'PUBLISHED' | 'CANCELLED';
+  mediaUrl?: string;
+  mediaType?: 'IMAGE' | 'VIDEO';
+  publishedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Task {
+  id: string;
+  userId: string;
+  title: string;
+  description?: string;
+  category: 'CONTENT' | 'EDITING' | 'RESPOND' | 'OTHER';
+  priority: 'LOW' | 'MEDIUM' | 'HIGH';
+  status: 'TODO' | 'IN_PROGRESS' | 'DONE';
+  dueDate?: string;
+  completedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Alert {
+  id: string;
+  userId: string;
+  type: 'PRODUCT_ARRIVING' | 'POST_UPCOMING' | 'TASK_DUE' | 'PRODUCT_NO_POST';
+  title: string;
+  message: string;
+  relatedId?: string;
+  isRead: boolean;
+  createdAt: string;
+}

@@ -5,6 +5,13 @@ import { useInfluencer } from '../context/InfluencerContext';
 export default function MediaKit() {
     const { data, totalFollowers } = useInfluencer();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [animationKey, setAnimationKey] = useState(0);
+
+    // Retrigger animation on mount
+    React.useEffect(() => {
+        // Force re-render to retrigger animations
+        setAnimationKey(prev => prev + 1);
+    }, []);
 
     // Calculate total average views
     const totalAverageViews = data.socials.reduce((acc, curr) => acc + (curr.averageViews || 0), 0);
@@ -130,7 +137,7 @@ export default function MediaKit() {
                         <div className="bg-gray-50 dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
                             <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 text-center">Seguidores</h4>
                             <div className="flex flex-col items-center gap-4">
-                                <svg viewBox="0 0 200 200" className="w-48 h-48">
+                                <svg key={`followers-${animationKey}`} viewBox="0 0 200 200" className="w-48 h-48">
                                     <style>{`
                                         @keyframes fillPie {
                                             from { stroke-dashoffset: 502; }
@@ -222,7 +229,7 @@ export default function MediaKit() {
                         <div className="bg-gray-50 dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
                             <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 text-center">Views Mensais</h4>
                             <div className="flex flex-col items-center gap-4">
-                                <svg viewBox="0 0 200 200" className="w-48 h-48">
+                                <svg key={`views-${animationKey}`} viewBox="0 0 200 200" className="w-48 h-48">
                                     {(() => {
                                         const getPlatformColor = (platform: string) => {
                                             const colorMap: Record<string, string> = {
@@ -316,7 +323,7 @@ export default function MediaKit() {
                         <div className="bg-gray-50 dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
                             <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 text-center">Frequência de Postagens</h4>
                             <div className="flex flex-col items-center gap-4">
-                                <svg viewBox="0 0 200 200" className="w-48 h-48">
+                                <svg key={`frequency-${animationKey}`} viewBox="0 0 200 200" className="w-48 h-48">
                                     {(() => {
                                         const getPlatformColor = (platform: string) => {
                                             const colorMap: Record<string, string> = {

@@ -3,7 +3,7 @@ import { HashRouter as Router, Routes, Route, Link, useLocation, Navigate } from
 import Dashboard from './pages/Dashboard';
 import Products from './pages/General';
 import { Companies } from './pages/General';
-import { Agenda } from './pages/General';
+import Agenda from './pages/Agenda';
 import Bazar from './pages/Bazar';
 import Finance from './pages/Finance';
 import Logistics from './pages/Logistics';

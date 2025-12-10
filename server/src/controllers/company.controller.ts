@@ -35,7 +35,7 @@ export const updateCompany = (req: Request, res: Response) => {
     try {
         const stmt = db.prepare(`
       UPDATE Company 
-      SET name = ?, contactName = ?, email = ?, phone = ?, country = ?, website = ?, contactMethod = ?, contactValue = ?, partnershipStatus = ?, status = ?, rating = ?, updatedAt = datetime('now')
+      SET name = ?, contactName = ?, email = ?, phone = ?, country = ?, website = ?, contactMethod = ?, contactValue = ?, partnershipStatus = ?, status = COALESCE(?, status), rating = COALESCE(?, rating), updatedAt = datetime('now')
       WHERE id = ?
     `);
         const result = stmt.run(name, contactName, email, phone, country, website, contactMethod, contactValue, partnershipStatus, status, rating, id);

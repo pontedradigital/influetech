@@ -8,6 +8,10 @@ export interface Product {
   status: 'Em análise' | 'Post Agendado' | 'Aguardando Envio' | 'Publicado' | 'Vendido' | 'Enviado';
   image: string;
   price?: number;
+  weight?: number;
+  height?: number;
+  width?: number;
+  length?: number;
 }
 
 export interface Company {

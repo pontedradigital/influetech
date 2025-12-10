@@ -15,12 +15,12 @@ model User {
   password  String
   name      String
   plan      String   @default("FREE") // FREE, BASIC, PRO
-  active    Boolean  @default(true)
+  active    Int      @default(1) // 0=false, 1=true
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Networking / Public Profile
-  isPublicProfile Boolean @default(false)
+  isPublicProfile Int     @default(0) // 0=false, 1=true
   bio             String? // Short description or "About Me"
   niche           String? // e.g., "Tech, Beauty, Gamer"
   location        String? // e.g., "São Paulo, SP"
@@ -132,12 +132,18 @@ model Product {
 
   sales          Sale[]
   scheduledPosts ScheduledPost[]
+
+  // Shipping Dimensions
+  weight        Float?   // Peso em kg
+  height        Float?   // Altura em cm
+  width         Float?   // Largura em cm
+  length        Float?   // Comprimento em cm
 }
 
 model Sale {
   id              String   @id @default(uuid())
   productId       String
-  product         Product  @relation(fields: [productId], references: [id])
+  product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   
   // Customer Information
   customerName    String
@@ -172,7 +178,7 @@ model Shipment {
   id              String   @id @default(uuid())
   userId          String
   saleId          String?  // Vincula envio à venda original
-  sale            Sale?    @relation(fields: [saleId], references: [id])
+  sale            Sale?    @relation(fields: [saleId], references: [id], onDelete: Cascade)
   
   // Dados do Remetente
   senderName      String
@@ -209,8 +215,8 @@ model Shipment {
   // Metadados
   trackingCode         String?   @unique
   status               String    @default("pending") // pending, shipped, delivered
-  labelGenerated       Boolean   @default(false) // Etiqueta foi gerada?
-  declarationGenerated Boolean   @default(false) // Declaração de conteúdo foi gerada?
+  labelGenerated       Int   @default(0) // Etiqueta foi gerada? (0=false, 1=true)
+  declarationGenerated Int   @default(0) // Declaração de conteúdo foi gerada? (0=false, 1=true)
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
   
@@ -222,7 +228,7 @@ model ScheduledPost {
   userId          String
   user            User     @relation(fields: [userId], references: [id])
   productId       String?
-  product         Product? @relation(fields: [productId], references: [id])
+  product         Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
   
   title           String
   caption         String?
@@ -265,7 +271,7 @@ model Alert {
   message     String
   relatedId   String?  // ID do produto/post/tarefa relacionado
   
-  isRead      Boolean  @default(false)
+  isRead      Int      @default(0) // 0=false, 1=true
   createdAt   DateTime @default(now())
 }
 

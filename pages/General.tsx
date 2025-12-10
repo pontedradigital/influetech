@@ -65,11 +65,15 @@ const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, title, message }: { is
 // Modal de Editar Produto
 const EditProductModal = ({ isOpen, onClose, onSave, product }: { isOpen: boolean; onClose: () => void; onSave: (product: Product) => void; product: Product | null }) => {
   const [name, setName] = useState('');
-  const [category, setCategory] = useState(PRODUCT_CATEGORIES[0]);
+  const [category, setCategory] = useState('');
   const [companyId, setCompanyId] = useState('');
   const [price, setPrice] = useState('');
   const [status, setStatus] = useState<Product['status']>('Em análise');
   const [companies, setCompanies] = useState<Array<{ id: string; name: string }>>([]);
+  const [weight, setWeight] = useState('');
+  const [height, setHeight] = useState('');
+  const [width, setWidth] = useState('');
+  const [length, setLength] = useState('');
 
   React.useEffect(() => {
     if (isOpen) {
@@ -91,6 +95,10 @@ const EditProductModal = ({ isOpen, onClose, onSave, product }: { isOpen: boolea
         const found = companies.find(c => c.name === product.company);
         if (found) setCompanyId(found.id);
       }
+      setWeight(product.weight?.toString() || '');
+      setHeight(product.height?.toString() || '');
+      setWidth(product.width?.toString() || '');
+      setLength(product.length?.toString() || '');
     }
   }, [product, companies]);
 
@@ -109,7 +117,11 @@ const EditProductModal = ({ isOpen, onClose, onSave, product }: { isOpen: boolea
           brand: companies.find(c => c.id === companyId)?.name || product.company,
           marketValue: parseFloat(price) || 0,
           condition: 'Novo',
-          status: status === 'Em análise' ? 'RECEIVED' : status
+          status: status === 'Em análise' ? 'RECEIVED' : status,
+          weight: parseFloat(weight) || null,
+          height: parseFloat(height) || null,
+          width: parseFloat(width) || null,
+          length: parseFloat(length) || null,
         })
       });
 
@@ -132,10 +144,10 @@ const EditProductModal = ({ isOpen, onClose, onSave, product }: { isOpen: boolea
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-[#1A202C] w-full max-w-lg rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
-        <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-700">
+      <div className="bg-white dark:bg-[#1A202C] w-full max-w-2xl rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-700 sticky top-0 bg-white dark:bg-[#1A202C] z-10 w-full">
           <h3 className="text-xl font-bold text-gray-900 dark:text-white">Editar Produto</h3>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-500">
+          <button type="button" onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-500">
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
@@ -189,6 +201,30 @@ const EditProductModal = ({ isOpen, onClose, onSave, product }: { isOpen: boolea
               </div>
             </div>
           )}
+
+          <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
+            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Dimensões e Peso (Opcional)</h4>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Peso (kg)</label>
+                <input type="number" step="0.001" value={weight} onChange={e => setWeight(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" placeholder="0.500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Altura (cm)</label>
+                <input type="number" step="0.1" value={height} onChange={e => setHeight(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" placeholder="10.0" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Largura (cm)</label>
+                <input type="number" step="0.1" value={width} onChange={e => setWidth(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" placeholder="20.0" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Comprimento (cm)</label>
+                <input type="number" step="0.1" value={length} onChange={e => setLength(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" placeholder="30.0" />
+              </div>
+            </div>
+          </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Empresa</label>
@@ -373,7 +409,7 @@ const NewProductModal = ({ isOpen, onClose, onSave, editingProduct }: {
   editingProduct?: any;
 }) => {
   const [name, setName] = useState('');
-  const [category, setCategory] = useState(PRODUCT_CATEGORIES[0]);
+  const [category, setCategory] = useState('');
   const [companyId, setCompanyId] = useState('');
   const [price, setPrice] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -384,6 +420,10 @@ const NewProductModal = ({ isOpen, onClose, onSave, editingProduct }: {
   const [primaryColor, setPrimaryColor] = useState('');
   const [secondaryColor, setSecondaryColor] = useState('');
   const [shippingCost, setShippingCost] = useState('');
+  const [weight, setWeight] = useState('');
+  const [height, setHeight] = useState('');
+  const [width, setWidth] = useState('');
+  const [length, setLength] = useState('');
 
   const [loadingCompanies, setLoadingCompanies] = useState(false);
 
@@ -418,10 +458,14 @@ const NewProductModal = ({ isOpen, onClose, onSave, editingProduct }: {
       setStatus(editingProduct.status || 'Em análise');
       setPrimaryColor(editingProduct.primaryColor || '');
       setSecondaryColor(editingProduct.secondaryColor || '');
+      setWeight(editingProduct.weight?.toString() || '');
+      setHeight(editingProduct.height?.toString() || '');
+      setWidth(editingProduct.width?.toString() || '');
+      setLength(editingProduct.length?.toString() || '');
     } else {
       // Reset form for new product
       setName('');
-      setCategory(PRODUCT_CATEGORIES[0]);
+      setCategory('');
       setCompanyId('');
       setPrice('');
       setDate(new Date().toISOString().split('T')[0]);
@@ -429,6 +473,11 @@ const NewProductModal = ({ isOpen, onClose, onSave, editingProduct }: {
       setPrimaryColor('');
       setSecondaryColor('');
       setShippingCost('');
+      setWeight('');
+      setHeight('');
+      setWidth('');
+      setLength('');
+      setIsImported(false);
       setIsImported(false);
       setPriceUSD('');
       setShippingUSD('');
@@ -479,7 +528,7 @@ const NewProductModal = ({ isOpen, onClose, onSave, editingProduct }: {
 
   const resetForm = () => {
     setName('');
-    setCategory(PRODUCT_CATEGORIES[0]);
+    setCategory('');
     setCompanyId('');
     setPrice('');
     setDate(new Date().toISOString().split('T')[0]);
@@ -487,6 +536,10 @@ const NewProductModal = ({ isOpen, onClose, onSave, editingProduct }: {
     setPrimaryColor('');
     setSecondaryColor('');
     setShippingCost('');
+    setWeight('');
+    setHeight('');
+    setWidth('');
+    setLength('');
     setIsImported(false);
     setPriceUSD('');
     setShippingUSD('');
@@ -545,7 +598,11 @@ const NewProductModal = ({ isOpen, onClose, onSave, editingProduct }: {
           condition: 'Novo',
           status,
           userId: 'mock-id',
-          companyId: companyId
+          companyId: companyId,
+          weight: parseFloat(weight) || null,
+          height: parseFloat(height) || null,
+          width: parseFloat(width) || null,
+          length: parseFloat(length) || null
         })
       });
 
@@ -644,6 +701,7 @@ const NewProductModal = ({ isOpen, onClose, onSave, editingProduct }: {
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Categoria</label>
               <select value={category} onChange={e => setCategory(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white">
+                <option value="" disabled>Selecione uma categoria</option>
                 {PRODUCT_CATEGORIES.map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
@@ -759,6 +817,30 @@ const NewProductModal = ({ isOpen, onClose, onSave, editingProduct }: {
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Data de Registro</label>
               <input type="date" value={date} onChange={e => setDate(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" />
+            </div>
+          </div>
+
+          <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
+            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Dimensões e Peso (Opcional)</h4>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Peso (kg)</label>
+                <input type="number" step="0.001" value={weight} onChange={e => setWeight(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" placeholder="0.500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Altura (cm)</label>
+                <input type="number" step="0.1" value={height} onChange={e => setHeight(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" placeholder="10.0" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Largura (cm)</label>
+                <input type="number" step="0.1" value={width} onChange={e => setWidth(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" placeholder="20.0" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Comprimento (cm)</label>
+                <input type="number" step="0.1" value={length} onChange={e => setLength(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" placeholder="30.0" />
+              </div>
             </div>
           </div>
 

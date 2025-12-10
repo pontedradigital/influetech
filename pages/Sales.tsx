@@ -139,29 +139,32 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
         }
     };
 
-    const handleContactValueChange = (value: string) => {
-        // If WhatsApp, format as phone number
-        if (contactChannel === 'WhatsApp') {
-            // Remove all non-numeric characters
-            const numbers = value.replace(/\D/g, '');
+    const [contactError, setContactError] = useState('');
 
-            // Format as (00) 0000-0000 or (00) 00000-0000
+    const handleContactValueChange = (value: string) => {
+        setContactValue(value);
+        setContactError('');
+
+        if (contactChannel === 'WhatsApp') {
+            // ... WhatsApp logic (omitted for brevity, assume keeping existing logic if needed, but here I'm replacing the function)
+            // Re-implementing WhatsApp masking for completeness since I'm replacing the block
+            const numbers = value.replace(/\D/g, '');
             let formatted = numbers;
             if (numbers.length > 0) {
-                if (numbers.length <= 2) {
-                    formatted = `(${numbers}`;
-                } else if (numbers.length <= 6) {
-                    formatted = `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
-                } else if (numbers.length <= 10) {
-                    formatted = `(${numbers.slice(0, 2)}) ${numbers.slice(2, 6)}-${numbers.slice(6, 10)}`;
-                } else {
-                    // 11 digits (with 9 in front)
-                    formatted = `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
-                }
+                if (numbers.length <= 2) formatted = `(${numbers}`;
+                else if (numbers.length <= 6) formatted = `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
+                else if (numbers.length <= 10) formatted = `(${numbers.slice(0, 2)}) ${numbers.slice(2, 6)}-${numbers.slice(6, 10)}`;
+                else formatted = `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
             }
             setContactValue(formatted);
-        } else {
-            setContactValue(value);
+        } else if (contactChannel === 'Instagram Direct') {
+            if (value && !value.startsWith('https://instagram.com/') && !value.startsWith('https://www.instagram.com/')) {
+                setContactError('O link deve começar com https://instagram.com/');
+            }
+        } else if (contactChannel === 'Facebook Messenger') {
+            if (value && !value.startsWith('https://m.me/') && !value.startsWith('https://facebook.com/')) {
+                setContactError('O link deve ser válido (https://m.me/ ou https://facebook.com/)');
+            }
         }
     };
 
@@ -187,6 +190,17 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
 
         if (!selectedProductId || !customerName || !contactValue) {
             alert('Por favor, preencha todos os campos obrigatórios');
+            return;
+        }
+
+        if (contactError) {
+            alert('Por favor, corrija os erros de contato antes de salvar.');
+            return;
+        }
+
+        // Validate mandatory address fields
+        if (!cep || !street || !number || !neighborhood || !city || !state) {
+            alert('Por favor, preencha todos os campos do endereço de envio.');
             return;
         }
 
@@ -263,6 +277,28 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
                                 <p className="text-sm text-gray-500">
                                     {selectedProduct.brand} | {selectedProduct.category}
                                 </p>
+
+                                {/* Dimensions Display */}
+                                {(selectedProduct.weight || selectedProduct.height || selectedProduct.width || selectedProduct.length) && (
+                                    <div className="grid grid-cols-4 gap-2 text-xs bg-gray-50 dark:bg-gray-800/50 p-2 rounded border border-gray-100 dark:border-gray-700">
+                                        <div title="Peso">
+                                            <span className="block text-gray-400">Peso</span>
+                                            <span className="font-medium text-gray-900 dark:text-white">{selectedProduct.weight} kg</span>
+                                        </div>
+                                        <div title="Altura">
+                                            <span className="block text-gray-400">Alt.</span>
+                                            <span className="font-medium text-gray-900 dark:text-white">{selectedProduct.height} cm</span>
+                                        </div>
+                                        <div title="Largura">
+                                            <span className="block text-gray-400">Larg.</span>
+                                            <span className="font-medium text-gray-900 dark:text-white">{selectedProduct.width} cm</span>
+                                        </div>
+                                        <div title="Comp.">
+                                            <span className="block text-gray-400">Comp.</span>
+                                            <span className="font-medium text-gray-900 dark:text-white">{selectedProduct.length} cm</span>
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
                                     <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
@@ -372,24 +408,29 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
                                 value={contactValue}
                                 onChange={(e) => handleContactValueChange(e.target.value)}
                                 required
-                                className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white"
+                                className={`w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border ${contactError ? 'border-red-500 focus:ring-red-500/20 focus:border-red-500' : 'border-gray-200 dark:border-gray-700 focus:ring-primary/20 focus:border-primary'} outline-none transition-all text-gray-900 dark:text-white`}
                                 placeholder={
                                     contactChannel === 'WhatsApp' ? '(11) 98765-4321' :
                                         contactChannel === 'Discord' ? 'usuario#1234' :
-                                            '@usuario'
+                                            contactChannel === 'Instagram Direct' ? 'https://instagram.com/usuario' :
+                                                contactChannel === 'TikTok' ? '@usuario' :
+                                                    contactChannel === 'Facebook Messenger' ? 'https://m.me/usuario' :
+                                                        '@usuario'
                                 }
                                 maxLength={contactChannel === 'WhatsApp' ? 15 : undefined}
                             />
+                            {contactError && <p className="text-xs text-red-500 mt-1">{contactError}</p>}
                         </div>
                     </div>
 
+
                     {/* Shipping Address */}
                     <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                        <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Endereço de Envio (Opcional)</h4>
+                        <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Endereço de Envio</h4>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">CEP</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">CEP <span className="text-red-500">*</span></label>
                                 <input
                                     type="text"
                                     value={cep}
@@ -402,7 +443,7 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
                             </div>
 
                             <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Rua</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Rua <span className="text-red-500">*</span></label>
                                 <input
                                     type="text"
                                     value={street}
@@ -415,7 +456,7 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
 
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Número</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Número <span className="text-red-500">*</span></label>
                                 <input
                                     type="text"
                                     value={number}
@@ -439,7 +480,7 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Bairro</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Bairro <span className="text-red-500">*</span></label>
                                 <input
                                     type="text"
                                     value={neighborhood}
@@ -450,7 +491,7 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Cidade</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Cidade <span className="text-red-500">*</span></label>
                                 <input
                                     type="text"
                                     value={city}
@@ -461,7 +502,7 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Estado</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Estado <span className="text-red-500">*</span></label>
                                 <input
                                     type="text"
                                     value={state}
@@ -541,7 +582,13 @@ const SaleDetailsModal = ({ isOpen, onClose, sale, onDelete }: {
                         </div>
                         <div>
                             <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Contato</label>
-                            <p className="text-gray-900 dark:text-white font-medium">{sale.contactValue}</p>
+                            {sale.contactValue.startsWith('http') ? (
+                                <a href={sale.contactValue} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium break-all">
+                                    {sale.contactValue}
+                                </a>
+                            ) : (
+                                <p className="text-gray-900 dark:text-white font-medium">{sale.contactValue}</p>
+                            )}
                         </div>
                         <div>
                             <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Data da Venda</label>

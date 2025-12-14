@@ -825,7 +825,26 @@ const NewProductModal = ({ isOpen, onClose, onSave, editingProduct }: {
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Peso (kg)</label>
-                <input required type="number" step="0.001" value={weight} onChange={e => setWeight(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" placeholder="0.500" />
+                <select
+                  required
+                  value={weight}
+                  onChange={e => setWeight(e.target.value)}
+                  className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white"
+                >
+                  <option value="" disabled>Selecione o peso</option>
+                  {/* Grams 100g - 900g */}
+                  {Array.from({ length: 9 }, (_, i) => {
+                    const val = (i + 1) / 10;
+                    const label = val.toFixed(3).replace('.', ',');
+                    return <option key={val} value={val}>{label}</option>;
+                  })}
+                  {/* Kilos 1kg - 30kg */}
+                  {Array.from({ length: 30 }, (_, i) => {
+                    const val = i + 1;
+                    const label = val.toFixed(3).replace('.', ',');
+                    return <option key={val} value={val}>{label}</option>;
+                  })}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Altura (cm)</label>

@@ -29,7 +29,7 @@ export const createProduct = (req: Request, res: Response) => {
         res.status(201).json({ id, name, category, status: 'RECEIVED' });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: 'Erro ao criar produto' });
+        res.status(500).json({ error: 'Erro ao criar produto: ' + (error as any).message });
     }
 };
 

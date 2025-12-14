@@ -15,9 +15,10 @@ import MediaKit from './pages/MediaKit';
 
 import Networking from './pages/Networking';
 
-const SidebarItem: React.FC<{ to: string; icon: string; label: string; active: boolean }> = ({ to, icon, label, active }) => (
+const SidebarItem: React.FC<{ to: string; icon: string; label: string; active: boolean; onClick?: () => void }> = ({ to, icon, label, active, onClick }) => (
   <Link
     to={to}
+    onClick={onClick}
     className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${active
       ? 'bg-primary/10 text-primary'
       : 'text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5'
@@ -82,7 +83,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       {/* Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-[#111621] border-r border-gray-200 dark:border-gray-800 transform transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:flex md:flex-col ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
+          } overflow-y-auto`}
       >
         <div className="flex h-full flex-col justify-between p-4">
           <div className="flex flex-col gap-8">
@@ -102,8 +103,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                   icon={item.icon}
                   label={item.label}
                   active={location.pathname === item.to || (item.to !== '/' && location.pathname.startsWith(item.to))}
+                  onClick={() => setIsMobileMenuOpen(false)}
                 />
               ))}
+
             </nav>
           </div>
 

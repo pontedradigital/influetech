@@ -1,11 +1,41 @@
 import React, { useState, useEffect } from 'react';
 
-export const AdRevenueCalculator: React.FC = () => {
+interface Props {
+    onTransactionCreated?: () => void;
+}
+
+export const AdRevenueCalculator: React.FC<Props> = ({ onTransactionCreated }) => {
     const [views, setViews] = useState(10000);
     const [cpm, setCpm] = useState(2.50); // Default CPM
     const [platform, setPlatform] = useState('YouTube');
+    const [isSaving, setIsSaving] = useState(false);
 
     const estimatedRevenue = (views / 1000) * cpm;
+
+    const handleSaveIncome = async () => {
+        setIsSaving(true);
+        try {
+            await fetch('/api/financial', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: 'INCOME',
+                    category: 'Publicidade',
+                    amount: estimatedRevenue,
+                    date: new Date().toISOString(), // Today
+                    description: `Receita Ads (${platform}): ${views} views`,
+                    name: `Ads ${platform}`
+                })
+            });
+            alert('Receita registrada no dashboard!');
+            if (onTransactionCreated) onTransactionCreated();
+        } catch (error) {
+            console.error(error);
+            alert('Erro ao salvar.');
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     return (
         <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg shadow-purple-500/5 border-t-4 border-t-purple-500">
@@ -23,8 +53,8 @@ export const AdRevenueCalculator: React.FC = () => {
                                 key={p}
                                 onClick={() => setPlatform(p)}
                                 className={`flex-1 py-1.5 text-sm rounded-lg border transition-colors ${platform === p
-                                        ? 'bg-purple-100 border-purple-200 text-purple-700 dark:bg-purple-900/30 dark:border-purple-800 dark:text-purple-300 font-bold'
-                                        : 'border-gray-200 dark:border-gray-700 text-gray-500'
+                                    ? 'bg-purple-100 border-purple-200 text-purple-700 dark:bg-purple-900/30 dark:border-purple-800 dark:text-purple-300 font-bold'
+                                    : 'border-gray-200 dark:border-gray-700 text-gray-500'
                                     }`}
                             >
                                 {p}
@@ -42,15 +72,23 @@ export const AdRevenueCalculator: React.FC = () => {
                         step="1000"
                         value={views}
                         onChange={(e) => setViews(Number(e.target.value))}
-                        className="w-full"
+                        className="w-fullaccent-purple-600"
                     />
                     <div className="text-right font-bold text-gray-700 dark:text-white mt-1">
                         {views.toLocaleString()} views
                     </div>
                 </div>
 
-                <div>
-                    <label className="block text-sm font-medium mb-1 dark:text-gray-300">CPM Estimado ($)</label>
+                <div className="relative group">
+                    <label className="block text-sm font-medium mb-1 dark:text-gray-300 flex items-center gap-1 cursor-help">
+                        CPM Estimado ($)
+                        <span className="material-symbols-outlined text-xs text-gray-400">help</span>
+                    </label>
+                    {/* Tooltip */}
+                    <div className="absolute bottom-full left-0 mb-2 w-64 p-2 bg-gray-900 text-white text-xs rounded hidden group-hover:block z-10">
+                        <strong>CPM (Custo por Mil):</strong> Quanto a plataforma paga a cada 1.000 visualizações monetizadas. Varia por nicho e época do ano.
+                    </div>
+
                     <input
                         type="number"
                         step="0.10"
@@ -65,9 +103,23 @@ export const AdRevenueCalculator: React.FC = () => {
                     <p className="text-3xl font-black text-purple-600 dark:text-purple-400">
                         $ {estimatedRevenue.toFixed(2)}
                     </p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-400 mb-4">
                         R$ {(estimatedRevenue * 5).toFixed(2)} (aprox.)
                     </p>
+
+                    <button
+                        onClick={handleSaveIncome}
+                        disabled={isSaving}
+                        className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold text-sm transition-colors flex items-center justify-center gap-2"
+                    >
+                        {isSaving ? 'Salvando...' : (
+                            <>
+                                <span className="material-symbols-outlined text-sm">save_alt</span>
+                                Registrar Receita
+                            </>
+                        )}
+                    </button>
+                    <p className="text-[10px] text-gray-400 mt-2">Salva como "Entrada" no seu fluxo de caixa.</p>
                 </div>
             </div>
         </div>

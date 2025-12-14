@@ -101,8 +101,8 @@ export default function Finance() {
       <DeleteConfirmModal isOpen={!!deletingId} onClose={() => setDeletingId(null)} onConfirm={confirmDelete} />
       <TransactionModal isOpen={showIncomeModal} onClose={() => setShowIncomeModal(false)} type="INCOME" onSuccess={refreshData} />
       <TransactionModal isOpen={showExpenseModal} onClose={() => setShowExpenseModal(false)} type="EXPENSE" onSuccess={refreshData} />
-      <TaxSimulatorModal isOpen={showTaxModal} onClose={() => setShowTaxModal(false)} />
-      <ROICalculatorModal isOpen={showROIModal} onClose={() => setShowROIModal(false)} />
+      <TaxSimulatorModal isOpen={showTaxModal} onClose={() => setShowTaxModal(false)} onTransactionCreated={refreshData} />
+      <ROICalculatorModal isOpen={showROIModal} onClose={() => setShowROIModal(false)} onTransactionCreated={refreshData} />
 
       {/* --- Header --- */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -153,7 +153,7 @@ export default function Finance() {
             { id: 'OVERVIEW', label: 'Visão Geral', icon: 'dashboard' },
             { id: 'PLANNING', label: 'Planejamento', icon: 'savings' },
             { id: 'AFFILIATES', label: 'Ganhos Afiliações', icon: 'payments' },
-            { id: 'ANALYSIS', label: 'Análise Profunda', icon: 'query_stats' },
+            { id: 'ANALYSIS', label: 'Comparativo Mês a Mês', icon: 'query_stats' },
             { id: 'TOOLS', label: 'Ferramentas', icon: 'construction' }
           ].map(tab => (
             <button
@@ -328,7 +328,7 @@ export default function Finance() {
         {activeTab === 'TOOLS' && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <AdRevenueCalculator />
+              <AdRevenueCalculator onTransactionCreated={refreshData} />
 
               <div
                 onClick={() => setShowTaxModal(true)}

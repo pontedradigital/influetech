@@ -3,16 +3,47 @@ import React, { useState } from 'react';
 interface Props {
     isOpen: boolean;
     onClose: () => void;
+    onTransactionCreated?: () => void;
 }
 
-export const ROICalculatorModal: React.FC<Props> = ({ isOpen, onClose }) => {
+export const ROICalculatorModal: React.FC<Props> = ({ isOpen, onClose, onTransactionCreated }) => {
     const [cost, setCost] = useState(0);
     const [revenue, setRevenue] = useState(0);
+    const [isSaving, setIsSaving] = useState(false);
 
     if (!isOpen) return null;
 
     const netProfit = revenue - cost;
     const roi = cost > 0 ? (netProfit / cost) * 100 : 0;
+
+    const handleSave = async (type: 'EXPENSE' | 'INCOME') => {
+        setIsSaving(true);
+        const amount = type === 'EXPENSE' ? cost : revenue;
+        const category = type === 'EXPENSE' ? 'Marketing' : 'Vendas';
+        const desc = type === 'EXPENSE' ? 'Investimento Campanha' : 'Retorno Campanha';
+
+        try {
+            await fetch('/api/financial', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type,
+                    category,
+                    amount,
+                    date: new Date().toISOString(),
+                    description: desc,
+                    name: 'Campanha ROI'
+                })
+            });
+            alert(`${type === 'EXPENSE' ? 'Custo' : 'Receita'} registrada!`);
+            if (onTransactionCreated) onTransactionCreated();
+        } catch (error) {
+            console.error(error);
+            alert('Erro ao salvar.');
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -28,11 +59,31 @@ export const ROICalculatorModal: React.FC<Props> = ({ isOpen, onClose }) => {
                 <div className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium mb-1 dark:text-gray-300">Custo do Investimento (R$)</label>
-                        <input type="number" value={cost} onChange={e => setCost(Number(e.target.value))} className="w-full p-2 rounded-lg border dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                        <div className="flex gap-2">
+                            <input type="number" value={cost} onChange={e => setCost(Number(e.target.value))} className="w-full p-2 rounded-lg border dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                            <button
+                                onClick={() => handleSave('EXPENSE')}
+                                disabled={isSaving || cost <= 0}
+                                className="px-3 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 disabled:opacity-50"
+                                title="Salvar como Despesa"
+                            >
+                                <span className="material-symbols-outlined text-lg">save_alt</span>
+                            </button>
+                        </div>
                     </div>
                     <div>
                         <label className="block text-sm font-medium mb-1 dark:text-gray-300">Receita Gerada (R$)</label>
-                        <input type="number" value={revenue} onChange={e => setRevenue(Number(e.target.value))} className="w-full p-2 rounded-lg border dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                        <div className="flex gap-2">
+                            <input type="number" value={revenue} onChange={e => setRevenue(Number(e.target.value))} className="w-full p-2 rounded-lg border dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                            <button
+                                onClick={() => handleSave('INCOME')}
+                                disabled={isSaving || revenue <= 0}
+                                className="px-3 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 disabled:opacity-50"
+                                title="Salvar como Receita"
+                            >
+                                <span className="material-symbols-outlined text-lg">save_alt</span>
+                            </button>
+                        </div>
                     </div>
 
                     <div className={`mt-6 p-6 rounded-xl border-2 text-center ${roi >= 0 ? 'border-green-100 bg-green-50 dark:bg-green-900/20' : 'border-red-100 bg-red-50 dark:bg-red-900/20'}`}>
@@ -42,6 +93,9 @@ export const ROICalculatorModal: React.FC<Props> = ({ isOpen, onClose }) => {
                         </p>
                         <p className="text-sm font-medium mt-2 dark:text-white">
                             Lucro Líquido: R$ {netProfit.toFixed(2)}
+                        </p>
+                        <p className="text-[10px] text-gray-400 mt-2">
+                            Use os botões de disquete para salvar os valores no seu fluxo.
                         </p>
                     </div>
                 </div>

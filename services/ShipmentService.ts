@@ -54,4 +54,24 @@ export class ShipmentService {
             throw error;
         }
     }
+    static async update(id: string, data: Partial<Shipment>): Promise<Shipment> {
+        try {
+            const response = await fetch(`${this.API_URL}/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update shipment');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error updating shipment:', error);
+            throw error;
+        }
+    }
 }

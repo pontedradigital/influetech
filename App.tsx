@@ -12,7 +12,7 @@ import ProductPlanner from './pages/ProductPlanner';
 import Auth from './pages/Auth';
 import Sales from './pages/Sales';
 import MediaKit from './pages/MediaKit';
-import Affiliates from './pages/Affiliates';
+
 import Networking from './pages/Networking';
 
 const SidebarItem: React.FC<{ to: string; icon: string; label: string; active: boolean }> = ({ to, icon, label, active }) => (
@@ -58,7 +58,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     { to: '/agenda', icon: 'calendar_today', label: 'Agenda' },
     { to: '/financeiro', icon: 'account_balance', label: 'Financeiro' },
     { to: '/vendas', icon: 'shopping_cart', label: 'Vendas' },
-    { to: '/afiliados', icon: 'link', label: 'Afiliações' },
+
     { to: '/envios', icon: 'local_shipping', label: 'Envios' },
     { to: '/media-kit', icon: 'picture_as_pdf', label: 'Media Kit' },
     { to: '/networking', icon: 'hub', label: 'Networking' },
@@ -175,7 +175,7 @@ const App: React.FC = () => {
                 <Route path="/agenda" element={<Agenda />} />
                 <Route path="/financeiro/*" element={<Finance />} />
                 <Route path="/vendas" element={<Sales />} />
-                <Route path="/afiliados" element={<Affiliates />} />
+
                 <Route path="/envios/*" element={<Logistics />} />
                 <Route path="/media-kit" element={<MediaKit />} />
                 <Route path="/networking" element={<Networking />} />

@@ -107,7 +107,7 @@ export const createSale = (req: Request, res: Response) => {
         );
 
         // Get product info for financial transaction and shipment
-        const product = db.prepare('SELECT name, category, brand FROM Product WHERE id = ?').get(productId) as any;
+        const product = db.prepare('SELECT name, category, brand, weight, height, width, length FROM Product WHERE id = ?').get(productId) as any;
 
         // Create financial transaction (income)
         const transactionId = uuidv4();
@@ -123,12 +123,8 @@ export const createSale = (req: Request, res: Response) => {
         db.prepare('UPDATE Product SET status = ? WHERE id = ?').run('SOLD', productId);
 
         // Get user profile for sender information (usando dados mock por enquanto)
-        // TODO: Buscar dados reais do perfil do usuário
-        const senderName = 'InflueTech'; // Placeholder
-        const senderCep = '01310-100'; // Placeholder
-        const senderAddress = 'Av. Paulista, 1000'; // Placeholder
-        const senderCity = 'São Paulo'; // Placeholder
-        const senderState = 'SP'; // Placeholder
+        // TODO: Buscar dados reais do perfil do usuário ou configurações de envio
+        // Removed hardcoded placeholders (InflueTech, Av Paulista) to let the frontend/Service use the User Profile dynamically
 
         // Create shipment automatically
         const shipmentId = uuidv4();
@@ -159,8 +155,8 @@ export const createSale = (req: Request, res: Response) => {
 
         shipmentStmt.run(
             shipmentId, finalUserId, id,
-            // Sender
-            senderName, senderAddress, senderCity, senderState, senderCep, null,
+            // Sender - Pass NULL to use Profile data on generation
+            null, null, null, null, null, null,
             // Recipient
             customerName,
             street && number ? `${street}, ${number}${complement ? ', ' + complement : ''}` : (street || ''),
@@ -168,8 +164,12 @@ export const createSale = (req: Request, res: Response) => {
             state || '',
             cep || '',
             customerCpf || null,
-            // Package
-            0.5, 10, 10, 10, salePrice,
+            // Package (Use product dimensions or defaults)
+            product?.weight || 0.5,
+            product?.height || 10,
+            product?.width || 10,
+            product?.length || 10,
+            salePrice,
             // Freight
             'A definir', 0, 0,
             // Content

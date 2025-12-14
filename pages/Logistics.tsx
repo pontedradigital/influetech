@@ -11,6 +11,7 @@ import { TrackingService, TrackingData } from '../services/TrackingService';
 import { FreightService, FreightCalculationRequest, FreightCalculationResponse, FreightOption } from '../services/FreightService';
 import { ShipmentService } from '../services/ShipmentService';
 import { LabelGenerator } from '../services/LabelGenerator';
+import DeclarationDataModal from '../components/DeclarationDataModal';
 
 const ShippingCalculator = () => {
   const { data } = useInfluencer();
@@ -446,10 +447,13 @@ const ShippingCalculator = () => {
 
 
 const ShipmentList = () => {
+  const { data } = useInfluencer(); // Hook added to access profile data
   const navigate = useNavigate();
   const [isNewShipmentModalOpen, setIsNewShipmentModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
+  const [isDeclarationModalOpen, setIsDeclarationModalOpen] = useState(false);
+  const [pendingShipmentForDeclaration, setPendingShipmentForDeclaration] = useState<Shipment | null>(null);
   const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null);
 
   const [shipments, setShipments] = useState<Shipment[]>([]);
@@ -510,10 +514,18 @@ const ShipmentList = () => {
     setIsDeleteModalOpen(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (selectedShipment) {
-      setShipments(shipments.filter(s => s.id !== selectedShipment.id));
-      setSelectedShipment(null);
+      try {
+        await ShipmentService.delete(selectedShipment.id);
+        setShipments(shipments.filter(s => s.id !== selectedShipment.id));
+        setSelectedShipment(null);
+        setIsDeleteModalOpen(false); // Close modal explicitly
+        alert('Envio excluído com sucesso!');
+      } catch (error) {
+        console.error('Erro ao excluir envio:', error);
+        alert('Erro ao excluir envio. Tente novamente.');
+      }
     }
   };
 
@@ -529,26 +541,113 @@ const ShipmentList = () => {
     }
   };
 
-  const handleGenerateDocuments = async (shipment: Shipment) => {
+  const handleGenerateDocument = async (shipment: Shipment, type: 'label' | 'declaration') => {
     try {
-      // Gerar PDF (etiqueta + declaração)
-      const { LabelGenerator } = await import('../services/LabelGenerator');
-      LabelGenerator.generate(shipment);
+      if (type === 'declaration') {
+        // Validar dados críticos
+        // Se faltar CPF, endereço completo, etc., abrir modal
+        const missingSenderData = !data.profile.cpfCnpj || !data.profile.location;
+        const missingRecipientData = !shipment.recipientCpfCnpj || !shipment.recipientAddress || !shipment.recipientCity || !shipment.recipientState || !shipment.recipientCep;
 
-      // Marcar ambos como gerados no backend
+        if (missingSenderData || missingRecipientData) {
+          setPendingShipmentForDeclaration(shipment);
+          setIsDeclarationModalOpen(true);
+          return;
+        }
+      }
+
+      // Gerar PDF específico
+      const { LabelGenerator } = await import('../services/LabelGenerator');
+      LabelGenerator.generate(shipment, type, data.profile);
+
+      // Marcar como gerado no backend
       await fetch(`/api/shipments/${shipment.id}/mark-document`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ documentType: 'both' })
+        body: JSON.stringify({ documentType: type })
       });
 
-      // Recarregar lista
-      loadShipments();
+      // Update local state optimistic
+      const docTypeKey = type === 'label' ? 'labelGenerated' : 'declarationGenerated';
+      setShipments(shipments.map(s => s.id === shipment.id ? { ...s, [docTypeKey]: 1 } : s));
 
-      alert('Documentos gerados com sucesso!');
+      alert(`${type === 'label' ? 'Etiqueta' : 'Declaração'} gerada com sucesso!`);
     } catch (error) {
-      console.error('Erro ao gerar documentos:', error);
-      alert('Erro ao gerar documentos');
+      console.error('Erro ao gerar documento:', error);
+      alert('Erro ao gerar documento');
+    }
+  };
+
+  const handleSaveDeclarationData = async (updatedData: any) => {
+    if (!pendingShipmentForDeclaration) return;
+
+    try {
+      // Atualizar o shipment com os dados de destinatário
+      // (Opcional: atualizar o profile com dados de remetente se o backend permitir, mas aqui focamos no shipment)
+      // Como o LabelGenerator mistura shipment + profile, aqui vamos garantir que o shipment tenha os dados "finais"
+      // para essa geração específica.
+
+      // Se quisermos salvar no banco, chamamos a API.
+      // Vamos tentar atualizar o shipment no backend para persistir CPFs e outros dados.
+      await ShipmentService.update(pendingShipmentForDeclaration.id, {
+        recipientName: updatedData.recipientName,
+        recipientCpfCnpj: updatedData.recipientCpfCnpj,
+        recipientAddress: updatedData.recipientAddress,
+        recipientCity: updatedData.recipientCity,
+        recipientState: updatedData.recipientState,
+        recipientCep: updatedData.recipientCep,
+        // Sender data usually comes from profile, but we can override in generate call via specific object if LabelGenerator supported it fully.
+        // But LabelGenerator.generate takes (shipment, type, senderProfile).
+        // We need to pass a "temporary" profile or modified shipment.
+      });
+
+      // Atualizar state local
+      const updatedShipment = {
+        ...pendingShipmentForDeclaration,
+        // Recipient Data (Updated)
+        recipientName: updatedData.recipientName,
+        recipientCpfCnpj: updatedData.recipientCpfCnpj,
+        recipientAddress: updatedData.recipientAddress,
+        recipientCity: updatedData.recipientCity,
+        recipientState: updatedData.recipientState,
+        recipientCep: updatedData.recipientCep,
+        // Sender Data (Updated from Modal)
+        // We must update these so LabelGenerator uses them directly without needing a profile overlay
+        senderName: updatedData.senderName,
+        senderCpfCnpj: updatedData.senderCpfCnpj,
+        senderAddress: updatedData.senderAddress,
+        senderCity: updatedData.senderCity,
+        senderState: updatedData.senderState,
+        senderCep: updatedData.senderCep
+      };
+
+      setShipments(prev => prev.map(s => s.id === updatedShipment.id ? updatedShipment : s));
+
+      // Gerar PDF agora
+      const { LabelGenerator } = await import('../services/LabelGenerator');
+
+      // We pass 'undefined' for the profile argument because we have already populated 
+      // the shipment object with the "final", user-edited data from the modal.
+      // If we passed a profile, LabelGenerator might try to re-parse 'location' 
+      // and overwrite our correct City/State with incorrect parsing.
+      LabelGenerator.generate(updatedShipment, 'declaration', undefined);
+
+      // Marcar como gerado
+      await fetch(`/api/shipments/${updatedShipment.id}/mark-document`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ documentType: 'declaration' })
+      });
+
+      setShipments(prev => prev.map(s => s.id === updatedShipment.id ? { ...s, declarationGenerated: 1 } : s));
+
+      setIsDeclarationModalOpen(false);
+      setPendingShipmentForDeclaration(null);
+      alert('Dados salvos e Declaração gerada com sucesso!');
+
+    } catch (error) {
+      console.error("Erro ao salvar dados/gerar declaração:", error);
+      alert("Erro ao processar dados. Tente novamente.");
     }
   };
 
@@ -640,6 +739,17 @@ const ShipmentList = () => {
         currentCode={selectedShipment?.trackingCode}
       />
 
+      <DeclarationDataModal
+        isOpen={isDeclarationModalOpen}
+        onClose={() => {
+          setIsDeclarationModalOpen(false);
+          setPendingShipmentForDeclaration(null);
+        }}
+        onSave={handleSaveDeclarationData}
+        shipment={pendingShipmentForDeclaration}
+        senderProfile={data.profile}
+      />
+
       <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
         <div className="flex gap-4 mb-4">
           <div className="flex-1 relative">
@@ -665,7 +775,12 @@ const ShipmentList = () => {
                     <div className="flex items-center gap-2">
                       <span
                         className={`font-medium ${s.trackingCode && !s.trackingCode.startsWith('AG') ? 'text-primary hover:underline cursor-pointer' : 'text-gray-500'}`}
-                        onClick={() => s.trackingCode && !s.trackingCode.startsWith('AG') && navigate(`rastreio/${s.trackingCode}`)}
+                        onClick={() => {
+                          if (s.trackingCode && !s.trackingCode.startsWith('AG')) {
+                            navigator.clipboard.writeText(s.trackingCode);
+                            alert('Código copiado para a área de transferência!');
+                          }
+                        }}
                       >
                         {s.trackingCode || 'Sem código'}
                       </span>
@@ -713,50 +828,62 @@ const ShipmentList = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-1">
-                      {/* Botão Gerar Documentos */}
-                      {(!s.labelGenerated || !s.declarationGenerated) && (
+                    <div className="flex justify-end items-center gap-2">
+                      {/* Botões de Documentos */}
+                      <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1 mr-2">
                         <button
-                          onClick={() => handleGenerateDocuments(s)}
-                          title="Gerar Etiqueta e Declaração"
-                          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                          onClick={() => handleGenerateDocument(s, 'label')}
+                          title={s.labelGenerated ? "Etiqueta Gerada (Baixar Novamente)" : "Gerar Etiqueta"}
+                          className={`p-1.5 rounded transition-all flex items-center gap-1 ${s.labelGenerated
+                            ? 'bg-white shadow text-green-600 dark:bg-gray-600 dark:text-green-400'
+                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
                         >
-                          <span className="material-symbols-outlined text-[20px]">print</span>
+                          <span className="material-symbols-outlined text-[18px]">label</span>
                         </button>
-                      )}
 
-                      {/* Botão Marcar como Enviado */}
-                      {s.labelGenerated && s.declarationGenerated && s.status === 'pending' && (
+                        <div className="w-px bg-gray-300 dark:bg-gray-600 mx-1 self-stretch"></div>
+
                         <button
-                          onClick={() => handleMarkAsShipped(s)}
-                          title="Marcar como Enviado"
-                          className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                          onClick={() => handleGenerateDocument(s, 'declaration')}
+                          title={s.declarationGenerated ? "Declaração Gerada (Baixar Novamente)" : "Gerar Declaração"}
+                          className={`p-1.5 rounded transition-all flex items-center gap-1 ${s.declarationGenerated
+                            ? 'bg-white shadow text-green-600 dark:bg-gray-600 dark:text-green-400'
+                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
                         >
-                          <span className="material-symbols-outlined text-[20px]">local_shipping</span>
+                          <span className="material-symbols-outlined text-[18px]">description</span>
                         </button>
-                      )}
+                      </div>
 
+                      {/* Botão Rastreio - Destaque Principal se pendente */}
                       <button
                         onClick={() => handleTrackingClick(s)}
-                        title="Adicionar/Editar Rastreio"
-                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                        className={`flex items-center gap-1 px-3 py-1.5 rounded-lg border transition-all text-xs font-bold uppercase tracking-wide
+                          ${s.trackingCode && !s.trackingCode.startsWith('AG')
+                            ? 'border-gray-200 text-gray-600 hover:border-primary hover:text-primary bg-white'
+                            : 'border-primary bg-primary/10 text-primary hover:bg-primary hover:text-white' // Destaque para adicionar
+                          }`}
                       >
-                        <span className="material-symbols-outlined text-[20px]">barcode_scanner</span>
+                        <span className="material-symbols-outlined text-[16px]">barcode_scanner</span>
+                        <span>{s.trackingCode && !s.trackingCode.startsWith('AG') ? 'Rastreio' : 'Adicionar Rastreio'}</span>
                       </button>
-                      <button
-                        onClick={() => handleEditClick(s)}
-                        title="Editar Envio"
-                        className="p-2 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                      >
-                        <span className="material-symbols-outlined text-[20px]">edit</span>
-                      </button>
-                      <button
-                        onClick={() => handleDeleteClick(s)}
-                        title="Excluir Envio"
-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                      >
-                        <span className="material-symbols-outlined text-[20px]">delete</span>
-                      </button>
+
+                      {/* Menu de Acoes Secundarias (Editar/Excluir) */}
+                      <div className="flex gap-1 ml-2">
+                        <button
+                          onClick={() => handleEditClick(s)}
+                          title="Editar"
+                          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">edit</span>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClick(s)}
+                          title="Excluir"
+                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">delete</span>
+                        </button>
+                      </div>
                     </div>
                   </td>
                 </tr>

@@ -1,21 +1,47 @@
 import { Request, Response } from 'express';
-// import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import db from '../db';
+import { v4 as uuidv4 } from 'uuid';
 
 // Criar novo envio
-export const create = async (req: Request, res: Response) => {
+export const create = (req: Request, res: Response) => {
     try {
         const shipmentData = req.body;
+        const id = uuidv4();
+        const userId = req.body.userId || '327aa8c1-7c26-41c2-95d7-b375c25eb896'; // TODO: Auth
 
-        const shipment = await prisma.shipment.create({
-            data: {
-                ...shipmentData,
-                userId: req.body.userId || 'default-user-id', // TODO: Get from auth token
-            },
-        });
+        const stmt = db.prepare(`
+            INSERT INTO Shipment (
+                id, userId, saleId,
+                senderName, senderAddress, senderCity, senderState, senderCep, senderCpfCnpj,
+                recipientName, recipientAddress, recipientCity, recipientState, recipientCep, recipientCpfCnpj,
+                weight, height, width, length, declaredValue,
+                carrier, price, deliveryTime,
+                contentDescription, contentQuantity,
+                trackingCode, status, labelGenerated, declarationGenerated,
+                createdAt, updatedAt
+            ) VALUES (
+                ?, ?, ?,
+                ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?,
+                ?, ?, ?,
+                ?, ?,
+                ?, ?, ?, ?,
+                datetime('now'), datetime('now')
+            )
+        `);
 
-        res.status(201).json(shipment);
+        stmt.run(
+            id, userId, shipmentData.saleId || null,
+            shipmentData.senderName, shipmentData.senderAddress, shipmentData.senderCity, shipmentData.senderState, shipmentData.senderCep, shipmentData.senderCpfCnpj || null,
+            shipmentData.recipientName, shipmentData.recipientAddress, shipmentData.recipientCity, shipmentData.recipientState, shipmentData.recipientCep, shipmentData.recipientCpfCnpj || null,
+            shipmentData.weight, shipmentData.height, shipmentData.width, shipmentData.length, shipmentData.declaredValue || null,
+            shipmentData.carrier, shipmentData.price, shipmentData.deliveryTime,
+            shipmentData.contentDescription, shipmentData.contentQuantity || 1,
+            shipmentData.trackingCode || null, shipmentData.status || 'pending', 0, 0
+        );
+
+        res.status(201).json({ id, ...shipmentData });
     } catch (error) {
         console.error('Error creating shipment:', error);
         res.status(500).json({ error: 'Failed to create shipment' });
@@ -23,17 +49,25 @@ export const create = async (req: Request, res: Response) => {
 };
 
 // Listar envios do usuário
-export const list = async (req: Request, res: Response) => {
+export const list = (req: Request, res: Response) => {
     try {
-        // TODO: Get from auth token - usando o mesmo userId do sistema
         const userId = req.query.userId as string || '327aa8c1-7c26-41c2-95d7-b375c25eb896';
 
-        const shipments = await prisma.shipment.findMany({
-            where: { userId },
-            orderBy: { createdAt: 'desc' },
-        });
+        const shipments = db.prepare(`
+            SELECT * FROM Shipment 
+            WHERE userId = ? 
+            ORDER BY createdAt DESC
+        `).all(userId);
 
-        res.json(shipments);
+        // Map sqlite 0/1 to boolean if needed, though frontend handles truthy usually. 
+        // Prisma maps 0/1 to booleans automatically. Let's replicate strict boolean for crucial flags.
+        const formatted = shipments.map((s: any) => ({
+            ...s,
+            labelGenerated: !!s.labelGenerated,
+            declarationGenerated: !!s.declarationGenerated
+        }));
+
+        res.json(formatted);
     } catch (error) {
         console.error('Error listing shipments:', error);
         res.status(500).json({ error: 'Failed to list shipments' });
@@ -41,19 +75,21 @@ export const list = async (req: Request, res: Response) => {
 };
 
 // Buscar envio por ID
-export const getById = async (req: Request, res: Response) => {
+export const getById = (req: Request, res: Response) => {
     try {
         const { id } = req.params;
 
-        const shipment = await prisma.shipment.findUnique({
-            where: { id },
-        });
+        const shipment = db.prepare('SELECT * FROM Shipment WHERE id = ?').get(id) as any;
 
         if (!shipment) {
             return res.status(404).json({ error: 'Shipment not found' });
         }
 
-        res.json(shipment);
+        res.json({
+            ...shipment,
+            labelGenerated: !!shipment.labelGenerated,
+            declarationGenerated: !!shipment.declarationGenerated
+        });
     } catch (error) {
         console.error('Error getting shipment:', error);
         res.status(500).json({ error: 'Failed to get shipment' });
@@ -61,17 +97,53 @@ export const getById = async (req: Request, res: Response) => {
 };
 
 // Atualizar envio
-export const update = async (req: Request, res: Response) => {
+export const update = (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const updateData = req.body;
+        const data = req.body;
 
-        const shipment = await prisma.shipment.update({
-            where: { id },
-            data: updateData,
-        });
+        // Dynamic Update Query
+        const fields = Object.keys(data).filter(k => k !== 'id' && k !== 'createdAt');
+        if (fields.length === 0) return res.json({ message: 'No fields to update' });
 
-        res.json(shipment);
+        const setClause = fields.map(f => `${f} = ?`).join(', ');
+        const values = fields.map(f => data[f]);
+
+        values.push(id); // For WHERE clause
+
+        const stmt = db.prepare(`UPDATE Shipment SET ${setClause}, updatedAt = datetime('now') WHERE id = ?`);
+        const result = stmt.run(...values);
+
+        if (result.changes === 0) return res.status(404).json({ error: 'Shipment not found' });
+
+        // --- Cascade Update Logic for Tracking Code ---
+        if (data.trackingCode && data.trackingCode.length > 4) { // Basic validation
+            try {
+                // 1. Auto-update Shipment status to 'shipped' if not already
+                db.prepare("UPDATE Shipment SET status = 'shipped' WHERE id = ?").run(id);
+
+                // 2. Get Sale ID
+                const shipmentStr = db.prepare('SELECT saleId FROM Shipment WHERE id = ?').get(id) as any;
+
+                if (shipmentStr && shipmentStr.saleId) {
+                    // 3. Update Sale Status
+                    db.prepare("UPDATE Sale SET status = 'SHIPPED', updatedAt = datetime('now') WHERE id = ?").run(shipmentStr.saleId);
+
+                    // 4. Update Product Status
+                    const saleRow = db.prepare('SELECT productId FROM Sale WHERE id = ?').get(shipmentStr.saleId) as any;
+                    if (saleRow && saleRow.productId) {
+                        db.prepare("UPDATE Product SET status = 'Enviado' WHERE id = ?").run(saleRow.productId);
+                    }
+                    console.log('Cascade update successful for shipment:', id);
+                }
+            } catch (cascadeError) {
+                console.error('Error in cascade update:', cascadeError);
+                // Don't fail the request, just log
+            }
+        }
+        // ----------------------------------------------
+
+        res.json({ message: 'Shipment updated', ...data });
     } catch (error) {
         console.error('Error updating shipment:', error);
         res.status(500).json({ error: 'Failed to update shipment' });
@@ -79,13 +151,14 @@ export const update = async (req: Request, res: Response) => {
 };
 
 // Deletar envio
-export const deleteShipment = async (req: Request, res: Response) => {
+export const deleteShipment = (req: Request, res: Response) => {
     try {
         const { id } = req.params;
 
-        await prisma.shipment.delete({
-            where: { id },
-        });
+        const stmt = db.prepare('DELETE FROM Shipment WHERE id = ?');
+        const result = stmt.run(id);
+
+        if (result.changes === 0) return res.status(404).json({ error: 'Shipment not found' });
 
         res.status(204).send();
     } catch (error) {
@@ -95,88 +168,63 @@ export const deleteShipment = async (req: Request, res: Response) => {
 };
 
 // Marcar documento como gerado
-export const markDocumentGenerated = async (req: Request, res: Response) => {
+export const markDocumentGenerated = (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { documentType } = req.body; // 'label' ou 'declaration' ou 'both'
+        const { documentType } = req.body; // 'label' | 'declaration' | 'both'
 
-        let updateData: any = {};
-
+        let updateSql = '';
         if (documentType === 'label') {
-            updateData.labelGenerated = true;
+            updateSql = 'labelGenerated = 1';
         } else if (documentType === 'declaration') {
-            updateData.declarationGenerated = true;
+            updateSql = 'declarationGenerated = 1';
         } else if (documentType === 'both') {
-            updateData.labelGenerated = true;
-            updateData.declarationGenerated = true;
+            updateSql = 'labelGenerated = 1, declarationGenerated = 1';
         } else {
-            return res.status(400).json({ error: 'Invalid document type. Use "label", "declaration", or "both"' });
+            return res.status(400).json({ error: 'Invalid document type' });
         }
 
-        const shipment = await prisma.shipment.update({
-            where: { id },
-            data: updateData,
-        });
+        const stmt = db.prepare(`UPDATE Shipment SET ${updateSql}, updatedAt = datetime('now') WHERE id = ?`);
+        const result = stmt.run(id);
 
-        res.json(shipment);
+        if (result.changes === 0) return res.status(404).json({ error: 'Shipment not found' });
+
+        res.json({ message: 'Document marked as generated' });
     } catch (error) {
-        console.error('Error marking document as generated:', error);
-        res.status(500).json({ error: 'Failed to mark document as generated' });
+        console.error('Error marking document:', error);
+        res.status(500).json({ error: 'Failed to mark document' });
     }
 };
 
 // Validar e atualizar status do envio
-export const updateShipmentStatus = async (req: Request, res: Response) => {
+export const updateShipmentStatus = (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const { status } = req.body;
 
-        // Se tentando marcar como shipped, validar documentos
         if (status === 'shipped') {
-            const shipment = await prisma.shipment.findUnique({
-                where: { id },
-            });
+            const shipment = db.prepare('SELECT * FROM Shipment WHERE id = ?').get(id) as any;
 
-            if (!shipment) {
-                return res.status(404).json({ error: 'Shipment not found' });
-            }
+            if (!shipment) return res.status(404).json({ error: 'Shipment not found' });
 
-            // Validar se documentos foram gerados
             if (!shipment.labelGenerated || !shipment.declarationGenerated) {
                 return res.status(400).json({
-                    error: 'Não é possível marcar como enviado sem gerar a Etiqueta e a Declaração de Conteúdo',
-                    missingDocuments: {
-                        label: !shipment.labelGenerated,
-                        declaration: !shipment.declarationGenerated
-                    }
-                });
-            }
-
-            // Validar dados obrigatórios
-            if (!shipment.recipientName || !shipment.recipientCep || !shipment.recipientAddress) {
-                return res.status(400).json({
-                    error: 'Dados do destinatário incompletos',
-                    missingFields: {
-                        name: !shipment.recipientName,
-                        cep: !shipment.recipientCep,
-                        address: !shipment.recipientAddress
-                    }
+                    error: 'Não é possível marcar como enviado sem gerar a Etiqueta e a Declaração de Conteúdo'
                 });
             }
         }
 
-        // Atualizar status
-        const updatedShipment = await prisma.shipment.update({
-            where: { id },
-            data: { status },
-        });
+        const stmt = db.prepare(`UPDATE Shipment SET status = ?, updatedAt = datetime('now') WHERE id = ?`);
+        const result = stmt.run(status, id);
 
-        res.json(updatedShipment);
+        if (result.changes === 0) return res.status(404).json({ error: 'Shipment not found' });
+
+        res.json({ message: 'Status updated' });
     } catch (error) {
-        console.error('Error updating shipment status:', error);
-        res.status(500).json({ error: 'Failed to update shipment status' });
+        console.error('Error updating status:', error);
+        res.status(500).json({ error: 'Failed to update status' });
     }
 };
 
-// Export delete with different name to avoid reserved keyword
+// Export delete as "delete"
 export { deleteShipment as delete };

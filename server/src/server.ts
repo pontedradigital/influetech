@@ -13,7 +13,7 @@ import taskRoutes from './routes/task.routes';
 import alertRoutes from './routes/alert.routes';
 import bazarRoutes from './routes/bazar.routes';
 import trendingProductRoutes from './routes/trendingProduct.routes';
-// import shipmentRoutes from './routes/shipment.routes'; // Temporarily disabled
+import shipmentRoutes from './routes/shipment.routes';
 
 import recurringExpenseRoutes from './routes/recurringExpense.routes';
 import financialGoalRoutes from './routes/financialGoal.routes';
@@ -45,7 +45,7 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/bazares', bazarRoutes);
 app.use('/api/trending-products', trendingProductRoutes);
-// app.use('/api/shipments', shipmentRoutes); // Temporarily disabled
+app.use('/api/shipments', shipmentRoutes);
 
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date() });

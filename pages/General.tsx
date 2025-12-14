@@ -622,10 +622,10 @@ const NewProductModal = ({ isOpen, onClose, onSave, editingProduct }: {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-[#1A202C] w-full max-w-lg rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden transform transition-all scale-100">
-        <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-700">
+      <div className="bg-white dark:bg-[#1A202C] w-full max-w-3xl rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden max-h-[90vh] overflow-y-auto transform transition-all scale-100">
+        <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-700 sticky top-0 bg-white dark:bg-[#1A202C] z-10 w-full">
           <h3 className="text-xl font-bold text-gray-900 dark:text-white">{editingProduct ? 'Editar Produto' : 'Novo Produto'}</h3>
-          <button onClick={() => { if (!editingProduct) resetForm(); onClose(); }} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-500">
+          <button type="button" onClick={() => { if (!editingProduct) resetForm(); onClose(); }} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-500">
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
@@ -821,25 +821,25 @@ const NewProductModal = ({ isOpen, onClose, onSave, editingProduct }: {
           </div>
 
           <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
-            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Dimensões e Peso (Opcional)</h4>
+            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Dimensões e Peso</h4>
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Peso (kg)</label>
-                <input type="number" step="0.001" value={weight} onChange={e => setWeight(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" placeholder="0.500" />
+                <input required type="number" step="0.001" value={weight} onChange={e => setWeight(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" placeholder="0.500" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Altura (cm)</label>
-                <input type="number" step="0.1" value={height} onChange={e => setHeight(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" placeholder="10.0" />
+                <input required type="number" step="0.1" value={height} onChange={e => setHeight(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" placeholder="10.0" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Largura (cm)</label>
-                <input type="number" step="0.1" value={width} onChange={e => setWidth(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" placeholder="20.0" />
+                <input required type="number" step="0.1" value={width} onChange={e => setWidth(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" placeholder="20.0" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Comprimento (cm)</label>
-                <input type="number" step="0.1" value={length} onChange={e => setLength(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" placeholder="30.0" />
+                <input required type="number" step="0.1" value={length} onChange={e => setLength(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" placeholder="30.0" />
               </div>
             </div>
           </div>

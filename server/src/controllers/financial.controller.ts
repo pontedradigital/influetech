@@ -93,9 +93,11 @@ export const createTransaction = (req: Request, res: Response) => {
             category,
             message: 'Transação criada com sucesso'
         });
-    } catch (error) {
+    } catch (error: any) {
+        const fs = require('fs');
+        fs.appendFileSync('debug-fin.log', `${new Date().toISOString()} Error creating transaction: ${error.message || error}\n`);
         console.error('Error creating transaction:', error);
-        res.status(500).json({ error: 'Erro ao criar transação' });
+        res.status(500).json({ error: `Erro ao criar transação: ${error.message}` });
     }
 };
 
@@ -129,17 +131,43 @@ export const deleteTransaction = (req: Request, res: Response) => {
     const { id } = req.params;
 
     try {
-        const stmt = db.prepare('DELETE FROM FinancialTransaction WHERE id = ?');
-        const result = stmt.run(id);
+        const deleteTx = db.transaction(() => {
+            // 1. Check if transaction has relations
+            const transaction: any = db.prepare('SELECT * FROM FinancialTransaction WHERE id = ?').get(id);
+            if (!transaction) throw new Error('Transação não encontrada');
+
+            // 2. Reverse Goal Funding if applicable
+            if (transaction.relatedType === 'GOAL_FUNDING' && transaction.relatedId) {
+                const goal: any = db.prepare('SELECT * FROM FinancialGoal WHERE id = ?').get(transaction.relatedId);
+                if (goal) {
+                    const newAmount = Number(goal.currentAmount) - Number(transaction.amount);
+                    const status = newAmount >= Number(goal.targetAmount) ? 'COMPLETED' : 'ACTIVE';
+
+                    db.prepare('UPDATE FinancialGoal SET currentAmount = ?, status = ?, updatedAt = datetime("now") WHERE id = ?')
+                        .run(newAmount, status, transaction.relatedId);
+                }
+            }
+
+            // 3. Cascade Delete: Recurring Expense
+            if (transaction.relatedType === 'RECURRING_EXPENSE' && transaction.relatedId) {
+                db.prepare('DELETE FROM RecurringExpense WHERE id = ?').run(transaction.relatedId);
+            }
+
+            // 3. Delete Transaction
+            const result = db.prepare('DELETE FROM FinancialTransaction WHERE id = ?').run(id);
+            return result;
+        });
+
+        const result = deleteTx();
 
         if (result.changes === 0) {
             return res.status(404).json({ error: 'Transação não encontrada' });
         }
 
-        res.json({ message: 'Transação excluída' });
-    } catch (error) {
+        res.json({ message: 'Transação excluída e efeitos revertidos' });
+    } catch (error: any) {
         console.error('Error deleting transaction:', error);
-        res.status(500).json({ error: 'Erro ao excluir transação' });
+        res.status(500).json({ error: `Erro ao excluir transação: ${error.message}` });
     }
 };
 

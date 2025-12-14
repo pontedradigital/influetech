@@ -15,6 +15,9 @@ import bazarRoutes from './routes/bazar.routes';
 import trendingProductRoutes from './routes/trendingProduct.routes';
 // import shipmentRoutes from './routes/shipment.routes'; // Temporarily disabled
 
+import recurringExpenseRoutes from './routes/recurringExpense.routes';
+import financialGoalRoutes from './routes/financialGoal.routes';
+
 dotenv.config();
 
 const app = express();
@@ -29,6 +32,8 @@ app.use('/api/products', productRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/sales', saleRoutes);
 app.use('/api/financial', financialRoutes);
+app.use('/api/financial-goals', financialGoalRoutes);
+app.use('/api/recurring-expenses', recurringExpenseRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/opportunities', opportunityRoutes);
 app.use('/api/scheduled-posts', scheduledPostRoutes);

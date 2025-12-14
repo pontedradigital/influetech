@@ -11,6 +11,13 @@ export interface Product {
     condition?: string;
     userId: string;
     companyId?: string;
+    weight?: number;
+    height?: number;
+    width?: number;
+    length?: number;
+    primaryColor?: string;
+    secondaryColor?: string;
+    shippingCost?: number;
     createdAt: string;
     updatedAt: string;
 }

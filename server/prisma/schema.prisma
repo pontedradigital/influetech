@@ -46,6 +46,10 @@ model User {
   opportunities Opportunity[]
   likesGiven    ProfileLike[] @relation("LikesGiven")
   likesReceived ProfileLike[] @relation("LikesReceived")
+  
+  // Phase 3: Enhanced Financials
+  financialGoals    FinancialGoal[]
+  recurringExpenses RecurringExpense[]
 }
 
 model Opportunity {
@@ -86,6 +90,11 @@ model FinancialTransaction {
   status      String   @default("COMPLETED") // COMPLETED, PENDING, CANCELLED
   userId      String
   user        User     @relation(fields: [userId], references: [id])
+  
+  // Relations for Cascading Logic
+  relatedId   String?  // ID of the Goal or RecurringExpense
+  relatedType String?  // GOAL_FUNDING, RECURRING_EXPENSE
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -289,4 +298,39 @@ model BazarEvent {
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model FinancialGoal {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  
+  name          String
+  targetAmount  Decimal
+  currentAmount Decimal  @default(0)
+  deadline      DateTime?
+  status        String   @default("ACTIVE") // ACTIVE, COMPLETED, ARCHIVED
+  color         String?  // Hex color for UI
+  icon          String?  // Icon name
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model RecurringExpense {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  
+  name          String
+  amount        Decimal
+  currency      String   @default("BRL")
+  frequency     String   @default("MONTHLY") // MONTHLY, YEARLY, WEEKLY
+  category      String
+  active        Int      @default(1) // 0=false, 1=true
+  nextDueDate   DateTime?
+  autoRenew     Int      @default(1) // 0=false, 1=true
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

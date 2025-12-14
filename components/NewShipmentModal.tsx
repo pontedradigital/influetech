@@ -21,7 +21,11 @@ export default function NewShipmentModal({ isOpen, onClose, onSave, initialData 
         state: '',
         productName: '',
         value: '',
-        paymentMethod: 'Pix'
+        paymentMethod: 'Pix',
+        weight: '',
+        height: '',
+        width: '',
+        length: ''
     });
 
     const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
@@ -47,7 +51,11 @@ export default function NewShipmentModal({ isOpen, onClose, onSave, initialData 
                     state: '',
                     productName: '',
                     value: '',
-                    paymentMethod: 'Pix'
+                    paymentMethod: 'Pix',
+                    weight: '',
+                    height: '',
+                    width: '',
+                    length: ''
                 });
                 setSelectedProductId('');
             }
@@ -73,7 +81,11 @@ export default function NewShipmentModal({ isOpen, onClose, onSave, initialData 
             setFormData(prev => ({
                 ...prev,
                 productName: product.name,
-                value: product.marketValue?.toString() || ''
+                value: product.marketValue?.toString() || '',
+                weight: product.weight?.toString() || '',
+                height: product.height?.toString() || '',
+                width: product.width?.toString() || '',
+                length: product.length?.toString() || ''
             }));
         }
     };
@@ -244,6 +256,65 @@ export default function NewShipmentModal({ isOpen, onClose, onSave, initialData 
                                     onChange={handleChange}
                                     required
                                     className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-4 py-2.5 focus:ring-2 focus:ring-primary/50"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Dados do Pacote */}
+                    <div>
+                        <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase mb-4 border-b border-gray-100 dark:border-gray-700 pb-2">Dados do Pacote</h3>
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Peso (kg)</label>
+                                <input
+                                    type="number"
+                                    step="0.001"
+                                    name="weight"
+                                    value={formData.weight}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-4 py-2.5 focus:ring-2 focus:ring-primary/50"
+                                    placeholder="0.000"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Altura (cm)</label>
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    name="height"
+                                    value={formData.height}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-4 py-2.5 focus:ring-2 focus:ring-primary/50"
+                                    placeholder="0.0"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Largura (cm)</label>
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    name="width"
+                                    value={formData.width}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-4 py-2.5 focus:ring-2 focus:ring-primary/50"
+                                    placeholder="0.0"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Comprimento (cm)</label>
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    name="length"
+                                    value={formData.length}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-4 py-2.5 focus:ring-2 focus:ring-primary/50"
+                                    placeholder="0.0"
                                 />
                             </div>
                         </div>

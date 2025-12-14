@@ -17,6 +17,8 @@ import trendingProductRoutes from './routes/trendingProduct.routes';
 
 import recurringExpenseRoutes from './routes/recurringExpense.routes';
 import financialGoalRoutes from './routes/financialGoal.routes';
+import affiliatePlatformRoutes from './routes/affiliatePlatform.routes';
+import affiliateEarningRoutes from './routes/affiliateEarning.routes';
 
 dotenv.config();
 
@@ -34,6 +36,8 @@ app.use('/api/sales', saleRoutes);
 app.use('/api/financial', financialRoutes);
 app.use('/api/financial-goals', financialGoalRoutes);
 app.use('/api/recurring-expenses', recurringExpenseRoutes);
+app.use('/api/affiliate-platforms', affiliatePlatformRoutes);
+app.use('/api/affiliate-earnings', affiliateEarningRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/opportunities', opportunityRoutes);
 app.use('/api/scheduled-posts', scheduledPostRoutes);

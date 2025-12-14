@@ -153,7 +153,12 @@ export const deleteTransaction = (req: Request, res: Response) => {
                 db.prepare('DELETE FROM RecurringExpense WHERE id = ?').run(transaction.relatedId);
             }
 
-            // 3. Delete Transaction
+            // 4. Cascade Delete: Affiliate Earning
+            if (transaction.relatedType === 'AFFILIATE_EARNING' && transaction.relatedId) {
+                db.prepare('DELETE FROM AffiliateEarning WHERE id = ?').run(transaction.relatedId);
+            }
+
+            // 5. Delete Transaction
             const result = db.prepare('DELETE FROM FinancialTransaction WHERE id = ?').run(id);
             return result;
         });

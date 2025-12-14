@@ -12,9 +12,10 @@ import { TaxSimulatorModal } from '../components/Financial/TaxSimulatorModal';
 import { ROICalculatorModal } from '../components/Financial/ROICalculatorModal';
 import { ExpenseBreakdown } from '../components/Financial/ExpenseBreakdown';
 import { IncomeTrend } from '../components/Financial/IncomeTrend';
+import { AffiliateSection } from '../components/Financial/AffiliateSection';
 
 export default function Finance() {
-  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'PLANNING' | 'ANALYSIS' | 'TOOLS'>('OVERVIEW');
+  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'PLANNING' | 'AFFILIATES' | 'ANALYSIS' | 'TOOLS'>('OVERVIEW');
 
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -151,6 +152,7 @@ export default function Finance() {
           {[
             { id: 'OVERVIEW', label: 'Visão Geral', icon: 'dashboard' },
             { id: 'PLANNING', label: 'Planejamento', icon: 'savings' },
+            { id: 'AFFILIATES', label: 'Ganhos Afiliações', icon: 'payments' },
             { id: 'ANALYSIS', label: 'Análise Profunda', icon: 'query_stats' },
             { id: 'TOOLS', label: 'Ferramentas', icon: 'construction' }
           ].map(tab => (
@@ -316,6 +318,11 @@ export default function Finance() {
             </div>
             <IncomeTrend />
           </div>
+
+        )}
+
+        {activeTab === 'AFFILIATES' && (
+          <AffiliateSection onTransactionCreated={refreshData} />
         )}
 
         {activeTab === 'TOOLS' && (

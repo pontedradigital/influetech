@@ -253,6 +253,31 @@ model ScheduledPost {
   updatedAt       DateTime @updatedAt
 }
 
+model AffiliatePlatform {
+  id              String   @id
+  userId          String
+  name            String
+  paymentTermDays Int      @default(30)
+  icon            String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  earnings        AffiliateEarning[]
+}
+
+model AffiliateEarning {
+  id              String   @id
+  userId          String
+  platformId      String
+  platform        AffiliatePlatform @relation(fields: [platformId], references: [id])
+  amount          Decimal
+  requestDate     DateTime
+  receiptDate     DateTime // Calculated (requestDate + platform.term)
+  status          String   @default("PENDING") // PENDING, PAID
+  description     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
 model Task {
   id          String   @id @default(uuid())
   userId      String

@@ -70,14 +70,33 @@ export const deleteTask = (req: Request, res: Response) => {
 export const completeTask = (req: Request, res: Response) => {
     const { id } = req.params;
     try {
+        const now = new Date();
+        const nowIso = now.toISOString();
+
+        // Get current task to check date
+        const currentTask = db.prepare('SELECT dueDate FROM Task WHERE id = ?').get(id) as any;
+
+        if (!currentTask) return res.status(404).json({ error: 'Tarefa não encontrada' });
+
+        // If dueDate is null, keep it null, otherwise check if future
+        let newDueDate = currentTask.dueDate;
+        if (currentTask.dueDate) {
+            const dueDate = new Date(currentTask.dueDate);
+            if (dueDate > now) {
+                newDueDate = nowIso;
+            }
+        }
+
         const stmt = db.prepare(`
             UPDATE Task 
-            SET status = 'DONE', completedAt = datetime('now'), updatedAt = datetime('now')
+            SET status = 'DONE', 
+                completedAt = ?, 
+                dueDate = ?,
+                updatedAt = ?
             WHERE id = ?
         `);
 
-        const result = stmt.run(id);
-        if (result.changes === 0) return res.status(404).json({ error: 'Tarefa não encontrada' });
+        stmt.run(nowIso, newDueDate, nowIso, id);
         res.json({ message: 'Tarefa marcada como concluída' });
     } catch (error) {
         console.error('Error completing task:', error);

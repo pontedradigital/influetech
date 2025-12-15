@@ -90,14 +90,27 @@ export const deleteScheduledPost = (req: Request, res: Response) => {
 export const publishScheduledPost = (req: Request, res: Response) => {
     const { id } = req.params;
     try {
+        const now = new Date();
+        const nowIso = now.toISOString();
+
+        // Get current post to check date
+        const currentPost = db.prepare('SELECT scheduledFor FROM ScheduledPost WHERE id = ?').get(id) as any;
+
+        if (!currentPost) return res.status(404).json({ error: 'Post não encontrado' });
+
+        const scheduledDate = new Date(currentPost.scheduledFor);
+        const newScheduledFor = scheduledDate > now ? nowIso : currentPost.scheduledFor;
+
         const stmt = db.prepare(`
             UPDATE ScheduledPost 
-            SET status = 'PUBLISHED', publishedAt = datetime('now'), updatedAt = datetime('now')
+            SET status = 'PUBLISHED', 
+                publishedAt = ?, 
+                scheduledFor = ?,
+                updatedAt = ?
             WHERE id = ?
         `);
 
-        const result = stmt.run(id);
-        if (result.changes === 0) return res.status(404).json({ error: 'Post não encontrado' });
+        stmt.run(nowIso, newScheduledFor, nowIso, id);
         res.json({ message: 'Post marcado como publicado' });
     } catch (error) {
         console.error('Error publishing post:', error);

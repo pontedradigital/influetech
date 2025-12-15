@@ -147,8 +147,8 @@ export default function Finance() {
       </div>
 
       {/* --- Tabs --- */}
-      <div className="border-b border-gray-200 dark:border-gray-700">
-        <nav className="flex space-x-8">
+      <div className="border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
+        <nav className="flex space-x-8 min-w-max pb-1">
           {[
             { id: 'OVERVIEW', label: 'Visão Geral', icon: 'dashboard' },
             { id: 'PLANNING', label: 'Planejamento', icon: 'savings' },

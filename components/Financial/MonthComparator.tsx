@@ -96,7 +96,7 @@ export const MonthComparator: React.FC = () => {
             </h3>
 
             {/* Selectors */}
-            <div className="flex justify-center items-center gap-4 mb-8 bg-gray-50 dark:bg-gray-700/30 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50 max-w-2xl mx-auto">
+            <div className="flex flex-wrap justify-center items-center gap-4 mb-8 bg-gray-50 dark:bg-gray-700/30 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50 max-w-2xl mx-auto">
                 <div className="flex flex-col">
                     <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Mês Base</span>
                     <select

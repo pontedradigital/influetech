@@ -11,9 +11,7 @@ interface MediaKitGenerationModalProps {
 
 const LANGUAGES = [
     { code: 'pt', name: 'Português', flag: '🇧🇷' },
-    { code: 'en', name: 'English', flag: '🇺🇸' },
-    { code: 'es', name: 'Español', flag: '🇪🇸' },
-    { code: 'zh', name: '中文', flag: '🇨🇳' }
+    { code: 'en', name: 'English', flag: '🇺🇸' }
 ];
 
 export default function MediaKitGenerationModal({ isOpen, onClose, initialData }: MediaKitGenerationModalProps) {

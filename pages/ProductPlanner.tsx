@@ -89,9 +89,9 @@ const ProductPlanner = () => {
             if (selectedHype) params.append('hype_level', selectedHype);
 
             const [productsRes, statsRes, categoriesRes] = await Promise.all([
-                fetch(`http://localhost:3001/api/trending-products?${params}`),
-                fetch('http://localhost:3001/api/trending-products/stats/summary'),
-                fetch('http://localhost:3001/api/trending-products/categories/list')
+                fetch(`/api/trending-products?${params}`),
+                fetch('/api/trending-products/stats/summary'),
+                fetch('/api/trending-products/categories/list')
             ]);
 
             const productsData = await productsRes.json();
@@ -112,7 +112,7 @@ const ProductPlanner = () => {
     const handleRefresh = async () => {
         setIsRefreshing(true);
         try {
-            const res = await fetch('http://localhost:3001/api/trending-products/refresh', {
+            const res = await fetch('/api/trending-products/refresh', {
                 method: 'POST'
             });
             const data = await res.json();

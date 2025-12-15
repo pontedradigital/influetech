@@ -475,6 +475,25 @@ export default function Agenda() {
                             alert('Erro ao excluir agendamento');
                         }
                     }}
+                    onComplete={async () => {
+                        if (!confirm(selectedEvent.type === 'post' ? 'Deseja marcar este post como publicado?' : 'Deseja marcar esta tarefa como concluída?')) return;
+
+                        const endpoint = selectedEvent.type === 'post'
+                            ? `/api/scheduled-posts/${selectedEvent.id}/publish`
+                            : `/api/tasks/${selectedEvent.id}/complete`;
+
+                        const method = selectedEvent.type === 'post' ? 'POST' : 'PATCH';
+
+                        try {
+                            await fetch(endpoint, { method });
+                            setShowDetailModal(false);
+                            setSelectedEvent(null);
+                            fetchData();
+                        } catch (error) {
+                            console.error('Error completing:', error);
+                            alert('Erro ao concluir item');
+                        }
+                    }}
                     products={products}
                 />
             )}
@@ -757,11 +776,12 @@ function NewTaskModal({ onClose }: { onClose: () => void }) {
 }
 
 // Modal de Detalhes do Agendamento
-function AgendamentoDetailModal({ event, onClose, onEdit, onDelete, products }: { 
-    event: any; 
-    onClose: () => void; 
+function AgendamentoDetailModal({ event, onClose, onEdit, onDelete, onComplete, products }: {
+    event: any;
+    onClose: () => void;
     onEdit: () => void;
     onDelete: () => void;
+    onComplete: () => void;
     products: Product[];
 }) {
     const getEventIcon = () => {
@@ -771,8 +791,8 @@ function AgendamentoDetailModal({ event, onClose, onEdit, onDelete, products }: 
     };
 
     const color = event.type === 'post' ? 'blue' : event.type === 'task' ? 'purple' : 'green';
-    const linkedProducts = event.productIds ? 
-        products.filter(p => JSON.parse(event.productIds || '[]').includes(p.id)) : 
+    const linkedProducts = event.productIds ?
+        products.filter(p => JSON.parse(event.productIds || '[]').includes(p.id)) :
         event.productId ? products.filter(p => p.id === event.productId) : [];
 
     return (
@@ -781,7 +801,12 @@ function AgendamentoDetailModal({ event, onClose, onEdit, onDelete, products }: 
                 <div className={`p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gradient-to-r from-${color}-500/10 to-${color}-600/10`}>
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                         <span className="material-symbols-outlined">{getEventIcon()}</span>
-                        {event.type === 'post' ? 'Post Agendado' : event.type === 'task' ? 'Tarefa' : 'Bazar'}
+                        {event.type === 'post'
+                            ? (event.status === 'PUBLISHED' ? 'Post Publicado' : 'Post Agendado')
+                            : event.type === 'task'
+                                ? (event.status === 'DONE' ? 'Tarefa Concluída' : 'Tarefa')
+                                : 'Bazar'
+                        }
                     </h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
                         <span className="material-symbols-outlined">close</span>
@@ -850,13 +875,23 @@ function AgendamentoDetailModal({ event, onClose, onEdit, onDelete, products }: 
                         {event.type !== 'bazar' && (
                             <button
                                 onClick={onEdit}
-                                className={`px-6 py-2.5 font-bold text-white rounded-lg shadow-lg transition-all active:scale-95 flex items-center gap-2 ${
-                                    event.type === 'post' ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20' :
+                                className={`px-6 py-2.5 font-bold text-white rounded-lg shadow-lg transition-all active:scale-95 flex items-center gap-2 ${event.type === 'post' ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20' :
                                     'bg-purple-600 hover:bg-purple-700 shadow-purple-500/20'
-                                }`}
+                                    }`}
                             >
                                 <span className="material-symbols-outlined">edit</span>
                                 Editar
+                            </button>
+                        )}
+                        {event.type !== 'bazar' && (event.status !== 'DONE' && event.status !== 'PUBLISHED') && (
+                            <button
+                                onClick={onComplete}
+                                className={`px-6 py-2.5 font-bold text-white rounded-lg shadow-lg transition-all active:scale-95 flex items-center gap-2 ${event.type === 'post' ? 'bg-green-600 hover:bg-green-700 shadow-green-500/20' :
+                                    'bg-green-600 hover:bg-green-700 shadow-green-500/20'
+                                    }`}
+                            >
+                                <span className="material-symbols-outlined">check_circle</span>
+                                {event.type === 'post' ? 'Publicar' : 'Concluir'}
                             </button>
                         )}
                     </div>

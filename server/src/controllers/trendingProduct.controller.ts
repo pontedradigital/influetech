@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import db from '../db';
+import { generateFullProduct, getRandomProduct } from '../utils/productData';
 
 interface TrendingProduct {
     id: number;
@@ -254,47 +255,105 @@ export const getCategories = (req: Request, res: Response) => {
 
 export const refreshTrendingData = (req: Request, res: Response) => {
     try {
-        // Simulate data refresh by updating timestamps and slightly varying metrics
-        const products = db.prepare('SELECT id, search_volume, growth_percentage, sentiment_score FROM trending_products').all() as Array<{
-            id: number;
-            search_volume: number;
-            growth_percentage: number;
-            sentiment_score: number;
-        }>;
+        // 1. Get all current products ordered by performance (growth * sentiment as a proxy score)
+        const products = db.prepare('SELECT * FROM trending_products').all() as TrendingProduct[];
 
-        const updateStmt = db.prepare(`
-      UPDATE trending_products 
-      SET 
-        search_volume = ?,
-        growth_percentage = ?,
-        sentiment_score = ?,
-        last_updated = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `);
+        // Calculate a score for each product to decide who stays
+        const scoredProducts = products.map(p => ({
+            ...p,
+            score: p.growth_percentage + (p.sentiment_score * 2) // Weight sentiment more
+        })).sort((a, b) => a.score - b.score); // Ascending order (lowest score first)
 
-        const insertHistoryStmt = db.prepare(`
-      INSERT INTO trend_history (product_id, search_volume, growth_percentage, sentiment_score)
-      VALUES (?, ?, ?, ?)
-    `);
+        // 2. Remove bottom 20% performers (make space for new trends)
+        const totalToRemove = Math.max(1, Math.floor(products.length * 0.2));
+        const productsToRemove = scoredProducts.slice(0, totalToRemove);
 
-        const refresh = db.transaction(() => {
-            for (const product of products) {
-                // Simulate small variations in metrics
-                const newSearchVolume = Math.floor(product.search_volume * (0.95 + Math.random() * 0.1));
-                const newGrowth = Math.max(0, product.growth_percentage + (Math.random() * 20 - 10));
-                const newSentiment = Math.min(100, Math.max(0, product.sentiment_score + (Math.random() * 6 - 3)));
+        // Delete them
+        const deleteStmt = db.prepare('DELETE FROM trending_products WHERE id = ?');
+        const deleteHistoryStmt = db.prepare('DELETE FROM trend_history WHERE product_id = ?');
 
-                updateStmt.run(newSearchVolume, newGrowth, newSentiment, product.id);
-                insertHistoryStmt.run(product.id, newSearchVolume, newGrowth, newSentiment);
+        const deleteTransaction = db.transaction(() => {
+            for (const p of productsToRemove) {
+                deleteHistoryStmt.run(p.id);
+                deleteStmt.run(p.id);
             }
         });
+        deleteTransaction();
 
-        refresh();
+        // 3. Update remaining products (simulate market changes)
+        // Keep the ones we didn't delete
+        const remainingProducts = scoredProducts.slice(totalToRemove);
+        const updateStmt = db.prepare(`
+            UPDATE trending_products 
+            SET 
+                search_volume = ?,
+                growth_percentage = ?,
+                sentiment_score = ?,
+                last_updated = CURRENT_TIMESTAMP
+            WHERE id = ?
+        `);
+
+        const insertHistoryStmt = db.prepare(`
+            INSERT INTO trend_history (product_id, search_volume, growth_percentage, sentiment_score)
+            VALUES (?, ?, ?, ?)
+        `);
+
+        // Helper to import from utils (need to handle Require/Import here or ensure top level import)
+        // Since we are in the controller, we can't easily import from 'productData' if not already imported.
+        // But we will add the import at the top of this file next.
+
+        const updateTransaction = db.transaction(() => {
+            for (const p of remainingProducts) {
+                // Simulate small variations
+                const newSearchVolume = Math.floor(p.search_volume * (0.9 + Math.random() * 0.2)); // +/- 10%
+                const newGrowth = Math.max(0, p.growth_percentage + (Math.random() * 40 - 20));
+                // Clamp sentiment 0-100 and round to integer
+                const newSentiment = Math.floor(Math.min(100, Math.max(0, p.sentiment_score + (Math.random() * 10 - 5))));
+
+                updateStmt.run(newSearchVolume, newGrowth, newSentiment, p.id);
+                insertHistoryStmt.run(p.id, newSearchVolume, newGrowth, newSentiment);
+            }
+        });
+        updateTransaction();
+
+        // 4. Add new products to replace removed ones
+        // We need to dynamically import or have imported the generator
+        // For now, I'll assume we added the import at the top.
+
+        // Imported generators are used below
+
+        const insertStmt = db.prepare(`
+            INSERT INTO trending_products (
+                product_name, category, platform, price_min, price_max, currency,
+                search_volume, growth_percentage, sentiment_score, hype_level,
+                image_url, product_url, keywords, description
+            ) VALUES (
+                @product_name, @category, @platform, @price_min, @price_max, @currency,
+                @search_volume, @growth_percentage, @sentiment_score, @hype_level,
+                @image_url, @product_url, @keywords, @description
+            )
+        `);
+
+        const insertNewTransaction = db.transaction(() => {
+            for (let i = 0; i < totalToRemove; i++) {
+                const template = getRandomProduct();
+                // Add "NEW" suffix or similar to verify it's new? No, just let it be generic.
+                const newProduct = generateFullProduct(template);
+                // Boost growth for new products to show they are "trending"
+                newProduct.growth_percentage = Math.floor(Math.random() * 400) + 100;
+                newProduct.hype_level = 'Altíssimo'; // New trends are usually hype
+
+                insertStmt.run(newProduct);
+            }
+        });
+        insertNewTransaction();
 
         res.json({
             success: true,
             message: 'Trending data refreshed successfully',
-            updated: products.length
+            updated: remainingProducts.length,
+            removed: totalToRemove,
+            added: totalToRemove
         });
     } catch (error) {
         console.error('Error refreshing data:', error);

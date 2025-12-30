@@ -93,6 +93,34 @@ export const updateProfile = (req: Request, res: Response) => {
     }
 };
 
+export const getUser = (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const stmt = db.prepare(`
+            SELECT 
+                id, name, email, plan, isPublicProfile, bio, niche, location, 
+                socialInstagram, socialLinkedin, socialYoutube, socialTikTok, socialWhatsapp 
+            FROM User WHERE id = ?
+        `);
+        const user: any = stmt.get(id);
+
+        if (!user) {
+            return res.status(404).json({ error: 'Usuário não encontrado' });
+        }
+
+        // Convert 1/0 back to boolean
+        const result = {
+            ...user,
+            isPublicProfile: Boolean(user.isPublicProfile)
+        };
+
+        res.json(result);
+    } catch (error: any) {
+        console.error('Error fetching user:', error);
+        res.status(500).json({ error: 'Erro ao buscar usuário' });
+    }
+};
+
 export const getPublicUsers = (req: Request, res: Response) => {
     try {
         const { search, niche, location } = req.query;

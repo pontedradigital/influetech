@@ -1,6 +1,6 @@
 
 import { Router } from 'express';
-import { updateProfile, getPublicUsers, toggleLike, getProfileStats } from '../controllers/user.controller';
+import { updateProfile, getPublicUsers, toggleLike, getProfileStats, getUser } from '../controllers/user.controller';
 
 const router = Router();
 
@@ -9,6 +9,9 @@ router.put('/:id', updateProfile);
 
 // GET /api/users/public - Get public users list
 router.get('/public', getPublicUsers);
+
+// GET /api/users/:id - Get user details
+router.get('/:id', getUser);
 
 // POST /api/users/like - Toggle like
 router.post('/like', toggleLike);

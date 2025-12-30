@@ -19,6 +19,7 @@ import recurringExpenseRoutes from './routes/recurringExpense.routes';
 import financialGoalRoutes from './routes/financialGoal.routes';
 import affiliatePlatformRoutes from './routes/affiliatePlatform.routes';
 import affiliateEarningRoutes from './routes/affiliateEarning.routes';
+import communityRoutes from './routes/community.routes';
 
 dotenv.config();
 
@@ -46,10 +47,31 @@ app.use('/api/alerts', alertRoutes);
 app.use('/api/bazares', bazarRoutes);
 app.use('/api/trending-products', trendingProductRoutes);
 app.use('/api/shipments', shipmentRoutes);
+app.use('/api/community', communityRoutes);
 
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date() });
 });
+
+import dashboardRoutes from './routes/dashboard.routes';
+import { dashboardService } from './services/dashboard.service';
+
+app.use('/api/dashboard', dashboardRoutes);
+
+import { SchedulerService } from './services/scheduler.service';
+SchedulerService.init();
+
+// Insights Generator Job (Every 3 hours)
+const INSIGHT_INTERVAL = 3 * 60 * 60 * 1000; // 3 hours
+setInterval(() => {
+    console.log('Running scheduled insights generation...');
+    dashboardService.generateInsights().catch(console.error);
+}, INSIGHT_INTERVAL);
+
+// Initial run on startup (optional, maybe delay it a bit)
+setTimeout(() => {
+    dashboardService.generateInsights().catch(console.error);
+}, 10000); // Run 10s after startup
 
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);

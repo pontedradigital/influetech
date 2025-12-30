@@ -2,12 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { User, Opportunity } from '../types';
 import { useInfluencer } from '../context/InfluencerContext';
+import CommunityFeed from '../components/Community/CommunityFeed';
 
 // Mock ID since we don't have full auth context yet in frontend
 const CURRENT_USER_ID = '327aa8c1-7c26-41c2-95d7-b375c25eb896';
 
 const Networking = () => {
-    const [activeTab, setActiveTab] = useState<'community' | 'opportunities'>('community');
+    const [activeTab, setActiveTab] = useState<'community' | 'opportunities' | 'feed'>('community');
     const [publicUsers, setPublicUsers] = useState<User[]>([]);
     const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -172,6 +173,15 @@ const Networking = () => {
                             >
                                 📌 Mural de Oportunidades
                             </button>
+                            <button
+                                onClick={() => setActiveTab('feed')}
+                                className={`px-6 py-3 rounded-xl font-bold transition-all ${activeTab === 'feed'
+                                    ? 'bg-white text-gray-900 shadow-lg'
+                                    : 'bg-white/10 text-white hover:bg-white/20'
+                                    }`}
+                            >
+                                💬 Feed da Comunidade
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -263,7 +273,7 @@ const Networking = () => {
                             ))}
                         </div>
                     </>
-                ) : (
+                ) : activeTab === 'opportunities' ? (
                     <>
                         {/* Opportunities Board */}
                         <div className="flex justify-between items-center mb-6">
@@ -328,6 +338,8 @@ const Networking = () => {
                             )}
                         </div>
                     </>
+                ) : (
+                    <CommunityFeed />
                 )}
             </div>
 

@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS trending_products (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   product_name TEXT NOT NULL,
   category TEXT NOT NULL,
-  platform TEXT NOT NULL CHECK(platform IN ('aliexpress', 'temu', 'shein', 'outros')),
+  platform TEXT NOT NULL CHECK(platform IN ('aliexpress', 'temu', 'shein', 'amazon', 'shopee', 'outros')),
   price_min REAL,
   price_max REAL,
   currency TEXT DEFAULT 'USD',

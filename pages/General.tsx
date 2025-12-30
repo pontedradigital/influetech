@@ -30,6 +30,61 @@ const PRODUCT_CATEGORIES = [
   'Teclado'
 ];
 
+// Mapeamento de Status (Inglês Global -> Português Interface)
+const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
+  'RECEIVED': { label: 'Em análise', color: 'text-blue-800 dark:text-blue-300', bg: 'bg-blue-100 dark:bg-blue-900/30' },
+  'WAITING_ARRIVAL': { label: 'Aguardando Recebimento', color: 'text-gray-800 dark:text-gray-300', bg: 'bg-gray-100 dark:bg-gray-800' },
+  'WAITING_SHIPMENT': { label: 'Aguardando Envio', color: 'text-purple-800 dark:text-purple-300', bg: 'bg-purple-100 dark:bg-purple-900/30' },
+  'SCHEDULED': { label: 'Post Agendado', color: 'text-indigo-800 dark:text-indigo-300', bg: 'bg-indigo-100 dark:bg-indigo-900/30' },
+  'PUBLISHED': { label: 'Publicado', color: 'text-yellow-800 dark:text-yellow-300', bg: 'bg-yellow-100 dark:bg-yellow-900/30' },
+  'SOLD': { label: 'Vendido', color: 'text-green-800 dark:text-green-300', bg: 'bg-green-100 dark:bg-green-900/30' },
+  'SHIPPED': { label: 'Enviado', color: 'text-cyan-800 dark:text-cyan-300', bg: 'bg-cyan-100 dark:bg-cyan-900/30' }
+};
+
+const STATUS_OPTIONS = Object.entries(STATUS_MAP).map(([key, value]) => ({
+  value: key,
+  label: value.label
+}));
+
+// Mapa de Cores (Nome PT -> Hex CSS)
+const COLOR_MAP: Record<string, string> = {
+  'Preto': '#000000',
+  'Branco': '#FFFFFF',
+  'Cinza': '#808080',
+  'Vermelho': '#EF4444',
+  'Azul': '#3B82F6',
+  'Verde': '#22C55E',
+  'Amarelo': '#EAB308',
+  'Laranja': '#F97316',
+  'Rosa': '#EC4899',
+  'Roxo': '#A855F7',
+  'Marrom': '#78350F',
+  'Bege': '#F5F5DC',
+  'Dourado': '#FFD700',
+  'Prateado': '#C0C0C0'
+};
+
+// Imagens por Categoria (Unsplash IDs)
+const CATEGORY_IMAGES: Record<string, string> = {
+  'Cadeiras': 'https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=300&q=80',
+  'Caixa de Som': 'https://images.unsplash.com/photo-1545459720-aac639a9192c?w=300&q=80',
+  'Controles': 'https://images.unsplash.com/photo-1592840496073-61f264560e80?w=300&q=80',
+  'Hardware': 'https://images.unsplash.com/photo-1555617981-d5a489297125?w=300&q=80',
+  'Headset': 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&q=80',
+  'Jogos': 'https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=300&q=80',
+  'Kit Mouse + Teclado': 'https://images.unsplash.com/photo-1587829741301-30c00609557f?w=300&q=80',
+  'Microfones': 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=300&q=80',
+  'Mochilas': 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=300&q=80',
+  'Monitores': 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=300&q=80',
+  'Mouse': 'https://images.unsplash.com/photo-1527814050087-3793815479db?w=300&q=80',
+  'Mousepad': 'https://images.unsplash.com/photo-1629429408209-1f912961dbd8?w=300&q=80',
+  'Notebook': 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300&q=80',
+  'Outros/Diversos': 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=300&q=80',
+  'Setup Completo': 'https://images.unsplash.com/photo-1598550476439-6847785fcea6?w=300&q=80',
+  'Teclado': 'https://images.unsplash.com/photo-1587829741301-30c00609557f?w=300&q=80'
+};
+
+
 // Função para validar telefone internacional
 const validatePhone = (phone: string): boolean => {
   if (!phone) return true; // Campo opcional
@@ -413,7 +468,7 @@ const NewProductModal = ({ isOpen, onClose, onSave, editingProduct }: {
   const [companyId, setCompanyId] = useState('');
   const [price, setPrice] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [status, setStatus] = useState<Product['status']>('Em análise');
+  const [status, setStatus] = useState<string>('RECEIVED');
   const [companies, setCompanies] = useState<Array<{ id: string; name: string }>>([]);
 
   // New fields
@@ -455,7 +510,8 @@ const NewProductModal = ({ isOpen, onClose, onSave, editingProduct }: {
       setPrice(basePrice > 0 ? basePrice.toString() : marketValue.toString());
       setShippingCost(shipping > 0 ? shipping.toString() : '');
       setDate(editingProduct.createdAt ? new Date(editingProduct.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
-      setStatus(editingProduct.status || 'Em análise');
+      // Ensure we use the valid status key, fallback to RECEIVED
+      setStatus(STATUS_MAP[editingProduct.status] ? editingProduct.status : 'RECEIVED');
       setPrimaryColor(editingProduct.primaryColor || '');
       setSecondaryColor(editingProduct.secondaryColor || '');
       setWeight(editingProduct.weight?.toString() || '');
@@ -469,7 +525,7 @@ const NewProductModal = ({ isOpen, onClose, onSave, editingProduct }: {
       setCompanyId('');
       setPrice('');
       setDate(new Date().toISOString().split('T')[0]);
-      setStatus('Em análise');
+      setStatus('RECEIVED');
       setPrimaryColor('');
       setSecondaryColor('');
       setShippingCost('');
@@ -532,7 +588,7 @@ const NewProductModal = ({ isOpen, onClose, onSave, editingProduct }: {
     setCompanyId('');
     setPrice('');
     setDate(new Date().toISOString().split('T')[0]);
-    setStatus('Em análise');
+    setStatus('RECEIVED');
     setPrimaryColor('');
     setSecondaryColor('');
     setShippingCost('');
@@ -865,13 +921,10 @@ const NewProductModal = ({ isOpen, onClose, onSave, editingProduct }: {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Status Inicial</label>
-            <select value={status} onChange={e => setStatus(e.target.value as Product['status'])} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white">
-              <option value="Aguardando Recebimento">Aguardando Recebimento</option>
-              <option value="Em análise">Em análise</option>
-              <option value="Aguardando Envio">Aguardando Envio</option>
-              <option value="Post Agendado">Post Agendado</option>
-              <option value="Publicado">Publicado</option>
-              <option value="Vendido">Vendido</option>
+            <select value={status} onChange={e => setStatus(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white">
+              {STATUS_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
             </select>
           </div>
 
@@ -898,7 +951,7 @@ const ProductDetailsModal = ({ isOpen, onClose, product, onEdit, onDelete, onSta
 
   React.useEffect(() => {
     if (product) {
-      setSelectedStatus(product.status || 'Em análise');
+      setSelectedStatus(product.status || 'RECEIVED');
     }
   }, [product]);
 
@@ -951,12 +1004,9 @@ const ProductDetailsModal = ({ isOpen, onClose, product, onEdit, onDelete, onSta
               onChange={(e) => handleStatusChange(e.target.value)}
               className="w-full h-11 px-4 rounded-lg bg-white dark:bg-gray-900 border border-blue-300 dark:border-blue-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-gray-900 dark:text-white font-medium"
             >
-              <option value="Aguardando Recebimento">Aguardando Recebimento</option>
-              <option value="Em análise">Em análise</option>
-              <option value="Aguardando Envio">Aguardando Envio</option>
-              <option value="Post Agendado">Post Agendado</option>
-              <option value="Publicado">Publicado</option>
-              <option value="Vendido">Vendido</option>
+              {STATUS_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
             </select>
           </div>
 
@@ -976,13 +1026,14 @@ const ProductDetailsModal = ({ isOpen, onClose, product, onEdit, onDelete, onSta
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Status Atual</label>
-              <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${selectedStatus === 'Vendido' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
-                selectedStatus === 'Enviado' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' :
-                  selectedStatus === 'Publicado' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' :
-                    'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-                }`}>
-                {selectedStatus}
-              </span>
+              {(() => {
+                const statusInfo = STATUS_MAP[selectedStatus] || STATUS_MAP['RECEIVED'];
+                return (
+                  <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${statusInfo.bg} ${statusInfo.color}`}>
+                    {statusInfo.label}
+                  </span>
+                );
+              })()}
             </div>
           </div>
 
@@ -995,7 +1046,10 @@ const ProductDetailsModal = ({ isOpen, onClose, product, onEdit, onDelete, onSta
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">Cor Primária</label>
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded border border-gray-300 dark:border-gray-600" style={{ backgroundColor: product.primaryColor.toLowerCase() }} />
+                      <div
+                        className="w-6 h-6 rounded border border-gray-300 dark:border-gray-600 shadow-sm"
+                        style={{ backgroundColor: COLOR_MAP[product.primaryColor] || product.primaryColor.toLowerCase() }}
+                      />
                       <span className="text-sm font-medium text-gray-900 dark:text-white">{product.primaryColor}</span>
                     </div>
                   </div>
@@ -1004,7 +1058,10 @@ const ProductDetailsModal = ({ isOpen, onClose, product, onEdit, onDelete, onSta
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">Cor Secundária</label>
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded border border-gray-300 dark:border-gray-600" style={{ backgroundColor: product.secondaryColor.toLowerCase() }} />
+                      <div
+                        className="w-6 h-6 rounded border border-gray-300 dark:border-gray-600 shadow-sm"
+                        style={{ backgroundColor: COLOR_MAP[product.secondaryColor] || product.secondaryColor.toLowerCase() }}
+                      />
                       <span className="text-sm font-medium text-gray-900 dark:text-white">{product.secondaryColor}</span>
                     </div>
                   </div>
@@ -1065,9 +1122,10 @@ export default function Products() {
           ...p,
           company: p.brand,
           receiveDate: new Date(p.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }),
-          status: p.status === 'RECEIVED' ? 'Em análise' : p.status,
+          status: p.status,
           price: p.marketValue,
-          image: 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=300&q=80'
+          // Use Image from Category map, fallback to p.image, then fallback to generic
+          image: CATEGORY_IMAGES[p.category] || p.image || 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=300&q=80'
         }));
         setProducts(mapped);
       })
@@ -1215,8 +1273,8 @@ export default function Products() {
           className="px-4 h-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-primary/50"
         >
           <option value="">Todos Status</option>
-          {statuses.map(status => (
-            <option key={status} value={status}>{status}</option>
+          {STATUS_OPTIONS.map(opt => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}
         </select>
 
@@ -1292,13 +1350,14 @@ export default function Products() {
                       <span className="text-sm text-gray-600 dark:text-gray-300">{product.receiveDate}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold
-                        ${product.status === 'Vendido' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
-                          product.status === 'Enviado' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' :
-                            product.status === 'Publicado' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' :
-                              'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'}`}>
-                        {product.status}
-                      </span>
+                      {(() => {
+                        const statusInfo = STATUS_MAP[product.status] || STATUS_MAP['RECEIVED'];
+                        return (
+                          <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${statusInfo.bg} ${statusInfo.color}`}>
+                            {statusInfo.label}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-2">

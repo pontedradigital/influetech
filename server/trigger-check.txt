@@ -1,0 +1,25 @@
+
+const fetch = require('node-fetch'); // Check if node-fetch is available, if not use built-in fetch (Node 18+)
+// Or just use http
+const http = require('http');
+
+// We need a userId to test. I'll use the one from the DB inspection.
+const userId = '327aa8c1-7c26-41c2-95d7-b375c25eb896';
+
+const options = {
+  hostname: 'localhost',
+  port: 3001,
+  path: `/api/dashboard/stats?userId=${userId}`, // Assuming endpoint accepts userId query or typically it comes from auth middleware.
+  // Ideally we need a token. If the endpoint is protected, this will fail with 401.
+  // But let's check.
+  method: 'GET',
+};
+
+// If the dashboard service relies on req.user.id populated by middleware, we can't easily fake it without a token.
+// However, I can temporarily modify dashboard.controller.ts to accept userId query param for debugging?
+// Or I can modify the getStats call in the controller to hardcode the ID?
+
+// Wait, the easier way is to rely on the frontend which IS making requests (status code 200 presumably, since no errors reported).
+// If the frontend is making requests, the log SHOULD be there.
+
+// I'll stick to checking the log first. If empty, I'll worry about triggering.

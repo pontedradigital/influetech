@@ -130,7 +130,9 @@ const ProductPlanner = () => {
         const colors: Record<string, string> = {
             aliexpress: '#FF6B00',
             temu: '#FF6F00',
-            shein: '#000000'
+            shein: '#000000',
+            amazon: '#FF9900', // Amazon Orange
+            shopee: '#EE4D2D'  // Shopee Red
         };
         return colors[platform] || '#6366F1';
     };
@@ -156,6 +158,13 @@ const ProductPlanner = () => {
         const diffHours = Math.floor(diffMins / 60);
         if (diffHours < 24) return `${diffHours}h atrás`;
         return `${Math.floor(diffHours / 24)}d atrás`;
+    };
+
+    const formatCurrency = (value: number) => {
+        return new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL'
+        }).format(value);
     };
 
     if (loading && !stats) {
@@ -286,6 +295,8 @@ const ProductPlanner = () => {
                                 <option value="aliexpress">AliExpress</option>
                                 <option value="temu">Temu</option>
                                 <option value="shein">Shein</option>
+                                <option value="amazon">Amazon</option>
+                                <option value="shopee">Shopee</option>
                             </select>
                         </div>
 
@@ -397,9 +408,14 @@ const ProductPlanner = () => {
 
                                     {/* Product Info */}
                                     <div className="p-4">
-                                        <h3 className="font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 min-h-[3rem]">
+                                        <h3 className="font-bold text-gray-900 dark:text-white mb-1 line-clamp-1">
                                             {product.product_name}
                                         </h3>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 line-clamp-2 h-8">
+                                            {product.description.length > 70
+                                                ? product.description.substring(0, 70) + '...'
+                                                : product.description}
+                                        </p>
 
                                         <div className="flex items-center gap-2 mb-3">
                                             <span className="material-symbols-outlined text-sm text-gray-500">category</span>
@@ -409,19 +425,19 @@ const ProductPlanner = () => {
                                         {/* Metrics */}
                                         <div className="grid grid-cols-3 gap-2 mb-4">
                                             <div className="text-center p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                                                <p className="text-xs text-gray-500 dark:text-gray-400">Crescimento</p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">Tendência de Alta</p>
                                                 <p className="font-bold text-green-600 dark:text-green-400 text-sm">
                                                     +{product.growth_percentage.toFixed(0)}%
                                                 </p>
                                             </div>
                                             <div className="text-center p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                                                <p className="text-xs text-gray-500 dark:text-gray-400">Sentimento</p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">Aprovação</p>
                                                 <p className="font-bold text-purple-600 dark:text-purple-400 text-sm">
-                                                    {product.sentiment_score}%
+                                                    {Number(product.sentiment_score).toFixed(0)}%
                                                 </p>
                                             </div>
                                             <div className="text-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                                                <p className="text-xs text-gray-500 dark:text-gray-400">Buscas</p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">Vol. Buscas</p>
                                                 <p className="font-bold text-blue-600 dark:text-blue-400 text-sm">
                                                     {(product.search_volume / 1000).toFixed(0)}k
                                                 </p>
@@ -433,7 +449,7 @@ const ProductPlanner = () => {
                                             <div>
                                                 <p className="text-xs text-gray-500">Faixa de Preço</p>
                                                 <p className="font-bold text-gray-900 dark:text-white">
-                                                    ${product.price_min} - ${product.price_max}
+                                                    {formatCurrency(product.price_min)} - {formatCurrency(product.price_max)}
                                                 </p>
                                             </div>
                                         </div>
@@ -442,9 +458,6 @@ const ProductPlanner = () => {
                                         <div className="flex gap-2">
                                             <button className="flex-1 px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary-600 transition-colors">
                                                 Ver Detalhes
-                                            </button>
-                                            <button className="px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                                <span className="material-symbols-outlined text-gray-500">bookmark</span>
                                             </button>
                                         </div>
                                     </div>
@@ -571,7 +584,7 @@ const ProductPlanner = () => {
                                         <div>
                                             <p className="text-sm text-gray-500">Faixa de Preço</p>
                                             <p className="font-bold text-gray-900 dark:text-white">
-                                                ${selectedProduct.price_min} - ${selectedProduct.price_max}
+                                                {formatCurrency(selectedProduct.price_min)} - {formatCurrency(selectedProduct.price_max)}
                                             </p>
                                         </div>
                                     </div>
@@ -580,15 +593,15 @@ const ProductPlanner = () => {
 
                             <div className="grid grid-cols-3 gap-4 mb-6">
                                 <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
-                                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Crescimento</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Tendência de Alta</p>
                                     <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                                         +{selectedProduct.growth_percentage.toFixed(0)}%
                                     </p>
                                 </div>
                                 <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg text-center">
-                                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Sentimento</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Aprovação do Público</p>
                                     <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                                        {selectedProduct.sentiment_score}%
+                                        {Number(selectedProduct.sentiment_score).toFixed(0)}%
                                     </p>
                                 </div>
                                 <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-center">
@@ -622,9 +635,6 @@ const ProductPlanner = () => {
                                 >
                                     Ver no {selectedProduct.platform}
                                 </a>
-                                <button className="px-6 py-3 border-2 border-primary text-primary font-bold rounded-lg hover:bg-primary/10 transition-colors">
-                                    Adicionar aos Favoritos
-                                </button>
                             </div>
                         </div>
                     </div>

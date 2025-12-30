@@ -7,6 +7,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -40,6 +41,7 @@ model User {
   scheduledPosts ScheduledPost[]
   tasks          Task[]
   alerts         Alert[]
+  insights       Insight[]
   bazarEvents    BazarEvent[]
   
   // Phase 2: Networking Advanced
@@ -190,11 +192,11 @@ model Shipment {
   sale            Sale?    @relation(fields: [saleId], references: [id], onDelete: Cascade)
   
   // Dados do Remetente
-  senderName      String
-  senderAddress   String
-  senderCity      String
-  senderState     String
-  senderCep       String
+  senderName      String?
+  senderAddress   String?
+  senderCity      String?
+  senderState     String?
+  senderCep       String?
   senderCpfCnpj   String?
   
   // Dados do Destinatário
@@ -358,4 +360,16 @@ model RecurringExpense {
   
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+model Insight {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String   // ALERT, SUGGESTION, INFO
+  title     String
+  message   String
+  level     String   @default("INFO") // HIGH, MEDIUM, LOW, INFO
+  isRead    Int      @default(0) // 0=false, 1=true
+  createdAt DateTime @default(now())
 }

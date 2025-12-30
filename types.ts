@@ -162,3 +162,13 @@ export interface Alert {
   isRead: boolean;
   createdAt: string;
 }
+
+export interface Insight {
+  id: string;
+  type: 'ALERT' | 'SUGGESTION' | 'INFO';
+  title: string;
+  message: string;
+  level: 'HIGH' | 'MEDIUM' | 'LOW' | 'INFO';
+  isRead: boolean;
+  createdAt: string;
+}

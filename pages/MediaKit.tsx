@@ -89,7 +89,7 @@ export default function MediaKit() {
                     <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
                         Agora você pode personalizar completamente seu documento! Escolha entre <strong>5 layouts profissionais</strong>,
                         selecione as cores da sua marca, faça upload de uma foto personalizada e traduza automaticamente para
-                        <strong> Inglês, Espanhol ou Chinês</strong>.
+                        <strong> Inglês ou Português</strong>.
                     </p>
                 </div>
             </div>

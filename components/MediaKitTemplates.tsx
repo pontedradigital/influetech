@@ -375,21 +375,16 @@ const stylesModern = StyleSheet.create({
     contactText: { fontSize: 10, color: '#ffffff', fontWeight: 'bold', marginTop: 4 },
 
     // Brands Grid
-    brandsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 10 },
+    brandsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
     brandCard: {
-        width: '30%', // 3 columns
+        width: '18%', // 5 columns
         height: 60,
-        // backgroundColor: '#f8fafc', // Remove bg
-        // borderRadius: 8,
-        // borderWidth: 1,
-        // borderColor: '#e2e8f0',
         alignItems: 'center',
         justifyContent: 'center',
-        // padding: 5, // Remove padding
         marginBottom: 8
     },
-    brandLogo: { width: 50, height: 50, objectFit: 'contain', borderRadius: 25 }, // Fixed size circle
-    brandName: { fontSize: 7, color: '#64748b', marginTop: 4, textAlign: 'center' }
+    brandLogo: { width: 35, height: 35, objectFit: 'contain', borderRadius: 17.5 }, // Smaller fixed size circle
+    brandName: { fontSize: 6, color: '#64748b', marginTop: 4, textAlign: 'center' }
 });
 
 const LayoutCorporate = ({ data }: { data: MediaKitData }) => {
@@ -577,9 +572,9 @@ const LayoutCorporate = ({ data }: { data: MediaKitData }) => {
                             {data.brands.map((brand, index) => (
                                 <View key={index} style={stylesModern.brandCard} wrap={false}>
                                     <View style={{
-                                        width: 50,
-                                        height: 50,
-                                        borderRadius: 25,
+                                        width: 35,
+                                        height: 35,
+                                        borderRadius: 17.5,
                                         overflow: 'hidden',
                                         backgroundColor: (brand as any).backgroundColor || '#ffffff', // Dynamic background
                                         alignItems: 'center',

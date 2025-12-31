@@ -1,0 +1,20 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN "cep" TEXT;
+ALTER TABLE "User" ADD COLUMN "city" TEXT;
+ALTER TABLE "User" ADD COLUMN "complement" TEXT;
+ALTER TABLE "User" ADD COLUMN "cpfCnpj" TEXT;
+ALTER TABLE "User" ADD COLUMN "neighborhood" TEXT;
+ALTER TABLE "User" ADD COLUMN "number" TEXT;
+ALTER TABLE "User" ADD COLUMN "state" TEXT;
+ALTER TABLE "User" ADD COLUMN "street" TEXT;
+
+-- CreateTable
+CREATE TABLE "MediaKitBrand" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "userId" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "logo" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "MediaKitBrand_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);

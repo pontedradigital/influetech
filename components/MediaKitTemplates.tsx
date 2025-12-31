@@ -32,6 +32,10 @@ interface MediaKitData {
         type: string;
         minimumValue: number;
     };
+    brands?: {
+        name: string;
+        logo: string;
+    }[];
     // Translated labels
     labels: {
         aboutMe: string;
@@ -44,6 +48,7 @@ interface MediaKitData {
         views: string;
         subscribers: string;
         engagement: string;
+        brands: string; // New label
     };
 }
 
@@ -368,6 +373,23 @@ const stylesModern = StyleSheet.create({
     contactItem: { alignItems: 'center' },
     contactTitle: { fontSize: 8, color: '#94a3b8', marginBottom: 4, textTransform: 'uppercase' },
     contactText: { fontSize: 10, color: '#ffffff', fontWeight: 'bold', marginTop: 4 },
+
+    // Brands Grid
+    brandsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 10 },
+    brandCard: {
+        width: '30%', // 3 columns
+        height: 60,
+        // backgroundColor: '#f8fafc', // Remove bg
+        // borderRadius: 8,
+        // borderWidth: 1,
+        // borderColor: '#e2e8f0',
+        alignItems: 'center',
+        justifyContent: 'center',
+        // padding: 5, // Remove padding
+        marginBottom: 8
+    },
+    brandLogo: { width: 50, height: 50, objectFit: 'contain', borderRadius: 25 }, // Fixed size circle
+    brandName: { fontSize: 7, color: '#64748b', marginTop: 4, textAlign: 'center' }
 });
 
 const LayoutCorporate = ({ data }: { data: MediaKitData }) => {
@@ -398,6 +420,8 @@ const LayoutCorporate = ({ data }: { data: MediaKitData }) => {
         loc: isEnglish ? 'Top Location' : 'Localização',
         niche: isEnglish ? 'Main Niche' : 'Nicho Principal',
         power: isEnglish ? 'Spending Power' : 'Poder Aquisitivo',
+
+        brands: isEnglish ? 'Trusted By' : 'Marcas Parceiras', // Translation
     };
 
     return (
@@ -542,10 +566,46 @@ const LayoutCorporate = ({ data }: { data: MediaKitData }) => {
                     </View>
                 </View>
 
+                {/* Brands Section (Only if brands exist) */}
+                {data.brands && data.brands.length > 0 && (
+                    <View style={stylesModern.section}>
+                        <View style={stylesModern.sectionHeader}>
+                            <View style={stylesModern.sectionBar} />
+                            <Text style={stylesModern.sectionTitle}>{t.brands}</Text>
+                        </View>
+                        <View style={stylesModern.brandsGrid}>
+                            {data.brands.map((brand, index) => (
+                                <View key={index} style={stylesModern.brandCard} wrap={false}>
+                                    <View style={{
+                                        width: 50,
+                                        height: 50,
+                                        borderRadius: 25,
+                                        overflow: 'hidden',
+                                        backgroundColor: (brand as any).backgroundColor || '#ffffff', // Dynamic background
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}>
+                                        {brand.logo ? (
+                                            <Image src={brand.logo} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                        ) : (
+                                            <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#cbd5e1' }}>{brand.name.charAt(0)}</Text>
+                                        )}
+                                    </View>
+                                    {/* Optional: Show name if no logo, or maybe always show name below? */}
+                                    <Text style={stylesModern.brandName}>{brand.name}</Text>
+                                </View>
+                            ))}
+                        </View>
+                    </View>
+                )}
+
                 {/* Footer Quote */}
                 <View style={[stylesModern.contactSection, { marginTop: 'auto', backgroundColor: '#f8fafc', borderTopColor: '#e2e8f0' }]}>
                     <Text style={{ textAlign: 'center', color: '#64748b', fontSize: 10, fontStyle: 'italic' }}>
                         "{isEnglish ? 'Let\'s create something extraordinary.' : 'Vamos criar algo extraordinário juntos.'}"
+                    </Text>
+                    <Text style={{ textAlign: 'center', color: '#cbd5e1', fontSize: 8, marginTop: 5, textTransform: 'uppercase', letterSpacing: 1 }}>
+                        {isEnglish ? 'Partnership Media Kit' : 'MediaKit para Parcerias'}
                     </Text>
                 </View>
             </Page>

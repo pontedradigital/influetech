@@ -9,6 +9,12 @@ interface MediaKitGenerationModalProps {
     initialData: any;
 }
 
+interface Brand {
+    id: string;
+    name: string;
+    logo: string;
+}
+
 const LANGUAGES = [
     { code: 'pt', name: 'Português', flag: '🇧🇷' },
     { code: 'en', name: 'English', flag: '🇺🇸' }
@@ -18,8 +24,12 @@ export default function MediaKitGenerationModal({ isOpen, onClose, initialData }
     const [step, setStep] = useState(1);
     const [selectedLanguage, setSelectedLanguage] = useState('pt');
     const [customPhoto, setCustomPhoto] = useState<string | null>(null);
+    const [displayName, setDisplayName] = useState('');
     const [translatedData, setTranslatedData] = useState<any>(null);
     const [isTranslating, setIsTranslating] = useState(false);
+
+    // Brands coming directly from initialData
+    const brands = initialData.brands || [];
 
     // Reset state when modal opens
     useEffect(() => {
@@ -27,9 +37,10 @@ export default function MediaKitGenerationModal({ isOpen, onClose, initialData }
             setStep(1);
             setSelectedLanguage('pt');
             setCustomPhoto(null);
+            setDisplayName(initialData.name || '');
             setTranslatedData(null);
         }
-    }, [isOpen]);
+    }, [isOpen, initialData]);
 
     // Handle Translation
     useEffect(() => {
@@ -58,11 +69,12 @@ export default function MediaKitGenerationModal({ isOpen, onClose, initialData }
                 totalMonthlyViews: TranslationService.translate('Total de Views Mensais', selectedLanguage as any) || 'Total de Views Mensais',
                 followersByPlatform: TranslationService.translate('Seguidores por Plataforma', selectedLanguage as any) || 'Seguidores por Plataforma',
                 viewsByPlatform: TranslationService.translate('Views por Plataforma', selectedLanguage as any) || 'Views por Plataforma',
+                brands: TranslationService.translate('Marcas Parceiras', selectedLanguage as any) || 'Marcas Parceiras',
             };
 
             // 2. Ensure all required fields have valid values (no null/undefined)
             const translatedContent = {
-                name: initialData.name || 'Influencer Name',
+                name: displayName || initialData.name || 'Influencer Name',
                 bio: TranslationService.translateObject(initialData.bio || '', selectedLanguage as any) || '',
                 location: initialData.location || '',
                 email: initialData.email || '',
@@ -108,6 +120,8 @@ export default function MediaKitGenerationModal({ isOpen, onClose, initialData }
                 audienceGenderMale: initialData.audienceGenderMale !== undefined ? initialData.audienceGenderMale : undefined,
                 audienceGenderFemale: initialData.audienceGenderFemale !== undefined ? initialData.audienceGenderFemale : undefined,
 
+                brands: brands.map((b: any) => ({ name: b.name, logo: b.logo, backgroundColor: b.backgroundColor })),
+
                 labels
             };
 
@@ -119,7 +133,7 @@ export default function MediaKitGenerationModal({ isOpen, onClose, initialData }
         if (isOpen) {
             translateData();
         }
-    }, [selectedLanguage, initialData, customPhoto, isOpen]);
+    }, [selectedLanguage, initialData, customPhoto, displayName, isOpen]);
 
     const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -134,8 +148,6 @@ export default function MediaKitGenerationModal({ isOpen, onClose, initialData }
 
     const getSelectedTemplate = () => {
         if (!translatedData) return null;
-
-        // Return the LayoutCorporate template
         return <MediaKitTemplates.LayoutCorporate data={translatedData} />;
     };
 
@@ -162,7 +174,7 @@ export default function MediaKitGenerationModal({ isOpen, onClose, initialData }
                     <div className="flex justify-center mb-8">
                         <div className="flex items-center gap-2">
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step >= 1 ? 'bg-primary text-white' : 'bg-gray-200 text-gray-500'}`}>1</div>
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Personalização</span>
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Perfil</span>
                             <div className="w-12 h-0.5 bg-gray-200 dark:bg-gray-700 mx-2" />
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step >= 2 ? 'bg-primary text-white' : 'bg-gray-200 text-gray-500'}`}>2</div>
                             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Download</span>
@@ -172,6 +184,23 @@ export default function MediaKitGenerationModal({ isOpen, onClose, initialData }
                     {/* Step 1: Customization */}
                     {step === 1 && (
                         <div className="max-w-xl mx-auto space-y-8">
+                            {/* Display Name */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                    Nome de Exibição
+                                </label>
+                                <input
+                                    type="text"
+                                    value={displayName}
+                                    onChange={(e) => setDisplayName(e.target.value)}
+                                    placeholder="Seu nome no Media Kit"
+                                    className="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                                />
+                                <p className="text-xs text-gray-500 mt-2">
+                                    Este nome aparecerá no cabeçalho do documento.
+                                </p>
+                            </div>
+
                             {/* Language */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
@@ -303,12 +332,20 @@ export default function MediaKitGenerationModal({ isOpen, onClose, initialData }
                 {/* Footer Actions */}
                 {step < 2 && (
                     <div className="p-6 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-between">
-                        <div />
+                        {step > 1 ? (
+                            <button
+                                onClick={() => setStep(s => s - 1)}
+                                className="text-sm font-medium text-gray-500 hover:text-gray-900 dark:hover:text-white px-4"
+                            >
+                                Voltar
+                            </button>
+                        ) : <div />}
+
                         <button
                             onClick={() => setStep(s => s + 1)}
                             className="px-8 py-2 bg-primary text-white font-bold rounded-lg hover:bg-primary-600 transition-colors shadow-lg shadow-primary/20"
                         >
-                            Continuar
+                            {step === 1 ? 'Gerar PDF' : 'Continuar'}
                         </button>
                     </div>
                 )}

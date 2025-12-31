@@ -62,6 +62,7 @@ model User {
   // Phase 3: Enhanced Financials
   financialGoals    FinancialGoal[]
   recurringExpenses RecurringExpense[]
+  mediaKitBrands    MediaKitBrand[]
 }
 
 model Opportunity {
@@ -382,4 +383,17 @@ model Insight {
   level     String   @default("INFO") // HIGH, MEDIUM, LOW, INFO
   isRead    Int      @default(0) // 0=false, 1=true
   createdAt DateTime @default(now())
+}
+
+model MediaKitBrand {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  name      String
+  logo      String?  // Base64 string
+  backgroundColor String? @default("#ffffff")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

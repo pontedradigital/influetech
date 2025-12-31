@@ -23,6 +23,7 @@ const LANGUAGES = [
 export default function MediaKitGenerationModal({ isOpen, onClose, initialData }: MediaKitGenerationModalProps) {
     const [step, setStep] = useState(1);
     const [selectedLanguage, setSelectedLanguage] = useState('pt');
+    const [selectedTemplate, setSelectedTemplate] = useState<'modern' | 'dark' | 'lines' | 'bold'>('modern'); // New State
     const [customPhoto, setCustomPhoto] = useState<string | null>(null);
     const [displayName, setDisplayName] = useState('');
     const [translatedData, setTranslatedData] = useState<any>(null);
@@ -36,6 +37,7 @@ export default function MediaKitGenerationModal({ isOpen, onClose, initialData }
         if (isOpen) {
             setStep(1);
             setSelectedLanguage('pt');
+            setSelectedTemplate('modern'); // Reset template
             setCustomPhoto(null);
             setDisplayName(initialData.name || '');
             setTranslatedData(null);
@@ -148,6 +150,15 @@ export default function MediaKitGenerationModal({ isOpen, onClose, initialData }
 
     const getSelectedTemplate = () => {
         if (!translatedData) return null;
+        if (selectedTemplate === 'dark') {
+            return <MediaKitTemplates.LayoutDark data={translatedData} />;
+        }
+        if (selectedTemplate === 'lines') {
+            return <MediaKitTemplates.LayoutLines data={translatedData} />;
+        }
+        if (selectedTemplate === 'bold') {
+            return <MediaKitTemplates.LayoutBold data={translatedData} />;
+        }
         return <MediaKitTemplates.LayoutCorporate data={translatedData} />;
     };
 
@@ -184,6 +195,78 @@ export default function MediaKitGenerationModal({ isOpen, onClose, initialData }
                     {/* Step 1: Customization */}
                     {step === 1 && (
                         <div className="max-w-xl mx-auto space-y-8">
+                            {/* Layout Selection */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                    Tema do Design
+                                </label>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <button
+                                        onClick={() => setSelectedTemplate('modern')}
+                                        className={`group relative p-4 rounded-xl border-2 text-left transition-all ${selectedTemplate === 'modern' ? 'border-primary bg-primary/5' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'}`}
+                                    >
+                                        <div className="flex items-start justify-between mb-2">
+                                            <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400">
+                                                <span className="material-symbols-outlined">light_mode</span>
+                                            </div>
+                                            {selectedTemplate === 'modern' && (
+                                                <span className="material-symbols-outlined text-primary">check_circle</span>
+                                            )}
+                                        </div>
+                                        <h3 className="font-bold text-gray-900 dark:text-white">Clássico Moderno</h3>
+                                        <p className="text-xs text-gray-500 mt-1">Light mode, limpo e profissional.</p>
+                                    </button>
+
+                                    <button
+                                        onClick={() => setSelectedTemplate('dark')}
+                                        className={`group relative p-4 rounded-xl border-2 text-left transition-all ${selectedTemplate === 'dark' ? 'border-primary bg-primary/5' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 bg-gray-900'}`}
+                                    >
+                                        <div className="flex items-start justify-between mb-2">
+                                            <div className="w-10 h-10 rounded-lg bg-gray-800 border border-gray-700 flex items-center justify-center text-yellow-500">
+                                                <span className="material-symbols-outlined">dark_mode</span>
+                                            </div>
+                                            {selectedTemplate === 'dark' && (
+                                                <span className="material-symbols-outlined text-primary">check_circle</span>
+                                            )}
+                                        </div>
+                                        <h3 className="font-bold text-white">Theme Dark</h3>
+                                        <p className="text-xs text-gray-400 mt-1">Estilo premium com fundo escuro.</p>
+                                    </button>
+
+                                    <button
+                                        onClick={() => setSelectedTemplate('lines')}
+                                        className={`group relative p-4 rounded-xl border-2 text-left transition-all ${selectedTemplate === 'lines' ? 'border-primary bg-primary/5' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 bg-[#FFF8E7]'}`}
+                                    >
+                                        <div className="flex items-start justify-between mb-2">
+                                            <div className="w-10 h-10 rounded-lg bg-blue-600 border border-blue-500 flex items-center justify-center text-white">
+                                                <span className="material-symbols-outlined">view_agenda</span>
+                                            </div>
+                                            {selectedTemplate === 'lines' && (
+                                                <span className="material-symbols-outlined text-primary">check_circle</span>
+                                            )}
+                                        </div>
+                                        <h3 className="font-bold text-blue-900">Theme Lines</h3>
+                                        <p className="text-xs text-blue-800/70 mt-1">Retro moderno, bordas e destaque.</p>
+                                    </button>
+
+                                    <button
+                                        onClick={() => setSelectedTemplate('bold')}
+                                        className={`group relative p-4 rounded-xl border-2 text-left transition-all ${selectedTemplate === 'bold' ? 'border-orange-500 bg-orange-500/10' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 bg-[#111010]'}`}
+                                    >
+                                        <div className="flex items-start justify-between mb-2">
+                                            <div className="w-10 h-10 rounded-lg bg-orange-600 border border-orange-500 flex items-center justify-center text-white">
+                                                <span className="material-symbols-outlined">bolt</span>
+                                            </div>
+                                            {selectedTemplate === 'bold' && (
+                                                <span className="material-symbols-outlined text-primary">check_circle</span>
+                                            )}
+                                        </div>
+                                        <h3 className="font-bold text-white">Theme Modern</h3>
+                                        <p className="text-xs text-gray-400 mt-1">Impactante, escuro com laranja neon.</p>
+                                    </button>
+                                </div>
+                            </div>
+
                             {/* Display Name */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">

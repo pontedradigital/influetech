@@ -1,8 +1,43 @@
 import React from 'react';
 import { Page, Text, View, Document, StyleSheet, Image, Font, Svg, Path, G, Circle, Rect, Polygon } from '@react-pdf/renderer';
 
-// Register fonts (using standard fonts for now to ensure compatibility)
-// In a real app, we would register custom fonts like 'Inter', 'Roboto', etc.
+// Register fonts
+Font.register({
+    family: 'Poppins',
+    fonts: [
+        { src: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/poppins/Poppins-Regular.ttf' },
+        { src: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/poppins/Poppins-Bold.ttf', fontWeight: 'bold' },
+        { src: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/poppins/Poppins-Italic.ttf', fontStyle: 'italic' }
+    ]
+});
+
+
+
+Font.register({
+    family: 'Josefin Sans',
+    fonts: [
+        { src: 'https://cdn.jsdelivr.net/npm/@fontsource/josefin-sans/files/josefin-sans-latin-400-normal.woff' },
+        { src: 'https://cdn.jsdelivr.net/npm/@fontsource/josefin-sans/files/josefin-sans-latin-700-normal.woff', fontWeight: 'bold' },
+        { src: 'https://cdn.jsdelivr.net/npm/@fontsource/josefin-sans/files/josefin-sans-latin-400-italic.woff', fontStyle: 'italic' }
+    ]
+});
+
+Font.register({
+    family: 'Oswald',
+    fonts: [
+        { src: 'https://cdn.jsdelivr.net/npm/@fontsource/oswald/files/oswald-latin-400-normal.woff' },
+        { src: 'https://cdn.jsdelivr.net/npm/@fontsource/oswald/files/oswald-latin-700-normal.woff', fontWeight: 'bold' }
+    ]
+});
+
+Font.register({
+    family: 'Libre Baskerville',
+    fonts: [
+        { src: 'https://cdn.jsdelivr.net/npm/@fontsource/libre-baskerville/files/libre-baskerville-latin-400-normal.woff' },
+        { src: 'https://cdn.jsdelivr.net/npm/@fontsource/libre-baskerville/files/libre-baskerville-latin-700-normal.woff', fontWeight: 'bold' },
+        { src: 'https://cdn.jsdelivr.net/npm/@fontsource/libre-baskerville/files/libre-baskerville-latin-400-italic.woff', fontStyle: 'italic' }
+    ]
+});
 
 export interface MediaKitSocial {
     platform: string;
@@ -36,6 +71,9 @@ interface MediaKitData {
         name: string;
         logo: string;
     }[];
+    audienceAge?: string;
+    audienceGenderFemale?: number;
+    audienceGenderMale?: number;
     // Translated labels
     labels: {
         aboutMe: string;
@@ -631,11 +669,889 @@ const LayoutCorporate = ({ data }: { data: MediaKitData }) => {
     );
 };
 
+
+
+
+// --- LAYOUT 7: PREMIUM DARK (Dashboard Redesign) ---
+const stylesDark = StyleSheet.create({
+    page: { backgroundColor: '#0f172a', fontFamily: 'Poppins', flexDirection: 'column' }, // Changed to Poppins
+
+    // Page 1 specific: Sidebar Layout
+    p1Container: { flexDirection: 'row', flex: 1 },
+    sidebar: { width: '35%', backgroundColor: '#1e293b', padding: 25, alignItems: 'center', borderRightWidth: 1, borderRightColor: '#334155' },
+    mainContent: { width: '65%', padding: 40, justifyContent: 'center' },
+
+    // Sidebar Elements
+    // Fix: Updated photo styles for better border handling
+    photoContainer: { width: 140, height: 140, marginBottom: 30, alignItems: 'center', justifyContent: 'center' },
+    photo: { width: 140, height: 140, borderRadius: 20, borderWidth: 2, borderColor: '#fbbf24', objectFit: 'cover' },
+
+    contactItem: { width: '100%', marginBottom: 18 },
+    contactLabel: { fontSize: 8, color: '#94a3b8', textTransform: 'uppercase', marginBottom: 3, letterSpacing: 1 },
+    contactValue: { fontSize: 8, color: '#f8fafc', fontWeight: 'bold' }, // Adjusted for Poppins readability
+
+    // Main Content Elements
+    headerName: { fontSize: 36, color: '#f8fafc', fontWeight: 'bold', marginBottom: 10, lineHeight: 1.1 }, // 36px is safe for Poppins
+    headerTagline: { fontSize: 12, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: 3, marginBottom: 40, fontWeight: 'bold' },
+
+    sectionTitle: { fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 12, borderBottomWidth: 1, borderBottomColor: '#334155', paddingBottom: 5, fontWeight: 'bold' },
+    bioText: { fontSize: 10, color: '#cbd5e1', lineHeight: 1.6, marginBottom: 30, textAlign: 'justify' },
+
+    // Audience Bars
+    audienceBar: { marginBottom: 15 },
+    audienceBarLabel: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 },
+    audienceBarName: { fontSize: 9, color: '#cbd5e1' },
+    audienceBarValue: { fontSize: 9, color: '#fbbf24', fontWeight: 'bold' },
+    barContainer: { height: 6, backgroundColor: '#334155', borderRadius: 3, overflow: 'hidden' },
+    barFill: { height: '100%', backgroundColor: '#fbbf24' },
+
+    // Page 2: Dashboard Grid
+    p2Container: { padding: 40 },
+    dashboardTitle: { fontSize: 22, color: '#f8fafc', marginBottom: 5, fontWeight: 'bold' },
+    dashboardSubtitle: { fontSize: 10, color: '#64748b', marginBottom: 25, textTransform: 'uppercase', letterSpacing: 1 },
+
+    metricsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+    metricCard: {
+        width: '48%',
+        backgroundColor: '#1e293b',
+        padding: 18,
+        borderRadius: 12,
+        marginBottom: 12,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between'
+    },
+    metricBigNumber: { fontSize: 32, color: '#f8fafc', fontWeight: 'bold', marginVertical: 8 },
+    metricLabel: { fontSize: 9, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1 },
+    metricSub: { fontSize: 8, color: '#64748b' },
+
+    socialRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1e293b', padding: 12, borderRadius: 12, marginBottom: 8 },
+    socialInfo: { marginLeft: 12, flex: 1 },
+    socialPlatform: { fontSize: 11, color: '#f8fafc', fontWeight: 'bold' },
+    socialStats: { fontSize: 10, color: '#fbbf24', fontWeight: 'bold' },
+
+    // P3: Brands
+    brandsContainer: { padding: 40 },
+    brandsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 20 },
+    brandCard: {
+        width: '18%',
+        height: 60,
+        backgroundColor: '#1e293b',
+        borderRadius: 8,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 10
+    },
+    brandLogo: { width: 30, height: 30, objectFit: 'contain', borderRadius: 15 },
+});
+
+const LayoutDark = ({ data }: { data: MediaKitData }) => {
+    // Language & Logic
+    const languageCode = data.labels.aboutMe.toLowerCase().includes('about') ? 'en' : 'pt';
+    const isEnglish = languageCode === 'en';
+
+    const t = {
+        about: isEnglish ? 'Biography' : 'Biografia',
+        contact: isEnglish ? 'Contact Info' : 'Contato',
+        audience: isEnglish ? 'Audience' : 'Audiência',
+        dashboard: isEnglish ? 'Performance Dashboard' : 'Dashboard de Performance',
+        overview: isEnglish ? 'Metric Overview' : 'Visão Geral',
+        partners: isEnglish ? 'Strategic Partners' : 'Parceiros Estratégicos',
+        followers: isEnglish ? 'Followers' : 'Seguidores',
+        engagement: isEnglish ? 'Engagement' : 'Engajamento',
+    };
+
+    return (
+        <Document>
+            {/* PAGE 1: SIDEBAR LAYOUT */}
+            <Page size="A4" style={stylesDark.page}>
+                <View style={stylesDark.p1Container}>
+                    {/* LEFT SIDEBAR */}
+                    <View style={stylesDark.sidebar}>
+                        <View style={stylesDark.photoContainer}>
+                            {data.photo ? (
+                                <Image style={stylesDark.photo} src={data.photo} />
+                            ) : (
+                                <View style={[stylesDark.photo, { backgroundColor: '#64748b' }]} />
+                            )}
+                        </View>
+
+                        <View style={stylesDark.contactItem}>
+                            <Text style={stylesDark.contactLabel}>Email</Text>
+                            <Text style={stylesDark.contactValue}>{data.email}</Text>
+                        </View>
+                        <View style={stylesDark.contactItem}>
+                            <Text style={stylesDark.contactLabel}>Phone/WhatsApp</Text>
+                            <Text style={stylesDark.contactValue}>{data.phone}</Text>
+                        </View>
+                        <View style={stylesDark.contactItem}>
+                            <Text style={stylesDark.contactLabel}>Location</Text>
+                            <Text style={stylesDark.contactValue}>{data.location}</Text>
+                        </View>
+
+                        <View style={[stylesDark.contactItem, { marginTop: 'auto' }]}>
+                            <Text style={stylesDark.contactLabel}>Social</Text>
+                            <Text style={stylesDark.contactValue}>@{(data.socialMedia || [])[0]?.handle || data.name.replace(/\s/g, '').toLowerCase()}</Text>
+                        </View>
+                    </View>
+
+                    {/* RIGHT MAIN CONTENT */}
+                    <View style={stylesDark.mainContent}>
+                        <Text style={stylesDark.headerName}>{data.name}</Text>
+                        <Text style={stylesDark.headerTagline}>{data.niche || 'Digital Creator'}</Text>
+
+                        <Text style={stylesDark.sectionTitle}>{t.about}</Text>
+                        <Text style={stylesDark.bioText}>{data.bio || ''}</Text>
+
+                        <Text style={stylesDark.sectionTitle}>{t.audience}</Text>
+
+                        {/* Fake Charts/Bars for Audience */}
+                        <View style={stylesDark.audienceBar}>
+                            <View style={stylesDark.audienceBarLabel}>
+                                <Text style={stylesDark.audienceBarName}>25-34 {isEnglish ? 'y.o.' : 'anos'}</Text>
+                                <Text style={stylesDark.audienceBarValue}>45%</Text>
+                            </View>
+                            <View style={stylesDark.barContainer}>
+                                <View style={[stylesDark.barFill, { width: '45%' }]} />
+                            </View>
+                        </View>
+
+                        <View style={stylesDark.audienceBar}>
+                            <View style={stylesDark.audienceBarLabel}>
+                                <Text style={stylesDark.audienceBarName}>Female / Feminino</Text>
+                                <Text style={stylesDark.audienceBarValue}>{data.audienceGenderFemale || 60}%</Text>
+                            </View>
+                            <View style={stylesDark.barContainer}>
+                                <View style={[stylesDark.barFill, { width: `${data.audienceGenderFemale || 60}%`, backgroundColor: '#f472b6' }]} />
+                            </View>
+                        </View>
+
+                        <View style={stylesDark.audienceBar}>
+                            <View style={stylesDark.audienceBarLabel}>
+                                <Text style={stylesDark.audienceBarName}>Male / Masculino</Text>
+                                <Text style={stylesDark.audienceBarValue}>{data.audienceGenderMale || 40}%</Text>
+                            </View>
+                            <View style={stylesDark.barContainer}>
+                                <View style={[stylesDark.barFill, { width: `${data.audienceGenderMale || 40}%`, backgroundColor: '#60a5fa' }]} />
+                            </View>
+                        </View>
+
+                    </View>
+                </View>
+            </Page>
+
+            {/* PAGE 2: DASHBOARD */}
+            <Page size="A4" style={stylesDark.page}>
+                <View style={stylesDark.p2Container}>
+                    <Text style={stylesDark.dashboardTitle}>Analytics Dashboard</Text>
+                    <Text style={stylesDark.dashboardSubtitle}>{t.overview}</Text>
+
+                    <View style={stylesDark.metricsGrid}>
+                        <View style={stylesDark.metricCard}>
+                            <Text style={stylesDark.metricLabel}>{t.followers}</Text>
+                            <Text style={stylesDark.metricBigNumber}>{(data.metrics.totalFollowers / 1000).toFixed(1)}K</Text>
+                            <Text style={stylesDark.metricSub}>Total Audience</Text>
+                        </View>
+                        <View style={stylesDark.metricCard}>
+                            <Text style={stylesDark.metricLabel}>{t.engagement}</Text>
+                            <Text style={stylesDark.metricBigNumber}>{data.metrics.engagementRate}%</Text>
+                            <Text style={stylesDark.metricSub}>Avg. Interaction Rate</Text>
+                        </View>
+                        <View style={stylesDark.metricCard}>
+                            <Text style={stylesDark.metricLabel}>Avg. Views</Text>
+                            <Text style={stylesDark.metricBigNumber}>{(data.metrics.averageViews / 1000).toFixed(1)}K</Text>
+                            <Text style={stylesDark.metricSub}>Per Video/Post</Text>
+                        </View>
+                        <View style={stylesDark.metricCard}>
+                            <Text style={stylesDark.metricLabel}>Power Score</Text>
+                            <Text style={[stylesDark.metricBigNumber, { color: '#fbbf24' }]}>A+</Text>
+                            <Text style={stylesDark.metricSub}>Influencer Tier</Text>
+                        </View>
+                    </View>
+
+                    <Text style={[stylesDark.sectionTitle, { marginTop: 40 }]}>Social Platforms</Text>
+
+                    {(data.socialMedia || []).map((social, index) => (
+                        <View key={index} style={stylesDark.socialRow}>
+                            {renderSocialIcon(social.platform, 24, '#fbbf24')}
+                            <View style={stylesDark.socialInfo}>
+                                <Text style={stylesDark.socialPlatform}>{social.platform}</Text>
+                                <Text style={{ fontSize: 9, color: '#64748b' }}>@{social.handle}</Text>
+                            </View>
+                            <Text style={stylesDark.socialStats}>{(social.followers / 1000).toFixed(1)}K</Text>
+                        </View>
+                    ))}
+
+                </View>
+            </Page>
+
+            {/* PAGE 3: BRANDS */}
+            {data.brands && data.brands.length > 0 && (
+                <Page size="A4" style={stylesDark.page}>
+                    <View style={stylesDark.brandsContainer}>
+                        <Text style={stylesDark.dashboardTitle}>{t.partners}</Text>
+                        <Text style={stylesDark.dashboardSubtitle}>Brands that trust our work</Text>
+
+                        <View style={stylesDark.brandsGrid}>
+                            {data.brands.map((brand, index) => (
+                                <View key={index} style={stylesDark.brandCard} wrap={false}>
+                                    <View style={{
+                                        width: 30,
+                                        height: 30,
+                                        borderRadius: 15,
+                                        overflow: 'hidden',
+                                        backgroundColor: (brand as any).backgroundColor || '#ffffff',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        marginBottom: 4
+                                    }}>
+                                        {brand.logo ? (
+                                            <Image src={brand.logo} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                        ) : (
+                                            <Text style={{ fontSize: 8, fontWeight: 'bold', color: '#cbd5e1' }}>{brand.name.charAt(0)}</Text>
+                                        )}
+                                    </View>
+                                    <Text style={{ fontSize: 8, color: '#94a3b8' }}>{brand.name}</Text>
+                                </View>
+                            ))}
+                        </View>
+                    </View>
+                </Page>
+            )}
+
+        </Document>
+    );
+};
+
+// --- LAYOUT 8: LINES (Retro/Modern Cream & Blue) ---
+const stylesLines = StyleSheet.create({
+    page: { backgroundColor: '#FFF8E7', fontFamily: 'Josefin Sans', padding: 30, color: '#2563EB' },
+
+    // Header
+    headerContainer: { marginBottom: 25 },
+    name: { fontSize: 36, fontWeight: 'bold', color: '#2563EB', textTransform: 'uppercase', marginBottom: 5 },
+    subtitleContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    subtitleLine: { height: 2, backgroundColor: '#2563EB', flex: 1, marginHorizontal: 10 },
+    subtitleText: { fontSize: 12, color: '#2563EB', textTransform: 'uppercase', letterSpacing: 1 },
+
+    // Top Section (About + Photo)
+    topSection: { flexDirection: 'row', marginBottom: 25 },
+    aboutCol: { width: '55%', paddingRight: 20 },
+    photoCol: { width: '45%', alignItems: 'center' },
+
+    sectionTitle: { fontSize: 18, color: '#2563EB', fontWeight: 'bold', textTransform: 'uppercase', borderBottomWidth: 2, borderBottomColor: '#60A5FA', marginBottom: 10 },
+    text: { fontSize: 11, color: '#4B5563', lineHeight: 1.5, textAlign: 'justify' },
+
+    // Photo with Double Border effect
+    photoFrameOuter: {
+        padding: 5,
+        borderRightWidth: 4,
+        borderBottomWidth: 4,
+        borderColor: '#2563EB',
+        marginBottom: 10
+    },
+    photoFrameInner: {
+        borderWidth: 2,
+        borderColor: '#2563EB',
+        padding: 5
+    },
+    photo: { width: 160, height: 200, objectFit: 'cover' },
+
+    // Social Strip
+    socialStrip: {
+        flexDirection: 'row',
+        borderTopWidth: 2,
+        borderBottomWidth: 2,
+        borderColor: '#2563EB',
+        paddingVertical: 15,
+        marginBottom: 25,
+        justifyContent: 'space-around'
+    },
+    socialItem: { flexDirection: 'row', alignItems: 'center' },
+    socialIconBox: { width: 35, height: 35, backgroundColor: '#2563EB', borderRadius: 17.5, alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+    socialDetails: {},
+    socialValue: { fontSize: 14, fontWeight: 'bold', color: '#1E3A8A' },
+    socialLabel: { fontSize: 8, color: '#2563EB', textTransform: 'uppercase' },
+
+    // Info Grid
+    infoGrid: { flexDirection: 'row', marginBottom: 25, gap: 30 },
+    colLeft: { flex: 1 },
+    colRight: { flex: 1 },
+
+    contactRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+    contactText: { fontSize: 10, color: '#4B5563', marginLeft: 8 },
+
+    // Audience
+    audienceRanges: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
+    rangeItem: { alignItems: 'center' },
+    rangeValue: { fontSize: 18, fontWeight: 'bold', color: '#2563EB' },
+    rangeLabel: { fontSize: 8, color: '#60A5FA', textTransform: 'uppercase' },
+
+    genderBar: { flexDirection: 'row', height: 8, borderRadius: 4, overflow: 'hidden', marginVertical: 5 },
+
+    // Stats Grid
+
+    // Stats
+    statsGrid: { flexDirection: 'row', justifyContent: 'center', marginVertical: 10, paddingVertical: 15, borderTopWidth: 2, borderTopColor: '#2563EB', borderBottomWidth: 2, borderBottomColor: '#2563EB' },
+    statBox: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRightWidth: 1, borderRightColor: '#93C5FD', paddingHorizontal: 5 },
+    statValue: { fontSize: 24, fontWeight: 'bold', color: '#2563EB', marginBottom: 2 },
+    statLabel: { fontSize: 8, color: '#60A5FA', textTransform: 'uppercase', letterSpacing: 1 },
+    frequencyValue: { fontSize: 10, lineHeight: 1.2, fontWeight: 'bold', color: '#2563EB', textAlign: 'center', marginBottom: 2 },
+
+    // Bottom
+    expectSection: { marginTop: 10 },
+    expectText: { fontSize: 10, color: '#4B5563', textAlign: 'center', fontStyle: 'italic', marginTop: 5 },
+
+    // Brands
+    brandsContainer: { marginVertical: 15 },
+    brandsTitle: { fontSize: 14, color: '#2563EB', fontWeight: 'bold', textTransform: 'uppercase', textAlign: 'center', marginBottom: 8 },
+    brandsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 10 },
+    brandItem: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        backgroundColor: '#FFFFFF',
+        borderWidth: 2,
+        borderColor: '#93C5FD',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 8,
+        overflow: 'hidden'
+    },
+    brandLogo: { width: '100%', height: '100%', objectFit: 'contain' },
+    brandName: { fontSize: 6, color: '#2563EB', textAlign: 'center', marginTop: 2, maxWidth: 50 },
+
+});
+
+const LayoutLines = ({ data }: { data: MediaKitData }) => {
+    // Logic
+    const languageCode = data.labels.aboutMe.toLowerCase().includes('about') ? 'en' : 'pt';
+    const isEnglish = languageCode === 'en';
+    const t = {
+        about: isEnglish ? 'About Me' : 'Sobre Mim',
+        contact: isEnglish ? 'Contact Info' : 'Contato',
+        audience: isEnglish ? 'Audience Range' : 'Perfil de Audiência',
+        age: isEnglish ? 'Age Range' : 'Faixa Etária',
+        stats: isEnglish ? 'Social Media Stats' : 'Estatísticas Sociais',
+        intro: isEnglish ? 'Content Creator - Influencer' : 'Criador de Conteúdo - Influenciador',
+        expect: isEnglish ? 'What To Expect' : 'O Que Esperar',
+        expectText: isEnglish ? 'Investing in influencer services not only enhances visibility and drives sales but also cultivates strong connections with your audience.' : 'Investir em marketing de influência aumenta a visibilidade, impulsiona vendas e cria conexões fortes com sua audiência.'
+    };
+
+    return (
+        <Document>
+            <Page size="A4" style={stylesLines.page}>
+                {/* Header */}
+                <View style={stylesLines.headerContainer}>
+                    <Text style={stylesLines.name}>{data.name}</Text>
+                    <View style={stylesLines.subtitleContainer}>
+                        <Text style={stylesLines.subtitleText}>{isEnglish ? 'CONTENT CREATOR' : 'CRIADOR DE CONTEÚDO'}</Text>
+                        <View style={stylesLines.subtitleLine} />
+                        <Text style={stylesLines.subtitleText}>{isEnglish ? 'INFLUENCER' : 'INFLUENCIADOR'}</Text>
+                    </View>
+                </View>
+
+                {/* Top Section */}
+                <View style={stylesLines.topSection}>
+                    <View style={stylesLines.aboutCol}>
+                        <Text style={stylesLines.sectionTitle}>{t.about}</Text>
+                        <Text style={stylesLines.text}>{data.bio}</Text>
+                    </View>
+                    <View style={stylesLines.photoCol}>
+                        <View style={stylesLines.photoFrameOuter}>
+                            <View style={stylesLines.photoFrameInner}>
+                                {data.photo ? <Image src={data.photo} style={stylesLines.photo} /> : <View style={[stylesLines.photo, { backgroundColor: '#ddd' }]} />}
+                            </View>
+                        </View>
+                    </View>
+                </View>
+
+                {/* Social Strip */}
+                <View style={stylesLines.socialStrip}>
+                    {(data.socialMedia || []).slice(0, 4).map((s, i) => (
+                        <View key={i} style={stylesLines.socialItem}>
+                            <View style={stylesLines.socialIconBox}>
+                                {renderSocialIcon(s.platform, 20, '#FFF')}
+                            </View>
+                            <View style={stylesLines.socialDetails}>
+                                <Text style={stylesLines.socialValue}>{(s.followers / 1000).toFixed(0)}K</Text>
+                                <Text style={stylesLines.socialLabel}>{s.platform}</Text>
+                            </View>
+                        </View>
+                    ))}
+                </View>
+
+                {/* Info Grid: Contact & Audience */}
+                <View style={stylesLines.infoGrid}>
+                    {/* Contact */}
+                    <View style={stylesLines.colLeft}>
+                        <Text style={stylesLines.sectionTitle}>{t.contact}</Text>
+                        <View style={stylesLines.contactRow}>
+                            <IconEmail size={16} color="#2563EB" />
+                            <Text style={stylesLines.contactText}>{data.email}</Text>
+                        </View>
+                        <View style={stylesLines.contactRow}>
+                            <IconWhatsApp size={16} color="#2563EB" />
+                            <Text style={stylesLines.contactText}>{data.phone}</Text>
+                        </View>
+                        <View style={stylesLines.contactRow}>
+                            <IconGeneric size={16} color="#2563EB" />
+                            <Text style={stylesLines.contactText}>{data.location}</Text>
+                        </View>
+                    </View>
+
+                    {/* Audience */}
+                    <View style={stylesLines.colRight}>
+                        <Text style={stylesLines.sectionTitle}>{t.audience}</Text>
+                        <View style={stylesLines.audienceRanges}>
+                            <View style={stylesLines.rangeItem}>
+                                <Text style={stylesLines.rangeValue}>25-34</Text>
+                                <Text style={stylesLines.rangeLabel}>{t.age}</Text>
+                            </View>
+                            <View style={stylesLines.rangeItem}>
+                                <Text style={stylesLines.rangeValue}>{data.metrics.engagementRate}%</Text>
+                                <Text style={stylesLines.rangeLabel}>Engagement</Text>
+                            </View>
+                        </View>
+                        <View style={{ marginTop: 10 }}>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+                                <Text style={{ fontSize: 10, color: '#2563EB', fontWeight: 'bold' }}>{data.audienceGenderFemale || 60}% Female</Text>
+                                <Text style={{ fontSize: 10, color: '#2563EB', fontWeight: 'bold' }}>{data.audienceGenderMale || 40}% Male</Text>
+                            </View>
+                            <View style={stylesLines.genderBar}>
+                                <View style={{ flex: data.audienceGenderFemale ? data.audienceGenderFemale / 100 : 0.6, backgroundColor: '#F472B6' }} />
+                                <View style={{ flex: data.audienceGenderMale ? data.audienceGenderMale / 100 : 0.4, backgroundColor: '#60A5FA' }} />
+                            </View>
+                        </View>
+                    </View>
+                </View>
+
+                {/* Social Stats Strip */}
+                <View style={{ marginBottom: 10, alignItems: 'center' }}>
+                    <Text style={[stylesLines.sectionTitle, { borderBottomWidth: 0, marginBottom: 0 }]}>{t.stats}</Text>
+                </View>
+                <View style={stylesLines.statsGrid}>
+                    <View style={stylesLines.statBox}>
+                        <Text style={stylesLines.statValue}>{(data.metrics.totalFollowers / 1000).toFixed(0)}K+</Text>
+                        <Text style={stylesLines.statLabel}>Total Audience</Text>
+                    </View>
+                    <View style={stylesLines.statBox}>
+                        <Text style={stylesLines.statValue}>{(data.metrics.averageViews / 1000).toFixed(0)}K</Text>
+                        <Text style={stylesLines.statLabel}>Avg. Views</Text>
+                    </View>
+                    <View style={[stylesLines.statBox, { borderRightWidth: 0, flex: 2 }]}>
+                        <Text style={stylesLines.frequencyValue}>{data.metrics.contentFrequency}</Text>
+                        <Text style={stylesLines.statLabel}>Frequency</Text>
+                    </View>
+                </View>
+            </Page>
+
+            <Page size="A4" style={stylesLines.page}>
+
+
+                {/* Brands Section */}
+                {data.brands && data.brands.length > 0 && (
+                    <View style={stylesLines.brandsContainer}>
+                        <Text style={[stylesLines.sectionTitle, { borderBottomWidth: 0, textAlign: 'center', marginBottom: 5 }]}>Trusted By</Text>
+                        <View style={stylesLines.brandsGrid}>
+                            {data.brands.map((brand, i) => (
+                                <View key={i} style={{ alignItems: 'center', marginHorizontal: 5 }}>
+                                    <View style={stylesLines.brandItem}>
+                                        {brand.logo ? (
+                                            <Image src={brand.logo} style={stylesLines.brandLogo} />
+                                        ) : (
+                                            <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#2563EB' }}>{brand.name.charAt(0)}</Text>
+                                        )}
+                                    </View>
+                                </View>
+                            ))}
+                        </View>
+                    </View>
+                )}
+
+                {/* Footer / What to Expect */}
+                <View style={[stylesLines.expectSection, { alignItems: 'center' }]}>
+                    <Text style={stylesLines.sectionTitle}>{t.expect}</Text>
+                    <Text style={stylesLines.expectText}>{t.expectText}</Text>
+                </View>
+
+            </Page>
+
+        </Document >
+    );
+};
+
+// --- Theme Bold (Modern/Orange) ---
+// Updated to use Libre Baskerville and Refined Layout
+const stylesBold = StyleSheet.create({
+    page: { backgroundColor: '#18181b', fontFamily: 'Libre Baskerville', flexDirection: 'column', paddingTop: 30, paddingBottom: 30, paddingHorizontal: 30 },
+
+    // Header Section (Photo + Info)
+    headerRow: { flexDirection: 'row', minHeight: 250, marginBottom: 20 },
+
+    // Left Photo Column
+    photoColumn: { width: '40%', position: 'relative', marginRight: 20 },
+    photo: { width: '100%', height: '100%', objectFit: 'cover' },
+
+    // "MEDIA" Overlay (Top Left)
+    mediaTextStroke: {
+        position: 'absolute', top: 15, left: -5,
+        fontSize: 32, fontFamily: 'Oswald', fontWeight: 'bold', color: '#ea580c', // Keep Oswald for graphic elements? User said "utilize a font Libre Baskerville", but usually display fonts are different. I will switch ALL to Libre Baskerville as requested to be safe, or keep Oswald for the graphic text if it fits the "Brand". User said "Arrume a fonte tambem utilize a font Libre Baskerville". I will apply it to the main texts.
+        opacity: 0.9
+    },
+    kitText: {
+        position: 'absolute', bottom: 15, right: 10,
+        fontSize: 32, fontFamily: 'Oswald', fontWeight: 'bold', color: '#ea580c',
+    },
+
+    // Right Info Column
+    infoColumn: { width: '60%', paddingTop: 0, backgroundColor: '#18181b', justifyContent: 'center' },
+
+    // Name Block
+    nameContainer: {
+        marginBottom: 20, // Reduced from 30
+        alignItems: 'flex-end',
+        width: '100%',
+        flexDirection: 'column'
+    },
+    firstNameReal: {
+        fontSize: 38, color: '#ea580c',
+        fontFamily: 'Libre Baskerville', fontWeight: 'bold',
+        textTransform: 'uppercase',
+        textAlign: 'right',
+        marginBottom: 5
+    },
+    lastNameReal: {
+        fontSize: 48, color: '#FFFFFF',
+        fontFamily: 'Libre Baskerville', fontWeight: 'bold',
+        textTransform: 'uppercase',
+        textAlign: 'right'
+    },
+
+    roleSubtitle: {
+        fontSize: 10, color: '#ea580c', letterSpacing: 3,
+        textTransform: 'uppercase', marginTop: 10, marginBottom: 10, // Reduced margin
+        textAlign: 'right', fontFamily: 'Libre Baskerville' // Changed from Oswald
+    },
+
+    divider: { height: 2, backgroundColor: '#FFFFFF', width: 60, marginBottom: 20, alignSelf: 'flex-end' },
+
+    // Contact Info
+    contactContainer: { alignItems: 'flex-end', marginTop: 10, gap: 8 },
+    contactRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 5 },
+    contactText: { color: '#d4d4d8', fontSize: 9, marginRight: 8, fontFamily: 'Libre Baskerville' },
+
+    // Body Content
+    bodyContainer: { paddingHorizontal: 15 },
+
+    // About Me
+    sectionTitle: {
+        fontSize: 16, color: '#ea580c', fontWeight: 'bold',
+        marginBottom: 15, textTransform: 'uppercase', fontFamily: 'Libre Baskerville' // Changed from Oswald
+    },
+    bioText: {
+        fontSize: 10, color: '#a1a1aa', fontFamily: 'Libre Baskerville',
+        lineHeight: 1.8, textAlign: 'justify', marginBottom: 30 // Reduced margin from 50 to 30
+    },
+
+    // Social Media Stats
+    centerTitle: {
+        fontSize: 18, color: '#ea580c', fontWeight: 'bold',
+        textAlign: 'center', textTransform: 'uppercase',
+        marginTop: 10, marginBottom: 20, fontFamily: 'Libre Baskerville' // Changed from Oswald
+    },
+
+    // General Stats Row
+    topStatsRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 30, // Reduced margin from 50 to 30
+        paddingHorizontal: 0
+    },
+    topStatItem: {
+        flexDirection: 'column',
+        alignItems: 'center',
+        width: '23%',
+        height: 80,
+        justifyContent: 'flex-start'
+    },
+    topStatValue: {
+        fontSize: 28, color: '#FFFFFF', fontWeight: 'bold',
+        fontFamily: 'Libre Baskerville', marginBottom: 10 // Changed from Oswald
+    },
+    topStatLabel: {
+        fontSize: 9, color: '#ea580c', fontFamily: 'Libre Baskerville',
+        fontStyle: 'italic', textAlign: 'center'
+    },
+
+    // Orange Strip (Card Style)
+    orangeStrip: {
+        backgroundColor: '#ea580c',
+        width: '100%',
+        borderRadius: 12,
+        paddingVertical: 35, // Increased padding to maintain box size while content shrinks
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: 40,
+        marginBottom: 20,
+        alignItems: 'center'
+    },
+    stripCard: {
+        flexDirection: 'column',
+        alignItems: 'center',
+        width: 'auto',
+        minWidth: 40,
+        justifyContent: 'center'
+    },
+    iconCircle: {
+        width: 20, height: 20, borderRadius: 10, // Reduced significantly (-30%)
+        borderWidth: 1.5, borderColor: '#FFFFFF',
+        alignItems: 'center', justifyContent: 'center',
+        marginBottom: 4,
+        minWidth: 20, minHeight: 20,
+        flexShrink: 0
+    },
+    stripValue: {
+        fontSize: 8, color: '#FFFFFF', fontWeight: 'bold', // Reduced to 8px
+        fontFamily: 'Libre Baskerville', marginBottom: 2
+    },
+    stripLabel: {
+        fontSize: 5, color: '#FFFFFF', fontFamily: 'Libre Baskerville' // Reduced to 5px
+    },
+
+    // Audience Section
+    audienceRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 10 },
+    audienceItem: {
+        flexDirection: 'column',
+        alignItems: 'center',
+        width: '25%',
+        height: 60
+    },
+    audienceValue: {
+        fontSize: 20, color: '#FFFFFF', fontWeight: 'bold',
+        fontFamily: 'Libre Baskerville', marginBottom: 10
+    },
+    audienceLabel: {
+        fontSize: 9, color: '#ea580c', fontFamily: 'Libre Baskerville',
+        textAlign: 'center'
+    }
+
+});
+
+const LayoutBold = ({ data }: { data: MediaKitData }) => {
+    // Language Setup
+    const languageCode = data.labels.aboutMe.toLowerCase().includes('about') ? 'en' : 'pt';
+    const isEnglish = languageCode === 'en';
+    const t = {
+        about: isEnglish ? 'ABOUT ME' : 'SOBRE MIM',
+        stats: isEnglish ? 'SOCIAL MEDIA STATS' : 'ESTATÍSTICAS',
+        audience: isEnglish ? 'AUDIENCE RANGE' : 'PÚBLICO ALVO',
+    };
+
+    // Name Logic - safer splitting
+    const nameParts = data.name.split(' ');
+    // Handle very long names by checking length
+    const firstName = nameParts[0] || 'NAME';
+    const lastName = nameParts.slice(1).join(' ') || 'SURNAME';
+
+    // Metrics Preparation
+    const formatK = (num: number) => {
+        if (!num) return '0';
+        if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+        if (num >= 1000) return (num / 1000).toFixed(0) + 'K';
+        return Math.round(num).toString();
+    };
+
+    return (
+        <Document>
+            <Page size="A4" style={stylesBold.page}>
+
+                {/* HEADER SECTION */}
+                <View style={stylesBold.headerRow}>
+                    {/* Photo Left */}
+                    <View style={stylesBold.photoColumn}>
+                        {data.photo ? (
+                            <Image src={data.photo} style={stylesBold.photo} />
+                        ) : (
+                            <View style={[stylesBold.photo, { backgroundColor: '#333' }]} />
+                        )}
+                        <Text style={stylesBold.mediaTextStroke}>MEDIA</Text>
+                        <Text style={stylesBold.kitText}>KIT</Text>
+                    </View>
+
+                    {/* Info Right */}
+                    <View style={stylesBold.infoColumn}>
+                        <View style={stylesBold.nameContainer}>
+                            {/* Reduced font size for safety */}
+                            <Text style={stylesBold.firstNameReal}>{firstName}</Text>
+                            <Text style={stylesBold.lastNameReal}>{lastName}</Text>
+                        </View>
+
+                        <Text style={stylesBold.roleSubtitle}>INFLUENCER | CONTENT CREATOR</Text>
+                        <View style={stylesBold.divider} />
+
+                        <View style={stylesBold.contactContainer}>
+                            <View style={stylesBold.contactRow}>
+                                <Text style={stylesBold.contactText}>{data.phone}</Text>
+                                <IconWhatsApp size={12} color="#ea580c" />
+                            </View>
+                            <View style={stylesBold.contactRow}>
+                                <Text style={stylesBold.contactText}>{data.email}</Text>
+                                <IconEmail size={12} color="#ea580c" />
+                            </View>
+                            <View style={stylesBold.contactRow}>
+                                <Text style={stylesBold.contactText}>{data.location}</Text>
+                                <IconGeneric size={12} color="#ea580c" />
+                            </View>
+                        </View>
+                    </View>
+                </View>
+
+                {/* Main Body */}
+                <View style={stylesBold.bodyContainer}>
+
+                    {/* ABOUT ME */}
+                    <View style={{ marginBottom: 30 }}>
+                        <Text style={stylesBold.sectionTitle}>{t.about}</Text>
+                        <Text style={stylesBold.bioText}>{data.bio}</Text>
+                    </View>
+
+                    {/* Explicit Spacer just in case */}
+                    <View style={{ height: 20, width: '100%' }} />
+
+                    {/* SOCIAL STATS TITLE */}
+                    <Text style={stylesBold.centerTitle}>{t.stats}</Text>
+
+                    {/* TOP STATS ROW (General) */}
+                    <View style={stylesBold.topStatsRow}>
+                        <View style={stylesBold.topStatItem}>
+                            <Text style={stylesBold.topStatValue}>{formatK(data.metrics.averageViews)}+</Text>
+                            <Text style={stylesBold.topStatLabel}>Avg. Views</Text>
+                        </View>
+                        <View style={stylesBold.topStatItem}>
+                            <Text style={stylesBold.topStatValue}>{formatK(data.metrics.totalFollowers / 20)}</Text>
+                            <Text style={stylesBold.topStatLabel}>New Subs</Text>
+                        </View>
+                        <View style={stylesBold.topStatItem}>
+                            <Text style={stylesBold.topStatValue}>{formatK(data.metrics.totalFollowers * 3)}</Text>
+                            <Text style={stylesBold.topStatLabel}>Monthly Reach</Text>
+                        </View>
+                        <View style={stylesBold.topStatItem}>
+                            <Text style={stylesBold.topStatValue}>{formatK(data.metrics.totalFollowers * 0.8)}</Text>
+                            <Text style={stylesBold.topStatLabel}>Avg. Blog Views</Text>
+                        </View>
+                    </View>
+
+                </View>
+
+                {/* ORANGE STRIP (Platform Specific) */}
+                <View style={stylesBold.orangeStrip} wrap={false}>
+                    {(data.socialMedia || []).slice(0, 4).map((s, i) => (
+                        <View key={i} style={stylesBold.stripCard}>
+                            <View style={stylesBold.iconCircle}>
+                                {renderSocialIcon(s.platform, 10, '#FFFFFF')}
+                            </View>
+                            <Text style={stylesBold.stripValue}>{formatK(s.followers)}</Text>
+                            <Text style={stylesBold.stripLabel}>{s.platform === 'instagram' ? 'Followers' : s.platform === 'youtube' ? 'Subscribers' : 'Followers'}</Text>
+                        </View>
+                    ))}
+                </View>
+
+            </Page>
+
+            {/* PAGE 2: BRANDS & AUDIENCE & EXPECTATIONS */}
+            <Page size="A4" style={stylesBold.page}>
+                {/* Page 2 Header */}
+                <View style={{ width: '100%', alignItems: 'flex-end', borderBottomWidth: 1, borderBottomColor: '#333', paddingBottom: 10, marginBottom: 30 }}>
+                    <Text style={{ fontFamily: 'Oswald', fontSize: 18, color: '#ea580c', fontWeight: 'bold' }}>{firstName} {lastName}</Text>
+                </View>
+
+                <View style={{ flex: 1, paddingVertical: 10 }}>
+
+                    {/* AUDIENCE SECTIONMOVED TO PAGE 2 */}
+                    <View style={{ marginBottom: 50 }}>
+                        <Text style={[stylesBold.centerTitle, { fontSize: 20 }]}>{t.audience}</Text>
+                        <View style={stylesBold.audienceRow}>
+                            <View style={stylesBold.audienceItem}>
+                                <Text style={stylesBold.audienceValue}>{data.audienceAge || '18-35'}</Text>
+                                <Text style={stylesBold.audienceLabel}>Age Range</Text>
+                            </View>
+                            <View style={stylesBold.audienceItem}>
+                                <Text style={stylesBold.audienceValue}>80%</Text>
+                                <Text style={stylesBold.audienceLabel}>Brazil</Text>
+                            </View>
+                            <View style={stylesBold.audienceItem}>
+                                <Text style={stylesBold.audienceValue}>{(data.audienceGenderMale || 50)}%</Text>
+                                <Text style={stylesBold.audienceLabel}>Male</Text>
+                            </View>
+                            <View style={stylesBold.audienceItem}>
+                                <Text style={stylesBold.audienceValue}>{(data.audienceGenderFemale || 50)}%</Text>
+                                <Text style={stylesBold.audienceLabel}>Female</Text>
+                            </View>
+                        </View>
+                    </View>
+
+                    {/* BRANDS SECTION - RESIZED AND GRIDIFIED */}
+                    {data.brands && data.brands.length > 0 && (
+                        <View style={{ marginBottom: 50 }}>
+                            <Text style={[stylesBold.centerTitle, { fontSize: 20, marginBottom: 20 }]}>TRUSTED BY</Text>
+                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 15 }}>
+                                {data.brands.map((brand, i) => (
+                                    <View key={i} style={{
+                                        width: 50, height: 50, // Slightly bigger than 45 for better visibility
+                                        backgroundColor: '#27272a',
+                                        borderRadius: 25,
+                                        alignItems: 'center', justifyContent: 'center',
+                                        margin: 8,
+                                        borderWidth: 1, borderColor: '#ea580c'
+                                    }}>
+                                        {brand.logo ? (
+                                            <Image src={brand.logo} style={{ width: 28, height: 28, objectFit: 'contain' }} />
+                                        ) : (
+                                            <Text style={{ fontSize: 12, color: '#ea580c', fontWeight: 'bold' }}>{brand.name.charAt(0)}</Text>
+                                        )}
+                                    </View>
+                                ))}
+                            </View>
+                        </View>
+                    )}
+
+                    {/* WHAT TO EXPECT / SERVICES */}
+                    <View style={{ marginTop: 'auto', width: '100%', alignItems: 'center', backgroundColor: '#27272a', padding: 25, borderRadius: 10 }}>
+                        <Text style={[stylesBold.sectionTitle, { fontSize: 16, marginBottom: 15 }]}>SERVICES & VALUES</Text>
+                        <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'space-between' }}>
+                            <View style={{ width: '30%', alignItems: 'center' }}>
+                                <IconGeneric size={24} color="#ea580c" />
+                                <Text style={{ fontSize: 10, color: '#fff', marginTop: 8, fontWeight: 'bold' }}>CONTENT CREATION</Text>
+                                <Text style={{ fontSize: 8, color: '#aaa', textAlign: 'center', marginTop: 4 }}>High quality posts and stories that resonate with your target audience.</Text>
+                            </View>
+                            <View style={{ width: '30%', alignItems: 'center' }}>
+                                <IconInstagram size={24} color="#ea580c" />
+                                <Text style={{ fontSize: 10, color: '#fff', marginTop: 8, fontWeight: 'bold' }}>BRAND AWARENESS</Text>
+                                <Text style={{ fontSize: 8, color: '#aaa', textAlign: 'center', marginTop: 4 }}>Boosting your market presence and brand recognition.</Text>
+                            </View>
+                            <View style={{ width: '30%', alignItems: 'center' }}>
+                                <IconTikTok size={24} color="#ea580c" />
+                                <Text style={{ fontSize: 10, color: '#fff', marginTop: 8, fontWeight: 'bold' }}>ENGAGEMENT</Text>
+                                <Text style={{ fontSize: 8, color: '#aaa', textAlign: 'center', marginTop: 4 }}>Active community interaction and relationship building.</Text>
+                            </View>
+                        </View>
+                    </View>
+
+                </View>
+            </Page>
+        </Document>
+    );
+};
+
 export const MediaKitTemplates = {
     Layout1,
     Layout2,
     Layout3,
     Layout4,
     Layout5,
-    LayoutCorporate
+    LayoutCorporate,
+    LayoutDark,
+    LayoutLines,
+    LayoutBold
 };

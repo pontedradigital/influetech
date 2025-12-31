@@ -561,39 +561,6 @@ const LayoutCorporate = ({ data }: { data: MediaKitData }) => {
                     </View>
                 </View>
 
-                {/* Brands Section (Only if brands exist) */}
-                {data.brands && data.brands.length > 0 && (
-                    <View style={stylesModern.section}>
-                        <View style={stylesModern.sectionHeader}>
-                            <View style={stylesModern.sectionBar} />
-                            <Text style={stylesModern.sectionTitle}>{t.brands}</Text>
-                        </View>
-                        <View style={stylesModern.brandsGrid}>
-                            {data.brands.map((brand, index) => (
-                                <View key={index} style={stylesModern.brandCard} wrap={false}>
-                                    <View style={{
-                                        width: 35,
-                                        height: 35,
-                                        borderRadius: 17.5,
-                                        overflow: 'hidden',
-                                        backgroundColor: (brand as any).backgroundColor || '#ffffff', // Dynamic background
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                    }}>
-                                        {brand.logo ? (
-                                            <Image src={brand.logo} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                                        ) : (
-                                            <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#cbd5e1' }}>{brand.name.charAt(0)}</Text>
-                                        )}
-                                    </View>
-                                    {/* Optional: Show name if no logo, or maybe always show name below? */}
-                                    <Text style={stylesModern.brandName}>{brand.name}</Text>
-                                </View>
-                            ))}
-                        </View>
-                    </View>
-                )}
-
                 {/* Footer Quote */}
                 <View style={[stylesModern.contactSection, { marginTop: 'auto', backgroundColor: '#f8fafc', borderTopColor: '#e2e8f0' }]}>
                     <Text style={{ textAlign: 'center', color: '#64748b', fontSize: 10, fontStyle: 'italic' }}>
@@ -604,6 +571,62 @@ const LayoutCorporate = ({ data }: { data: MediaKitData }) => {
                     </Text>
                 </View>
             </Page>
+
+            {/* PAGE 3: BRANDS (Dedicated Page) */}
+            {data.brands && data.brands.length > 0 && (
+                <Page size="A4" style={stylesModern.page}>
+                    {/* Header P3 */}
+                    <View style={[stylesModern.headerWrapper, { paddingVertical: 20 }]}>
+                        <Text style={[stylesModern.headerName, { fontSize: 18 }]}>{data.name}</Text>
+                        <Text style={[stylesModern.headerTagline, { fontSize: 10 }]}>{t.brands}</Text>
+                    </View>
+
+                    <View style={[stylesModern.section, { marginTop: 40 }]}>
+                        <View style={stylesModern.sectionHeader}>
+                            <View style={stylesModern.sectionBar} />
+                            <Text style={stylesModern.sectionTitle}>{t.brands}</Text>
+                        </View>
+                        <Text style={{ fontSize: 10, color: '#64748b', marginBottom: 20 }}>
+                            {isEnglish
+                                ? 'We are proud to collaborate with these amazing partners.'
+                                : 'Temos orgulho de colaborar com estas marcas incríveis.'}
+                        </Text>
+
+                        <View style={stylesModern.brandsGrid}>
+                            {data.brands.map((brand, index) => (
+                                <View key={index} style={stylesModern.brandCard} wrap={false}>
+                                    <View style={{
+                                        width: 35,
+                                        height: 35,
+                                        borderRadius: 17.5,
+                                        overflow: 'hidden',
+                                        backgroundColor: (brand as any).backgroundColor || '#ffffff',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}>
+                                        {brand.logo ? (
+                                            <Image src={brand.logo} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                        ) : (
+                                            <Text style={{ fontSize: 10, fontWeight: 'bold', color: '#cbd5e1' }}>{brand.name.charAt(0)}</Text>
+                                        )}
+                                    </View>
+                                    <Text style={stylesModern.brandName}>{brand.name}</Text>
+                                </View>
+                            ))}
+                        </View>
+                    </View>
+
+                    {/* Footer Quote */}
+                    <View style={[stylesModern.contactSection, { marginTop: 'auto', backgroundColor: '#f8fafc', borderTopColor: '#e2e8f0' }]}>
+                        <Text style={{ textAlign: 'center', color: '#64748b', fontSize: 10, fontStyle: 'italic' }}>
+                            "{isEnglish ? 'Let\'s create something extraordinary.' : 'Vamos criar algo extraordinário juntos.'}"
+                        </Text>
+                        <Text style={{ textAlign: 'center', color: '#cbd5e1', fontSize: 8, marginTop: 5, textTransform: 'uppercase', letterSpacing: 1 }}>
+                            {isEnglish ? 'Partnership Media Kit' : 'MediaKit para Parcerias'}
+                        </Text>
+                    </View>
+                </Page>
+            )}
         </Document>
     );
 };

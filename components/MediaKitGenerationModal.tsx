@@ -213,7 +213,7 @@ export default function MediaKitGenerationModal({ isOpen, onClose, initialData }
                                                 <span className="material-symbols-outlined text-primary">check_circle</span>
                                             )}
                                         </div>
-                                        <h3 className="font-bold text-gray-900 dark:text-white">Clássico Moderno</h3>
+                                        <h3 className="font-bold text-gray-900 dark:text-white">Classic</h3>
                                         <p className="text-xs text-gray-500 mt-1">Light mode, limpo e profissional.</p>
                                     </button>
 
@@ -229,7 +229,7 @@ export default function MediaKitGenerationModal({ isOpen, onClose, initialData }
                                                 <span className="material-symbols-outlined text-primary">check_circle</span>
                                             )}
                                         </div>
-                                        <h3 className="font-bold text-white">Theme Dark</h3>
+                                        <h3 className="font-bold text-white">Dark</h3>
                                         <p className="text-xs text-gray-400 mt-1">Estilo premium com fundo escuro.</p>
                                     </button>
 
@@ -245,7 +245,7 @@ export default function MediaKitGenerationModal({ isOpen, onClose, initialData }
                                                 <span className="material-symbols-outlined text-primary">check_circle</span>
                                             )}
                                         </div>
-                                        <h3 className="font-bold text-blue-900">Theme Lines</h3>
+                                        <h3 className="font-bold text-blue-900">Lines</h3>
                                         <p className="text-xs text-blue-800/70 mt-1">Retro moderno, bordas e destaque.</p>
                                     </button>
 
@@ -261,7 +261,7 @@ export default function MediaKitGenerationModal({ isOpen, onClose, initialData }
                                                 <span className="material-symbols-outlined text-primary">check_circle</span>
                                             )}
                                         </div>
-                                        <h3 className="font-bold text-white">Theme Modern</h3>
+                                        <h3 className="font-bold text-white">Modern</h3>
                                         <p className="text-xs text-gray-400 mt-1">Impactante, escuro com laranja neon.</p>
                                     </button>
                                 </div>

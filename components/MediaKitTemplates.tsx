@@ -88,7 +88,93 @@ interface MediaKitData {
         engagement: string;
         brands: string; // New label
     };
+    language?: 'pt' | 'en'; // Explicit language selection
 }
+
+// --- TRANSLATION DICTIONARY ---
+const getTranslations = (lang: string = 'pt') => {
+    const isEn = lang === 'en';
+    return {
+        // Sections
+        about: isEn ? 'About Creator' : 'Sobre o Criador',
+        audiencetitle: isEn ? 'Audience Profile' : 'Perfil da Audiência',
+        stats: isEn ? 'Social Statistics' : 'Estatísticas Sociais',
+        brands: isEn ? 'Trusted By' : 'Marcas Parceiras',
+        services: isEn ? 'Services & Values' : 'Serviços & Valores',
+        contact: isEn ? 'Contact Info' : 'Contato',
+
+        // Metrics
+        followers: isEn ? 'Followers' : 'Seguidores',
+        subscribers: isEn ? 'Subscribers' : 'Inscritos',
+        avgviews: isEn ? 'Avg. Views' : 'Vis. Médias',
+        engagement: isEn ? 'Engagement' : 'Engajamento',
+        reach: isEn ? 'Reach' : 'Alcance',
+        monthlyreach: isEn ? 'Monthly Reach' : 'Alcance Mensal',
+        newsubs: isEn ? 'New Subs' : 'Novos Inscritos',
+        frequency: isEn ? 'Frequency' : 'Frequência',
+        avg: isEn ? 'Average' : 'Média',
+
+        // Demographics
+        age: isEn ? 'Age Range' : 'Faixa Etária',
+        male: isEn ? 'Male' : 'Masculino',
+        female: isEn ? 'Female' : 'Feminino',
+        location: isEn ? 'Location' : 'Localização',
+        brazil: isEn ? 'Brazil' : 'Brasil',
+
+        // Footer/Misc
+        footer: isEn ? 'Partnership Media Kit' : 'MediaKit para Parcerias',
+        createdwith: isEn ? 'Created with Influetech' : 'Criado com Influetech',
+        letswork: isEn ? "Let's create something extraordinary." : "Vamos criar algo extraordinário juntos.",
+
+        // Descriptions
+        descEng: isEn ? 'Above industry average interaction' : 'Interação acima da média',
+        descReach: isEn ? 'Impressions across all platforms' : 'Impressões em todas as redes',
+        descViews: isEn ? 'Per video (last 90 days)' : 'Por vídeo (últimos 90 dias)',
+
+        // Fallbacks for empty fields
+        bioFallback: isEn ? 'Content Creator & Influencer' : 'Criador de Conteúdo & Influenciador',
+        nicheFallback: isEn ? 'Digital Creator' : 'Criador Digital',
+
+        // Labels for Charts
+        audienceStats: isEn ? 'Audience Stats' : 'Dados de Audiência',
+
+        // LayoutLines specific
+        expect: isEn ? 'What To Expect' : 'O Que Esperar',
+        expectText: isEn ? 'Investing in influencer services not only enhances visibility and drives sales but also cultivates strong connections with your audience.' : 'Investir em marketing de influência aumenta a visibilidade, impulsiona vendas e cria conexões fortes com sua audiência.',
+
+        // Services (LayoutBold)
+        svcContentTitle: isEn ? 'CONTENT CREATION' : 'CRIAÇÃO DE CONTEÚDO',
+        svcContentDesc: isEn ? 'High quality posts and stories that resonate with your target audience.' : 'Posts e stories de alta qualidade que ressoam com seu público-alvo.',
+        svcBrandTitle: isEn ? 'BRAND AWARENESS' : 'CONSCIÊNCIA DE MARCA',
+        svcBrandDesc: isEn ? 'Boosting your market presence and brand recognition.' : 'Impulsionando sua presença de mercado e reconhecimento de marca.',
+        svcEngageTitle: isEn ? 'ENGAGEMENT' : 'ENGAJAMENTO',
+        svcEngageDesc: isEn ? 'Active community interaction and relationship building.' : 'Interação ativa com a comunidade e construção de relacionamentos.',
+
+        // Additional Footer/Misc
+        years: isEn ? 'y.o.' : 'anos',
+        trustedSubtitle: isEn ? 'We are proud to collaborate with these amazing partners.' : 'Temos orgulho de colaborar com estas marcas incríveis.',
+
+        // LayoutDark Specific
+        analyticsDashboard: isEn ? 'Analytics Dashboard' : 'Dashboard de Análise',
+        totalAudience: isEn ? 'Total Audience' : 'Audiência Total',
+        interactionRate: isEn ? 'Avg. Interaction Rate' : 'Taxa de Interação Média',
+        perVideo: isEn ? 'Per Video/Post' : 'Por Vídeo/Post',
+        powerScore: isEn ? 'Power Score' : 'Pontuação de Poder',
+        influencerTier: isEn ? 'Influencer Tier' : 'Nível do Influenciador',
+        socialPlatforms: isEn ? 'Social Platforms' : 'Plataformas Sociais',
+        brandsTrust: isEn ? 'Brands that trust our work' : 'Marcas que confiam no nosso trabalho',
+
+        // Sidebar Labels
+        labelEmail: isEn ? 'EMAIL' : 'EMAIL',
+        labelPhone: isEn ? 'PHONE/WHATSAPP' : 'TELEFONE/WHATSAPP',
+        labelLocation: isEn ? 'LOCATION' : 'LOCALIZAÇÃO',
+        labelSocial: isEn ? 'SOCIAL' : 'SOCIAL',
+
+        // LayoutLines
+        contentCreator: isEn ? 'CONTENT CREATOR' : 'CRIADOR DE CONTEÚDO',
+        influencer: isEn ? 'INFLUENCER' : 'INFLUENCIADOR'
+    };
+};
 
 // --- ICON COMPONENTS ---
 
@@ -427,35 +513,8 @@ const stylesModern = StyleSheet.create({
 
 const LayoutCorporate = ({ data }: { data: MediaKitData }) => {
     // Language detection logic
-    const languageCode = data.labels.aboutMe.toLowerCase().includes('about') ? 'en' : 'pt';
-    const isEnglish = languageCode === 'en';
-
-    const t = {
-        about: isEnglish ? 'About Creator' : 'Sobre o Criador',
-        followers: isEnglish ? 'Followers' : 'Seguidores',
-        reach: isEnglish ? 'Platform Reach' : 'Alcance Total',
-        impact: isEnglish ? 'Performance Impact' : 'Impacto & Performance',
-        audience: isEnglish ? 'Audience Profile' : 'Perfil da Audiência',
-
-        // Metrics translations
-        engagement: isEnglish ? 'Engagement' : 'Engajamento',
-        monthlyReach: isEnglish ? 'Monthly Reach' : 'Alcance Mensal',
-        avgViews: isEnglish ? 'Avg. Views' : 'Vis. Médias',
-        frequency: isEnglish ? 'Content Freq.' : 'Frequência',
-
-        // Descriptions
-        descEng: isEnglish ? 'Above industry average interaction' : 'Interação acima da média',
-        descReach: isEnglish ? 'Impressions across all platforms' : 'Impressões em todas as redes',
-        descViews: isEnglish ? 'Per video (last 90 days)' : 'Por vídeo (últimos 90 dias)',
-
-        // Audience
-        age: isEnglish ? 'Age Range' : 'Faixa Etária',
-        loc: isEnglish ? 'Top Location' : 'Localização',
-        niche: isEnglish ? 'Main Niche' : 'Nicho Principal',
-        power: isEnglish ? 'Spending Power' : 'Poder Aquisitivo',
-
-        brands: isEnglish ? 'Trusted By' : 'Marcas Parceiras', // Translation
-    };
+    const t = getTranslations(data.language || (data.labels.aboutMe.toLowerCase().includes('about') ? 'en' : 'pt'));
+    const isEnglish = data.language === 'en';
 
     return (
         <Document>
@@ -535,14 +594,14 @@ const LayoutCorporate = ({ data }: { data: MediaKitData }) => {
                 {/* Header P2 */}
                 <View style={[stylesModern.headerWrapper, { paddingVertical: 20 }]}>
                     <Text style={[stylesModern.headerName, { fontSize: 18 }]}>{data.name}</Text>
-                    <Text style={[stylesModern.headerTagline, { fontSize: 10 }]}>{t.impact}</Text>
+                    <Text style={[stylesModern.headerTagline, { fontSize: 10 }]}>{t.stats}</Text>
                 </View>
 
                 {/* Metrics */}
                 <View style={stylesModern.section}>
                     <View style={stylesModern.sectionHeader}>
                         <View style={stylesModern.sectionBar} />
-                        <Text style={stylesModern.sectionTitle}>{t.impact}</Text>
+                        <Text style={stylesModern.sectionTitle}>{t.stats}</Text>
                     </View>
                     <View style={stylesModern.metricsGrid}>
                         <View style={stylesModern.metricCard}>
@@ -551,12 +610,12 @@ const LayoutCorporate = ({ data }: { data: MediaKitData }) => {
                             <Text style={stylesModern.metricDesc}>{t.descEng}</Text>
                         </View>
                         <View style={stylesModern.metricCard}>
-                            <Text style={stylesModern.metricTitle}>{t.monthlyReach}</Text>
+                            <Text style={stylesModern.metricTitle}>{t.monthlyreach}</Text>
                             <Text style={stylesModern.metricValue}>{(data.metrics.totalFollowers / 1000).toFixed(0)}K</Text>
                             <Text style={stylesModern.metricDesc}>{t.descReach}</Text>
                         </View>
                         <View style={stylesModern.metricCard}>
-                            <Text style={stylesModern.metricTitle}>{t.avgViews}</Text>
+                            <Text style={stylesModern.metricTitle}>{t.avgviews}</Text>
                             <Text style={stylesModern.metricValue}>{(data.metrics.averageViews / 1000).toFixed(0)}K</Text>
                             <Text style={stylesModern.metricDesc}>{t.descViews}</Text>
                         </View>
@@ -575,25 +634,25 @@ const LayoutCorporate = ({ data }: { data: MediaKitData }) => {
                 <View style={stylesModern.section}>
                     <View style={stylesModern.sectionHeader}>
                         <View style={stylesModern.sectionBar} />
-                        <Text style={stylesModern.sectionTitle}>{t.audience}</Text>
+                        <Text style={stylesModern.sectionTitle}>{t.audiencetitle}</Text>
                     </View>
                     <View style={stylesModern.audienceRow}>
                         <View style={stylesModern.audienceItem}>
                             <Text style={stylesModern.audienceLabel}>{t.age}</Text>
-                            <Text style={stylesModern.audienceValue}>25-40 {isEnglish ? 'y.o.' : 'anos'}</Text>
+                            <Text style={stylesModern.audienceValue}>25-40 {t.years}</Text>
                         </View>
                         <View style={stylesModern.audienceItem}>
-                            <Text style={stylesModern.audienceLabel}>{t.loc}</Text>
+                            <Text style={stylesModern.audienceLabel}>{t.location}</Text>
                             <Text style={stylesModern.audienceValue}>{data.location}</Text>
                         </View>
                     </View>
                     <View style={stylesModern.audienceRow}>
                         <View style={stylesModern.audienceItem}>
-                            <Text style={stylesModern.audienceLabel}>{t.power}</Text>
-                            <Text style={stylesModern.audienceValue}>High (72%)</Text>
+                            <Text style={stylesModern.audienceLabel}>{t.engagement}</Text>
+                            <Text style={stylesModern.audienceValue}>{data.metrics.engagementRate}%</Text>
                         </View>
                         <View style={stylesModern.audienceItem}>
-                            <Text style={stylesModern.audienceLabel}>{t.niche}</Text>
+                            <Text style={stylesModern.audienceLabel}>Niche</Text>
                             <Text style={stylesModern.audienceValue}>{data.niche}</Text>
                         </View>
                     </View>
@@ -602,10 +661,10 @@ const LayoutCorporate = ({ data }: { data: MediaKitData }) => {
                 {/* Footer Quote */}
                 <View style={[stylesModern.contactSection, { marginTop: 'auto', backgroundColor: '#f8fafc', borderTopColor: '#e2e8f0' }]}>
                     <Text style={{ textAlign: 'center', color: '#64748b', fontSize: 10, fontStyle: 'italic' }}>
-                        "{isEnglish ? 'Let\'s create something extraordinary.' : 'Vamos criar algo extraordinário juntos.'}"
+                        "{t.letswork}"
                     </Text>
                     <Text style={{ textAlign: 'center', color: '#cbd5e1', fontSize: 8, marginTop: 5, textTransform: 'uppercase', letterSpacing: 1 }}>
-                        {isEnglish ? 'Partnership Media Kit' : 'MediaKit para Parcerias'}
+                        {t.footer}
                     </Text>
                 </View>
             </Page>
@@ -625,9 +684,7 @@ const LayoutCorporate = ({ data }: { data: MediaKitData }) => {
                             <Text style={stylesModern.sectionTitle}>{t.brands}</Text>
                         </View>
                         <Text style={{ fontSize: 10, color: '#64748b', marginBottom: 20 }}>
-                            {isEnglish
-                                ? 'We are proud to collaborate with these amazing partners.'
-                                : 'Temos orgulho de colaborar com estas marcas incríveis.'}
+                            {t.trustedSubtitle}
                         </Text>
 
                         <View style={stylesModern.brandsGrid}>
@@ -657,10 +714,10 @@ const LayoutCorporate = ({ data }: { data: MediaKitData }) => {
                     {/* Footer Quote */}
                     <View style={[stylesModern.contactSection, { marginTop: 'auto', backgroundColor: '#f8fafc', borderTopColor: '#e2e8f0' }]}>
                         <Text style={{ textAlign: 'center', color: '#64748b', fontSize: 10, fontStyle: 'italic' }}>
-                            "{isEnglish ? 'Let\'s create something extraordinary.' : 'Vamos criar algo extraordinário juntos.'}"
+                            "{t.letswork}"
                         </Text>
                         <Text style={{ textAlign: 'center', color: '#cbd5e1', fontSize: 8, marginTop: 5, textTransform: 'uppercase', letterSpacing: 1 }}>
-                            {isEnglish ? 'Partnership Media Kit' : 'MediaKit para Parcerias'}
+                            {t.footer}
                         </Text>
                     </View>
                 </Page>
@@ -691,7 +748,7 @@ const stylesDark = StyleSheet.create({
     contactValue: { fontSize: 8, color: '#f8fafc', fontWeight: 'bold' }, // Adjusted for Poppins readability
 
     // Main Content Elements
-    headerName: { fontSize: 36, color: '#f8fafc', fontWeight: 'bold', marginBottom: 10, lineHeight: 1.1 }, // 36px is safe for Poppins
+    headerName: { fontSize: 26, color: '#f8fafc', fontWeight: 'bold', lineHeight: 1.1, marginBottom: 8, maxWidth: '100%' }, // 36px is safe for Poppins
     headerTagline: { fontSize: 12, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: 3, marginBottom: 40, fontWeight: 'bold' },
 
     sectionTitle: { fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 12, borderBottomWidth: 1, borderBottomColor: '#334155', paddingBottom: 5, fontWeight: 'bold' },
@@ -747,19 +804,8 @@ const stylesDark = StyleSheet.create({
 
 const LayoutDark = ({ data }: { data: MediaKitData }) => {
     // Language & Logic
-    const languageCode = data.labels.aboutMe.toLowerCase().includes('about') ? 'en' : 'pt';
-    const isEnglish = languageCode === 'en';
-
-    const t = {
-        about: isEnglish ? 'Biography' : 'Biografia',
-        contact: isEnglish ? 'Contact Info' : 'Contato',
-        audience: isEnglish ? 'Audience' : 'Audiência',
-        dashboard: isEnglish ? 'Performance Dashboard' : 'Dashboard de Performance',
-        overview: isEnglish ? 'Metric Overview' : 'Visão Geral',
-        partners: isEnglish ? 'Strategic Partners' : 'Parceiros Estratégicos',
-        followers: isEnglish ? 'Followers' : 'Seguidores',
-        engagement: isEnglish ? 'Engagement' : 'Engajamento',
-    };
+    const t = getTranslations(data.language || (data.labels.aboutMe.toLowerCase().includes('about') ? 'en' : 'pt'));
+    const isEnglish = data.language === 'en';
 
     return (
         <Document>
@@ -777,21 +823,21 @@ const LayoutDark = ({ data }: { data: MediaKitData }) => {
                         </View>
 
                         <View style={stylesDark.contactItem}>
-                            <Text style={stylesDark.contactLabel}>Email</Text>
+                            <Text style={stylesDark.contactLabel}>{t.labelEmail}</Text>
                             <Text style={stylesDark.contactValue}>{data.email}</Text>
                         </View>
                         <View style={stylesDark.contactItem}>
-                            <Text style={stylesDark.contactLabel}>Phone/WhatsApp</Text>
+                            <Text style={stylesDark.contactLabel}>{t.labelPhone}</Text>
                             <Text style={stylesDark.contactValue}>{data.phone}</Text>
                         </View>
                         <View style={stylesDark.contactItem}>
-                            <Text style={stylesDark.contactLabel}>Location</Text>
+                            <Text style={stylesDark.contactLabel}>{t.labelLocation}</Text>
                             <Text style={stylesDark.contactValue}>{data.location}</Text>
                         </View>
 
                         <View style={[stylesDark.contactItem, { marginTop: 'auto' }]}>
-                            <Text style={stylesDark.contactLabel}>Social</Text>
-                            <Text style={stylesDark.contactValue}>@{(data.socialMedia || [])[0]?.handle || data.name.replace(/\s/g, '').toLowerCase()}</Text>
+                            <Text style={stylesDark.contactLabel}>{t.labelSocial}</Text>
+                            <Text style={stylesDark.contactValue}>{(data.socialMedia || [])[0]?.handle?.startsWith('@') ? (data.socialMedia || [])[0]?.handle : '@' + ((data.socialMedia || [])[0]?.handle || data.name.replace(/\s/g, '').toLowerCase())}</Text>
                         </View>
                     </View>
 
@@ -803,7 +849,7 @@ const LayoutDark = ({ data }: { data: MediaKitData }) => {
                         <Text style={stylesDark.sectionTitle}>{t.about}</Text>
                         <Text style={stylesDark.bioText}>{data.bio || ''}</Text>
 
-                        <Text style={stylesDark.sectionTitle}>{t.audience}</Text>
+                        <Text style={stylesDark.sectionTitle}>{t.audiencetitle}</Text>
 
                         {/* Fake Charts/Bars for Audience */}
                         <View style={stylesDark.audienceBar}>
@@ -843,40 +889,40 @@ const LayoutDark = ({ data }: { data: MediaKitData }) => {
             {/* PAGE 2: DASHBOARD */}
             <Page size="A4" style={stylesDark.page}>
                 <View style={stylesDark.p2Container}>
-                    <Text style={stylesDark.dashboardTitle}>Analytics Dashboard</Text>
-                    <Text style={stylesDark.dashboardSubtitle}>{t.overview}</Text>
+                    <Text style={stylesDark.dashboardTitle}>{t.analyticsDashboard}</Text>
+                    <Text style={stylesDark.dashboardSubtitle}>{t.stats}</Text>
 
                     <View style={stylesDark.metricsGrid}>
                         <View style={stylesDark.metricCard}>
                             <Text style={stylesDark.metricLabel}>{t.followers}</Text>
                             <Text style={stylesDark.metricBigNumber}>{(data.metrics.totalFollowers / 1000).toFixed(1)}K</Text>
-                            <Text style={stylesDark.metricSub}>Total Audience</Text>
+                            <Text style={stylesDark.metricSub}>{t.totalAudience}</Text>
                         </View>
                         <View style={stylesDark.metricCard}>
                             <Text style={stylesDark.metricLabel}>{t.engagement}</Text>
                             <Text style={stylesDark.metricBigNumber}>{data.metrics.engagementRate}%</Text>
-                            <Text style={stylesDark.metricSub}>Avg. Interaction Rate</Text>
+                            <Text style={stylesDark.metricSub}>{t.interactionRate}</Text>
                         </View>
                         <View style={stylesDark.metricCard}>
-                            <Text style={stylesDark.metricLabel}>Avg. Views</Text>
+                            <Text style={stylesDark.metricLabel}>{t.avgviews}</Text>
                             <Text style={stylesDark.metricBigNumber}>{(data.metrics.averageViews / 1000).toFixed(1)}K</Text>
-                            <Text style={stylesDark.metricSub}>Per Video/Post</Text>
+                            <Text style={stylesDark.metricSub}>{t.perVideo}</Text>
                         </View>
                         <View style={stylesDark.metricCard}>
-                            <Text style={stylesDark.metricLabel}>Power Score</Text>
+                            <Text style={stylesDark.metricLabel}>{t.powerScore}</Text>
                             <Text style={[stylesDark.metricBigNumber, { color: '#fbbf24' }]}>A+</Text>
-                            <Text style={stylesDark.metricSub}>Influencer Tier</Text>
+                            <Text style={stylesDark.metricSub}>{t.influencerTier}</Text>
                         </View>
                     </View>
 
-                    <Text style={[stylesDark.sectionTitle, { marginTop: 40 }]}>Social Platforms</Text>
+                    <Text style={[stylesDark.sectionTitle, { marginTop: 40 }]}>{t.socialPlatforms}</Text>
 
                     {(data.socialMedia || []).map((social, index) => (
                         <View key={index} style={stylesDark.socialRow}>
                             {renderSocialIcon(social.platform, 24, '#fbbf24')}
                             <View style={stylesDark.socialInfo}>
                                 <Text style={stylesDark.socialPlatform}>{social.platform}</Text>
-                                <Text style={{ fontSize: 9, color: '#64748b' }}>@{social.handle}</Text>
+                                <Text style={{ fontSize: 9, color: '#64748b' }}>{social.handle?.startsWith('@') ? social.handle : '@' + social.handle}</Text>
                             </View>
                             <Text style={stylesDark.socialStats}>{(social.followers / 1000).toFixed(1)}K</Text>
                         </View>
@@ -889,8 +935,8 @@ const LayoutDark = ({ data }: { data: MediaKitData }) => {
             {data.brands && data.brands.length > 0 && (
                 <Page size="A4" style={stylesDark.page}>
                     <View style={stylesDark.brandsContainer}>
-                        <Text style={stylesDark.dashboardTitle}>{t.partners}</Text>
-                        <Text style={stylesDark.dashboardSubtitle}>Brands that trust our work</Text>
+                        <Text style={stylesDark.dashboardTitle}>{t.brands}</Text>
+                        <Text style={stylesDark.dashboardSubtitle}>{t.brandsTrust}</Text>
 
                         <View style={stylesDark.brandsGrid}>
                             {data.brands.map((brand, index) => (
@@ -1025,18 +1071,8 @@ const stylesLines = StyleSheet.create({
 
 const LayoutLines = ({ data }: { data: MediaKitData }) => {
     // Logic
-    const languageCode = data.labels.aboutMe.toLowerCase().includes('about') ? 'en' : 'pt';
-    const isEnglish = languageCode === 'en';
-    const t = {
-        about: isEnglish ? 'About Me' : 'Sobre Mim',
-        contact: isEnglish ? 'Contact Info' : 'Contato',
-        audience: isEnglish ? 'Audience Range' : 'Perfil de Audiência',
-        age: isEnglish ? 'Age Range' : 'Faixa Etária',
-        stats: isEnglish ? 'Social Media Stats' : 'Estatísticas Sociais',
-        intro: isEnglish ? 'Content Creator - Influencer' : 'Criador de Conteúdo - Influenciador',
-        expect: isEnglish ? 'What To Expect' : 'O Que Esperar',
-        expectText: isEnglish ? 'Investing in influencer services not only enhances visibility and drives sales but also cultivates strong connections with your audience.' : 'Investir em marketing de influência aumenta a visibilidade, impulsiona vendas e cria conexões fortes com sua audiência.'
-    };
+    const t = getTranslations(data.language || (data.labels.aboutMe.toLowerCase().includes('about') ? 'en' : 'pt'));
+    const isEnglish = data.language === 'en';
 
     return (
         <Document>
@@ -1045,9 +1081,9 @@ const LayoutLines = ({ data }: { data: MediaKitData }) => {
                 <View style={stylesLines.headerContainer}>
                     <Text style={stylesLines.name}>{data.name}</Text>
                     <View style={stylesLines.subtitleContainer}>
-                        <Text style={stylesLines.subtitleText}>{isEnglish ? 'CONTENT CREATOR' : 'CRIADOR DE CONTEÚDO'}</Text>
+                        <Text style={stylesLines.subtitleText}>{t.contentCreator}</Text>
                         <View style={stylesLines.subtitleLine} />
-                        <Text style={stylesLines.subtitleText}>{isEnglish ? 'INFLUENCER' : 'INFLUENCIADOR'}</Text>
+                        <Text style={stylesLines.subtitleText}>{t.influencer}</Text>
                     </View>
                 </View>
 
@@ -1088,7 +1124,17 @@ const LayoutLines = ({ data }: { data: MediaKitData }) => {
                         <Text style={stylesLines.sectionTitle}>{t.contact}</Text>
                         <View style={stylesLines.contactRow}>
                             <IconEmail size={16} color="#2563EB" />
-                            <Text style={stylesLines.contactText}>{data.email}</Text>
+                            <Text style={stylesLines.contactText}>
+                                {data.email.includes('@') ? (
+                                    <>
+                                        {data.email.split('@')[0]}
+                                        <Text style={{ fontFamily: 'Helvetica' }}>@</Text>
+                                        {data.email.split('@')[1]}
+                                    </>
+                                ) : (
+                                    data.email
+                                )}
+                            </Text>
                         </View>
                         <View style={stylesLines.contactRow}>
                             <IconWhatsApp size={16} color="#2563EB" />
@@ -1102,7 +1148,7 @@ const LayoutLines = ({ data }: { data: MediaKitData }) => {
 
                     {/* Audience */}
                     <View style={stylesLines.colRight}>
-                        <Text style={stylesLines.sectionTitle}>{t.audience}</Text>
+                        <Text style={stylesLines.sectionTitle}>{t.audiencetitle}</Text>
                         <View style={stylesLines.audienceRanges}>
                             <View style={stylesLines.rangeItem}>
                                 <Text style={stylesLines.rangeValue}>25-34</Text>
@@ -1110,13 +1156,13 @@ const LayoutLines = ({ data }: { data: MediaKitData }) => {
                             </View>
                             <View style={stylesLines.rangeItem}>
                                 <Text style={stylesLines.rangeValue}>{data.metrics.engagementRate}%</Text>
-                                <Text style={stylesLines.rangeLabel}>Engagement</Text>
+                                <Text style={stylesLines.rangeLabel}>{t.engagement}</Text>
                             </View>
                         </View>
                         <View style={{ marginTop: 10 }}>
                             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                                <Text style={{ fontSize: 10, color: '#2563EB', fontWeight: 'bold' }}>{data.audienceGenderFemale || 60}% Female</Text>
-                                <Text style={{ fontSize: 10, color: '#2563EB', fontWeight: 'bold' }}>{data.audienceGenderMale || 40}% Male</Text>
+                                <Text style={{ fontSize: 10, color: '#2563EB', fontWeight: 'bold' }}>{data.audienceGenderFemale || 60}% {t.female}</Text>
+                                <Text style={{ fontSize: 10, color: '#2563EB', fontWeight: 'bold' }}>{data.audienceGenderMale || 40}% {t.male}</Text>
                             </View>
                             <View style={stylesLines.genderBar}>
                                 <View style={{ flex: data.audienceGenderFemale ? data.audienceGenderFemale / 100 : 0.6, backgroundColor: '#F472B6' }} />
@@ -1133,7 +1179,7 @@ const LayoutLines = ({ data }: { data: MediaKitData }) => {
                 <View style={stylesLines.statsGrid}>
                     <View style={stylesLines.statBox}>
                         <Text style={stylesLines.statValue}>{(data.metrics.totalFollowers / 1000).toFixed(0)}K+</Text>
-                        <Text style={stylesLines.statLabel}>Total Audience</Text>
+                        <Text style={stylesLines.statLabel}>{t.followers}</Text>
                     </View>
                     <View style={stylesLines.statBox}>
                         <Text style={stylesLines.statValue}>{(data.metrics.averageViews / 1000).toFixed(0)}K</Text>
@@ -1215,14 +1261,14 @@ const stylesBold = StyleSheet.create({
         flexDirection: 'column'
     },
     firstNameReal: {
-        fontSize: 38, color: '#ea580c',
+        fontSize: 28, color: '#ea580c',
         fontFamily: 'Libre Baskerville', fontWeight: 'bold',
         textTransform: 'uppercase',
         textAlign: 'right',
-        marginBottom: 5
+        marginBottom: 2
     },
     lastNameReal: {
-        fontSize: 48, color: '#FFFFFF',
+        fontSize: 32, color: '#FFFFFF',
         fontFamily: 'Libre Baskerville', fontWeight: 'bold',
         textTransform: 'uppercase',
         textAlign: 'right'
@@ -1339,14 +1385,8 @@ const stylesBold = StyleSheet.create({
 });
 
 const LayoutBold = ({ data }: { data: MediaKitData }) => {
-    // Language Setup
-    const languageCode = data.labels.aboutMe.toLowerCase().includes('about') ? 'en' : 'pt';
-    const isEnglish = languageCode === 'en';
-    const t = {
-        about: isEnglish ? 'ABOUT ME' : 'SOBRE MIM',
-        stats: isEnglish ? 'SOCIAL MEDIA STATS' : 'ESTATÍSTICAS',
-        audience: isEnglish ? 'AUDIENCE RANGE' : 'PÚBLICO ALVO',
-    };
+    // Language & Logic
+    const t = getTranslations(data.language || (data.labels.aboutMe.toLowerCase().includes('about') ? 'en' : 'pt'));
 
     // Name Logic - safer splitting
     const nameParts = data.name.split(' ');
@@ -1411,7 +1451,7 @@ const LayoutBold = ({ data }: { data: MediaKitData }) => {
                 <View style={stylesBold.bodyContainer}>
 
                     {/* ABOUT ME */}
-                    <View style={{ marginBottom: 30 }}>
+                    <View style={{ marginBottom: 20 }}>
                         <Text style={stylesBold.sectionTitle}>{t.about}</Text>
                         <Text style={stylesBold.bioText}>{data.bio}</Text>
                     </View>
@@ -1426,15 +1466,15 @@ const LayoutBold = ({ data }: { data: MediaKitData }) => {
                     <View style={stylesBold.topStatsRow}>
                         <View style={stylesBold.topStatItem}>
                             <Text style={stylesBold.topStatValue}>{formatK(data.metrics.averageViews)}+</Text>
-                            <Text style={stylesBold.topStatLabel}>Avg. Views</Text>
+                            <Text style={stylesBold.topStatLabel}>{t.avgviews}</Text>
                         </View>
                         <View style={stylesBold.topStatItem}>
                             <Text style={stylesBold.topStatValue}>{formatK(data.metrics.totalFollowers / 20)}</Text>
-                            <Text style={stylesBold.topStatLabel}>New Subs</Text>
+                            <Text style={stylesBold.topStatLabel}>{t.newsubs}</Text>
                         </View>
                         <View style={stylesBold.topStatItem}>
                             <Text style={stylesBold.topStatValue}>{formatK(data.metrics.totalFollowers * 3)}</Text>
-                            <Text style={stylesBold.topStatLabel}>Monthly Reach</Text>
+                            <Text style={stylesBold.topStatLabel}>{t.monthlyreach}</Text>
                         </View>
                         <View style={stylesBold.topStatItem}>
                             <Text style={stylesBold.topStatValue}>{formatK(data.metrics.totalFollowers * 0.8)}</Text>
@@ -1452,7 +1492,7 @@ const LayoutBold = ({ data }: { data: MediaKitData }) => {
                                 {renderSocialIcon(s.platform, 10, '#FFFFFF')}
                             </View>
                             <Text style={stylesBold.stripValue}>{formatK(s.followers)}</Text>
-                            <Text style={stylesBold.stripLabel}>{s.platform === 'instagram' ? 'Followers' : s.platform === 'youtube' ? 'Subscribers' : 'Followers'}</Text>
+                            <Text style={stylesBold.stripLabel}>{s.platform === 'instagram' ? t.followers : s.platform === 'youtube' ? t.subscribers : t.followers}</Text>
                         </View>
                     ))}
                 </View>
@@ -1470,23 +1510,23 @@ const LayoutBold = ({ data }: { data: MediaKitData }) => {
 
                     {/* AUDIENCE SECTIONMOVED TO PAGE 2 */}
                     <View style={{ marginBottom: 50 }}>
-                        <Text style={[stylesBold.centerTitle, { fontSize: 20 }]}>{t.audience}</Text>
+                        <Text style={[stylesBold.centerTitle, { fontSize: 20 }]}>{t.audiencetitle}</Text>
                         <View style={stylesBold.audienceRow}>
                             <View style={stylesBold.audienceItem}>
                                 <Text style={stylesBold.audienceValue}>{data.audienceAge || '18-35'}</Text>
-                                <Text style={stylesBold.audienceLabel}>Age Range</Text>
+                                <Text style={stylesBold.audienceLabel}>{t.age}</Text>
                             </View>
                             <View style={stylesBold.audienceItem}>
                                 <Text style={stylesBold.audienceValue}>80%</Text>
-                                <Text style={stylesBold.audienceLabel}>Brazil</Text>
+                                <Text style={stylesBold.audienceLabel}>{t.brazil}</Text>
                             </View>
                             <View style={stylesBold.audienceItem}>
                                 <Text style={stylesBold.audienceValue}>{(data.audienceGenderMale || 50)}%</Text>
-                                <Text style={stylesBold.audienceLabel}>Male</Text>
+                                <Text style={stylesBold.audienceLabel}>{t.male}</Text>
                             </View>
                             <View style={stylesBold.audienceItem}>
                                 <Text style={stylesBold.audienceValue}>{(data.audienceGenderFemale || 50)}%</Text>
-                                <Text style={stylesBold.audienceLabel}>Female</Text>
+                                <Text style={stylesBold.audienceLabel}>{t.female}</Text>
                             </View>
                         </View>
                     </View>
@@ -1494,7 +1534,7 @@ const LayoutBold = ({ data }: { data: MediaKitData }) => {
                     {/* BRANDS SECTION - RESIZED AND GRIDIFIED */}
                     {data.brands && data.brands.length > 0 && (
                         <View style={{ marginBottom: 50 }}>
-                            <Text style={[stylesBold.centerTitle, { fontSize: 20, marginBottom: 20 }]}>TRUSTED BY</Text>
+                            <Text style={[stylesBold.centerTitle, { fontSize: 20, marginBottom: 20 }]}>{t.brands}</Text>
                             <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 15 }}>
                                 {data.brands.map((brand, i) => (
                                     <View key={i} style={{
@@ -1518,22 +1558,22 @@ const LayoutBold = ({ data }: { data: MediaKitData }) => {
 
                     {/* WHAT TO EXPECT / SERVICES */}
                     <View style={{ marginTop: 'auto', width: '100%', alignItems: 'center', backgroundColor: '#27272a', padding: 25, borderRadius: 10 }}>
-                        <Text style={[stylesBold.sectionTitle, { fontSize: 16, marginBottom: 15 }]}>SERVICES & VALUES</Text>
+                        <Text style={[stylesBold.sectionTitle, { fontSize: 16, marginBottom: 15 }]}>{t.services}</Text>
                         <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'space-between' }}>
                             <View style={{ width: '30%', alignItems: 'center' }}>
                                 <IconGeneric size={24} color="#ea580c" />
-                                <Text style={{ fontSize: 10, color: '#fff', marginTop: 8, fontWeight: 'bold' }}>CONTENT CREATION</Text>
-                                <Text style={{ fontSize: 8, color: '#aaa', textAlign: 'center', marginTop: 4 }}>High quality posts and stories that resonate with your target audience.</Text>
+                                <Text style={{ fontSize: 9, color: '#fff', marginTop: 8, fontWeight: 'bold', textAlign: 'center' }} wrap={false}>{t.svcContentTitle}</Text>
+                                <Text style={{ fontSize: 8, color: '#aaa', textAlign: 'center', marginTop: 4 }}>{t.svcContentDesc}</Text>
                             </View>
                             <View style={{ width: '30%', alignItems: 'center' }}>
-                                <IconInstagram size={24} color="#ea580c" />
-                                <Text style={{ fontSize: 10, color: '#fff', marginTop: 8, fontWeight: 'bold' }}>BRAND AWARENESS</Text>
-                                <Text style={{ fontSize: 8, color: '#aaa', textAlign: 'center', marginTop: 4 }}>Boosting your market presence and brand recognition.</Text>
+                                <IconGeneric size={24} color="#ea580c" />
+                                <Text style={{ fontSize: 9, color: '#fff', marginTop: 8, fontWeight: 'bold', textAlign: 'center' }} wrap={false}>{t.svcBrandTitle}</Text>
+                                <Text style={{ fontSize: 8, color: '#aaa', textAlign: 'center', marginTop: 4 }}>{t.svcBrandDesc}</Text>
                             </View>
                             <View style={{ width: '30%', alignItems: 'center' }}>
-                                <IconTikTok size={24} color="#ea580c" />
-                                <Text style={{ fontSize: 10, color: '#fff', marginTop: 8, fontWeight: 'bold' }}>ENGAGEMENT</Text>
-                                <Text style={{ fontSize: 8, color: '#aaa', textAlign: 'center', marginTop: 4 }}>Active community interaction and relationship building.</Text>
+                                <IconWhatsApp size={24} color="#ea580c" />
+                                <Text style={{ fontSize: 9, color: '#fff', marginTop: 8, fontWeight: 'bold', textAlign: 'center' }} wrap={false}>{t.svcEngageTitle}</Text>
+                                <Text style={{ fontSize: 8, color: '#aaa', textAlign: 'center', marginTop: 4 }}>{t.svcEngageDesc}</Text>
                             </View>
                         </View>
                     </View>

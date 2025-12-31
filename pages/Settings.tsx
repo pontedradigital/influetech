@@ -192,23 +192,129 @@ const Profile = () => {
               className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary/50"
             />
           </label>
+        </div>
+      </div>
+
+      {/* Endereço / Remetente */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Endereço de Envio (Remetente)</h3>
+        <p className="text-sm text-gray-500 mb-4">Esses dados serão usados como remetente nas etiquetas de envio.</p>
+
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <label className="block">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">CEP *</span>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={data.profile.cep}
+                  onChange={async (e) => {
+                    const value = e.target.value.replace(/\D/g, '');
+                    const formatted = value.replace(/^(\d{5})(\d)/, '$1-$2').substr(0, 9);
+                    updateProfile({ cep: formatted });
+
+                    if (value.length === 8) {
+                      try {
+                        const response = await fetch(`https://viacep.com.br/ws/${value}/json/`);
+                        const addressData = await response.json();
+                        if (!addressData.erro) {
+                          updateProfile({
+                            street: addressData.logradouro,
+                            neighborhood: addressData.bairro,
+                            city: addressData.localidade,
+                            state: addressData.uf
+                          });
+                        }
+                      } catch (error) {
+                        console.error('Erro ao buscar CEP:', error);
+                      }
+                    }
+                  }}
+                  placeholder="00000-000"
+                  maxLength={9}
+                  className={`mt-1 block w-full rounded-lg border ${data.profile.cep && data.profile.cep.length < 9 ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 dark:border-gray-700 focus:ring-primary/50'} bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2`}
+                />
+              </div>
+            </label>
+            <div className="md:col-span-2">
+              <label className="block">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Rua / Logradouro *</span>
+                <input
+                  type="text"
+                  value={data.profile.street || ''}
+                  onChange={e => updateProfile({ street: e.target.value })}
+                  className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary/50"
+                />
+              </label>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <label className="block">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Número *</span>
+              <input
+                type="text"
+                value={data.profile.number || ''}
+                onChange={e => updateProfile({ number: e.target.value })}
+                className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary/50"
+              />
+            </label>
+            <div className="md:col-span-3">
+              <label className="block">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Complemento</span>
+                <input
+                  type="text"
+                  value={data.profile.complement || ''}
+                  onChange={e => updateProfile({ complement: e.target.value })}
+                  className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary/50"
+                />
+              </label>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <label className="block">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Bairro *</span>
+              <input
+                type="text"
+                value={data.profile.neighborhood || ''}
+                onChange={e => updateProfile({ neighborhood: e.target.value })}
+                className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary/50"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Cidade *</span>
+              <input
+                type="text"
+                value={data.profile.city || ''}
+                onChange={e => updateProfile({ city: e.target.value })}
+                className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary/50"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Estado (UF) *</span>
+              <input
+                type="text"
+                value={data.profile.state || ''}
+                onChange={e => updateProfile({ state: e.target.value })}
+                maxLength={2}
+                className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary/50"
+              />
+            </label>
+          </div>
+
           <label className="block">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">CEP</span>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">CPF/CNPJ do Remetente *</span>
             <input
               type="text"
-              value={data.profile.cep}
+              value={data.profile.cpfCnpj || ''}
               onChange={e => {
-                const value = e.target.value.replace(/\D/g, '');
-                const formatted = value.replace(/^(\d{5})(\d)/, '$1-$2').substr(0, 9);
-                updateProfile({ cep: formatted });
+                // Simple formatting logic could be added here
+                updateProfile({ cpfCnpj: e.target.value });
               }}
-              placeholder="00000-000"
-              maxLength={9}
-              className={`mt-1 block w-full rounded-lg border ${data.profile.cep && data.profile.cep.length < 9 ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 dark:border-gray-700 focus:ring-primary/50'} bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2`}
+              className="mt-1 block w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white h-12 px-4 focus:ring-2 focus:ring-primary/50"
             />
-            <p className={`text-xs mt-1 ${data.profile.cep && data.profile.cep.length < 9 ? 'text-red-500' : 'text-gray-500'}`}>
-              {data.profile.cep && data.profile.cep.length < 9 ? 'Formato inválido. Use 00000-000' : 'Usado para cálculo de frete nos envios'}
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Necessário para emissão de etiquetas de envio.</p>
           </label>
         </div>
       </div>

@@ -31,6 +31,16 @@ model User {
   socialTikTok    String?
   socialWhatsapp  String? // For direct contact
 
+  // Address Information
+  cep             String?
+  street          String?
+  number          String?
+  complement      String?
+  neighborhood    String?
+  city            String?
+  state           String?
+  cpfCnpj         String?
+
   companies Company[]
   products  Product[]
   shipments Shipment[]

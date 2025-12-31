@@ -49,13 +49,17 @@ export const updateProfile = (req: Request, res: Response) => {
                 socialYoutube = COALESCE(?, socialYoutube),
                 socialTikTok = COALESCE(?, socialTikTok),
                 socialWhatsapp = COALESCE(?, socialWhatsapp),
+                cep = COALESCE(?, cep),
+                street = COALESCE(?, street),
+                number = COALESCE(?, number),
+                complement = COALESCE(?, complement),
+                neighborhood = COALESCE(?, neighborhood),
+                city = COALESCE(?, city),
+                state = COALESCE(?, state),
+                cpfCnpj = COALESCE(?, cpfCnpj),
                 updatedAt = datetime('now')
             WHERE id = ?
         `);
-
-        // Pass parameters. Use null for undefined to let COALESCE work if we want to keep existing.
-        // However, if we want to explicitly set to null (clear field), we need a way to distinguish.
-        // For now, let's assume valid values or null are passed.
 
         stmt.run(
             name,
@@ -68,6 +72,14 @@ export const updateProfile = (req: Request, res: Response) => {
             socialYoutube,
             socialTikTok,
             socialWhatsapp,
+            req.body.cep,
+            req.body.street,
+            req.body.number,
+            req.body.complement,
+            req.body.neighborhood,
+            req.body.city,
+            req.body.state,
+            req.body.cpfCnpj,
             id
         );
 
@@ -99,7 +111,8 @@ export const getUser = (req: Request, res: Response) => {
         const stmt = db.prepare(`
             SELECT 
                 id, name, email, plan, isPublicProfile, bio, niche, location, 
-                socialInstagram, socialLinkedin, socialYoutube, socialTikTok, socialWhatsapp 
+                socialInstagram, socialLinkedin, socialYoutube, socialTikTok, socialWhatsapp,
+                cep, street, number, complement, neighborhood, city, state, cpfCnpj
             FROM User WHERE id = ?
         `);
         const user: any = stmt.get(id);

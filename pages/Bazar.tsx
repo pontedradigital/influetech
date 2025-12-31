@@ -48,7 +48,10 @@ export default function Bazar() {
       setSuggestions(await suggestionsRes.json());
       const allProducts = await productsRes.json();
       // Filtra apenas produtos não vendidos
-      setProducts(allProducts.filter((p: Product) => p.status !== 'Vendido' && p.status !== 'Enviado'));
+      setProducts(allProducts.filter((p: Product) => {
+        const invalidStatuses = ['SOLD', 'VENDIDO', 'SHIPPED', 'ENVIADO', 'SENT'];
+        return !invalidStatuses.includes(p.status?.toUpperCase());
+      }));
       setBazarEvents(await eventsRes.json());
     } catch (error) {
       console.error('Error fetching data:', error);

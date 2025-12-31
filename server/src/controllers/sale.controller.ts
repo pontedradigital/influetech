@@ -153,10 +153,26 @@ export const createSale = (req: Request, res: Response) => {
         // Gerar código de rastreamento temporário
         const trackingCode = `AG${Date.now().toString().slice(-8)}`;
 
+        // Fetch user data for sender info
+        const userStmt = db.prepare('SELECT * FROM User WHERE id = ?');
+        const user: any = userStmt.get(finalUserId);
+
+        const senderName = user?.name || 'Vendedor Influetech';
+        const senderAddress = user?.street ? `${user.street}, ${user.number}${user.complement ? ' ' + user.complement : ''}` : 'Endereço não cadastrado';
+        const senderCity = user?.city || 'Não informado';
+        const senderState = user?.state || 'UF';
+        const senderCep = user?.cep || '00000-000';
+        const senderCpfCnpj = user?.cpfCnpj || null;
+
         shipmentStmt.run(
             shipmentId, finalUserId, id,
-            // Sender - Pass NULL to use Profile data on generation
-            null, null, null, null, null, null,
+            // Sender
+            senderName,
+            senderAddress,
+            senderCity,
+            senderState,
+            senderCep,
+            senderCpfCnpj,
             // Recipient
             customerName,
             street && number ? `${street}, ${number}${complement ? ', ' + complement : ''}` : (street || ''),

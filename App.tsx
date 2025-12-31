@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { HashRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Products from './pages/General';
 import { Companies } from './pages/General';
@@ -52,20 +52,20 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // ...
 
   const navItems = [
-    { to: '/', icon: 'dashboard', label: 'Dashboard' },
-    { to: '/meu-perfil', icon: 'person', label: 'Meu Perfil' },
-    { to: '/empresas', icon: 'domain', label: 'Empresas' },
-    { to: '/produtos', icon: 'package_2', label: 'Produtos' },
-    { to: '/agenda', icon: 'calendar_today', label: 'Agenda' },
-    { to: '/financeiro', icon: 'account_balance', label: 'Financeiro' },
-    { to: '/vendas', icon: 'shopping_cart', label: 'Vendas' },
+    { to: '/app', icon: 'dashboard', label: 'Dashboard' },
+    { to: '/app/meu-perfil', icon: 'person', label: 'Meu Perfil' },
+    { to: '/app/empresas', icon: 'domain', label: 'Empresas' },
+    { to: '/app/produtos', icon: 'package_2', label: 'Produtos' },
+    { to: '/app/agenda', icon: 'calendar_today', label: 'Agenda' },
+    { to: '/app/financeiro', icon: 'account_balance', label: 'Financeiro' },
+    { to: '/app/vendas', icon: 'shopping_cart', label: 'Vendas' },
 
-    { to: '/envios', icon: 'local_shipping', label: 'Envios' },
-    { to: '/media-kit', icon: 'picture_as_pdf', label: 'Media Kit' },
-    { to: '/networking', icon: 'hub', label: 'Networking' },
-    { to: '/radar-marcas', icon: 'radar', label: 'Radar de Marcas' },
-    { to: '/planejador-produtos', icon: 'trending_up', label: 'Planejador de Produtos' },
-    { to: '/bazar', icon: 'auto_awesome', label: 'Planejador de Bazares' },
+    { to: '/app/envios', icon: 'local_shipping', label: 'Envios' },
+    { to: '/app/media-kit', icon: 'picture_as_pdf', label: 'Media Kit' },
+    { to: '/app/networking', icon: 'hub', label: 'Networking' },
+    { to: '/app/radar-marcas', icon: 'radar', label: 'Radar de Marcas' },
+    { to: '/app/planejador-produtos', icon: 'trending_up', label: 'Planejador de Produtos' },
+    { to: '/app/bazar', icon: 'auto_awesome', label: 'Planejador de Bazares' },
   ];
 
   // ...
@@ -90,7 +90,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             {/* Logo */}
             <div className="flex items-center justify-center px-3 py-4">
               <div className="w-24">
-                <img src="/logo.png" alt="InflueTech Logo" className="w-full h-full object-contain" />
+                <Link to="/app">
+                  <img src="/logo.png" alt="InflueTech Logo" className="w-full h-full object-contain" />
+                </Link>
               </div>
             </div>
 
@@ -102,7 +104,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                   to={item.to}
                   icon={item.icon}
                   label={item.label}
-                  active={location.pathname === item.to || (item.to !== '/' && location.pathname.startsWith(item.to))}
+                  active={location.pathname === item.to || (item.to !== '/app' && location.pathname.startsWith(item.to))}
                   onClick={() => setIsMobileMenuOpen(false)}
                 />
               ))}
@@ -139,14 +141,19 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             </button>
 
             {/* Logout */}
-            <Link
-              to="/auth/login"
+            {/* Logout */}
+            <button
+              onClick={() => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/auth/login';
+              }}
               className="flex items-center gap-2 px-3 py-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
               title="Sair"
             >
               <span className="material-symbols-outlined text-lg">logout</span>
               <span className="text-sm font-medium hidden md:inline">Sair</span>
-            </Link>
+            </button>
           </div>
         </header>
 
@@ -162,33 +169,57 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 import { InfluencerProvider } from './context/InfluencerContext';
 import BrandRadar from './pages/BrandRadar';
 
+import SignUpDark from './pages/SignUpDark';
+import Home from './pages/Home';
+
+const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    return <Navigate to="/auth/login" replace />;
+  }
+  return <>{children}</>;
+};
+
 const App: React.FC = () => {
   return (
     <InfluencerProvider>
       <Router>
         <Routes>
-          <Route path="/auth/*" element={<Auth />} />
-          <Route path="/*" element={
-            <Layout>
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/meu-perfil/*" element={<Settings />} />
-                <Route path="/empresas/*" element={<Companies />} />
-                <Route path="/produtos" element={<Products />} />
-                <Route path="/agenda" element={<Agenda />} />
-                <Route path="/financeiro/*" element={<Finance />} />
-                <Route path="/vendas" element={<Sales />} />
+          <Route path="/signup-dark" element={<SignUpDark />} />
+          {/* TSL at Root */}
+          <Route path="/" element={<Home />} />
+          <Route path="/home" element={<Navigate to="/" replace />} />
 
-                <Route path="/envios/*" element={<Logistics />} />
-                <Route path="/media-kit" element={<MediaKit />} />
-                <Route path="/networking" element={<Networking />} />
-                <Route path="/radar-marcas" element={<BrandRadar />} />
-                <Route path="/planejador-produtos" element={<ProductPlanner />} />
-                <Route path="/bazar/*" element={<Bazar />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </Layout>
+          {/* Auth Pages */}
+          <Route path="/auth/*" element={<Auth />} />
+
+          {/* Protected Platform Routes at /app */}
+          <Route path="/app/*" element={
+            <PrivateRoute>
+              <Layout>
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/meu-perfil/*" element={<Settings />} />
+                  <Route path="/empresas/*" element={<Companies />} />
+                  <Route path="/produtos" element={<Products />} />
+                  <Route path="/agenda" element={<Agenda />} />
+                  <Route path="/financeiro/*" element={<Finance />} />
+                  <Route path="/vendas" element={<Sales />} />
+
+                  <Route path="/envios/*" element={<Logistics />} />
+                  <Route path="/media-kit" element={<MediaKit />} />
+                  <Route path="/networking" element={<Networking />} />
+                  <Route path="/radar-marcas" element={<BrandRadar />} />
+                  <Route path="/planejador-produtos" element={<ProductPlanner />} />
+                  <Route path="/bazar/*" element={<Bazar />} />
+                  <Route path="*" element={<Navigate to="/app" replace />} />
+                </Routes>
+              </Layout>
+            </PrivateRoute>
           } />
+
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
     </InfluencerProvider>

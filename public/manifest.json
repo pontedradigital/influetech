@@ -1,3 +1,7 @@
+{
+    "short_name": "Influetech",
+    "name": "Influetech App",
+    "icons": [
         {
             "src": "logo.png",
             "type": "image/png",

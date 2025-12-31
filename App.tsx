@@ -168,9 +168,11 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 import { InfluencerProvider } from './context/InfluencerContext';
 import BrandRadar from './pages/BrandRadar';
-
-import SignUpDark from './pages/SignUpDark';
+import ScrollToTop from './components/ScrollToTop';
+import CookieConsent from './components/CookieConsent';
 import Home from './pages/Home';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const token = localStorage.getItem('token');
@@ -180,48 +182,57 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   return <>{children}</>;
 };
 
+import { HelmetProvider } from 'react-helmet-async';
+
 const App: React.FC = () => {
   return (
     <InfluencerProvider>
-      <Router>
-        <Routes>
-          <Route path="/signup-dark" element={<SignUpDark />} />
-          {/* TSL at Root */}
-          <Route path="/" element={<Home />} />
-          <Route path="/home" element={<Navigate to="/" replace />} />
+      <HelmetProvider>
+        <Router>
+          <ScrollToTop />
+          <CookieConsent />
+          <Routes>
 
-          {/* Auth Pages */}
-          <Route path="/auth/*" element={<Auth />} />
 
-          {/* Protected Platform Routes at /app */}
-          <Route path="/app/*" element={
-            <PrivateRoute>
-              <Layout>
-                <Routes>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/meu-perfil/*" element={<Settings />} />
-                  <Route path="/empresas/*" element={<Companies />} />
-                  <Route path="/produtos" element={<Products />} />
-                  <Route path="/agenda" element={<Agenda />} />
-                  <Route path="/financeiro/*" element={<Finance />} />
-                  <Route path="/vendas" element={<Sales />} />
+            {/* TSL at Root */}
+            <Route path="/" element={<Home />} />
+            <Route path="/home" element={<Navigate to="/" replace />} />
+            <Route path="/termos" element={<Terms />} />
+            <Route path="/privacidade" element={<Privacy />} />
 
-                  <Route path="/envios/*" element={<Logistics />} />
-                  <Route path="/media-kit" element={<MediaKit />} />
-                  <Route path="/networking" element={<Networking />} />
-                  <Route path="/radar-marcas" element={<BrandRadar />} />
-                  <Route path="/planejador-produtos" element={<ProductPlanner />} />
-                  <Route path="/bazar/*" element={<Bazar />} />
-                  <Route path="*" element={<Navigate to="/app" replace />} />
-                </Routes>
-              </Layout>
-            </PrivateRoute>
-          } />
+            {/* Auth Pages */}
+            <Route path="/auth/*" element={<Auth />} />
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Router>
+            {/* Protected Platform Routes at /app */}
+            <Route path="/app/*" element={
+              <PrivateRoute>
+                <Layout>
+                  <Routes>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/meu-perfil/*" element={<Settings />} />
+                    <Route path="/empresas/*" element={<Companies />} />
+                    <Route path="/produtos" element={<Products />} />
+                    <Route path="/agenda" element={<Agenda />} />
+                    <Route path="/financeiro/*" element={<Finance />} />
+                    <Route path="/vendas" element={<Sales />} />
+
+                    <Route path="/envios/*" element={<Logistics />} />
+                    <Route path="/media-kit" element={<MediaKit />} />
+                    <Route path="/networking" element={<Networking />} />
+                    <Route path="/radar-marcas" element={<BrandRadar />} />
+                    <Route path="/planejador-produtos" element={<ProductPlanner />} />
+                    <Route path="/bazar/*" element={<Bazar />} />
+                    <Route path="*" element={<Navigate to="/app" replace />} />
+                  </Routes>
+                </Layout>
+              </PrivateRoute>
+            } />
+
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes >
+        </Router>
+      </HelmetProvider>
     </InfluencerProvider>
   );
 };

@@ -172,29 +172,6 @@ const Login = () => {
   );
 };
 
-const Register = () => (
-  <AuthLayout title="Criar Conta" subtitle="Comece a gerenciar seus produtos com inteligência">
-    <form className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome Completo</label>
-        <input type="text" className="w-full h-11 px-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent" />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-        <input type="email" className="w-full h-11 px-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent" />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Senha</label>
-        <input type="password" className="w-full h-11 px-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent" />
-      </div>
-      <button className="w-full h-12 bg-primary text-white font-bold rounded-lg hover:bg-primary-600 transition-colors mt-4">Criar Conta</button>
-      <p className="text-center text-sm text-gray-500">
-        Já tem uma conta? <Link to="/auth/login" className="text-primary font-bold hover:underline">Faça Login</Link>
-      </p>
-    </form>
-  </AuthLayout>
-);
-
 const Recover = () => {
   const [email, setEmail] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -313,7 +290,6 @@ export default function Auth() {
   return (
     <Routes>
       <Route path="login" element={<Login />} />
-      <Route path="registro" element={<Register />} />
       <Route path="recuperar" element={<Recover />} />
     </Routes>
   );

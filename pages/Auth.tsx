@@ -31,28 +31,32 @@ const Login = () => {
     setError('');
     setLoading(true);
 
-    const validEmail = 'contato@influetech.com.br';
-    const validPass = '123456789Mudar';
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
+      });
 
-    setTimeout(() => {
-      if (email === validEmail && password === validPass) {
-        const mockToken = 'mock-token-' + Math.random().toString(36).substr(2);
-        const mockUser = {
-          id: 'user-admin',
-          name: 'Influetech Admin',
-          email: validEmail,
-          avatar: null
-        };
+      const data = await response.json();
 
-        localStorage.setItem('token', mockToken);
-        localStorage.setItem('user', JSON.stringify(mockUser));
-        setLoading(false);
-        navigate('/app');
-      } else {
-        setError('Credenciais inválidas. Tente novamente.');
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error(data.error || 'Falha ao autenticar');
       }
-    }, 1500);
+
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      navigate('/app');
+
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'Erro de conexão com o servidor');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

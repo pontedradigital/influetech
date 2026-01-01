@@ -1,14 +1,17 @@
 import { Request, Response } from 'express';
-import db from '../db';
+import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+
+const prisma = new PrismaClient();
 
 export const login = async (req: Request, res: Response): Promise<void> => {
     const { email, password } = req.body;
 
     try {
-        const stmt = db.prepare('SELECT * FROM User WHERE email = ?');
-        const user = stmt.get(email) as any;
+        const user = await prisma.user.findUnique({
+            where: { email }
+        });
 
         if (!user) {
             res.status(400).json({ error: 'Usuário não encontrado' });

@@ -1,84 +1,92 @@
-// MINIMAL STANDALONE API FOR VERCEL - NO EXTERNAL IMPORTS
+// DEBUG VERSION - Minimal code to identify crash point
 const express = require('express');
-const cors = require('cors');
-const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 
-const prisma = new PrismaClient();
 const app = express();
 
-app.use(cors());
+// Enable JSON parsing
 app.use(express.json({ limit: '50mb' }));
 
-// Test endpoint
+// CORS - manual implementation to avoid issues
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
+    next();
+});
+
+// Simple test - NO DATABASE
 app.get('/api/test', (req, res) => {
-    res.json({ 
-        message: 'API funcionando!', 
-        timestamp: new Date().toISOString()
+    res.json({
+        message: 'API funcionando!',
+        timestamp: new Date().toISOString(),
+        env: process.env.NODE_ENV
     });
 });
 
-// Health check
-app.get('/api/health', async (req, res) => {
+// Health without DB
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        timestamp: new Date(),
+        hasDbUrl: !!process.env.DATABASE_URL,
+        hasJwt: !!process.env.JWT_SECRET
+    });
+});
+
+// Login test WITHOUT database - hardcoded
+app.post('/api/auth/login', async (req, res) => {
     try {
-        await prisma.$queryRaw`SELECT 1`;
-        res.json({ status: 'ok', database: 'connected', timestamp: new Date() });
+        const { email, password } = req.body;
+
+        console.log('Login attempt:', { email, hasPassword: !!password });
+
+        // Hardcoded test user
+        if (email === 'contato@influetech.com.br' && password === 'admin123') {
+            return res.json({
+                token: 'test-token-12345',
+                user: {
+                    id: '1',
+                    name: 'Test User',
+                    email: email,
+                    plan: 'PRO'
+                }
+            });
+        }
+
+        res.status(400).json({ error: 'Credenciais inválidas (use contato@influetech.com.br / admin123)' });
     } catch (error) {
-        res.status(500).json({ status: 'error', database: 'disconnected', error: error.message });
+        console.error('Login error:', error);
+        res.status(500).json({ error: 'Erro ao realizar login', details: error.message, stack: error.stack });
     }
 });
 
-// Login endpoint - INLINE, NO IMPORTS
-app.post('/api/auth/login', async (req, res) => {
-    const { email, password } = req.body;
-
-    try {
-        const user = await prisma.user.findUnique({
-            where: { email }
-        });
-
-        if (!user) {
-            return res.status(400).json({ error: 'Usuário não encontrado' });
-        }
-
-        const valid = await bcrypt.compare(password, user.password);
-        if (!valid) {
-            return res.status(400).json({ error: 'Senha inválida' });
-        }
-
-        const token = jwt.sign(
-            { id: user.id }, 
-            process.env.JWT_SECRET || 'supersecretkey', 
-            { expiresIn: '1d' }
-        );
-
-        res.json({
-            token,
-            user: {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                plan: user.plan
-            }
-        });
-    } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ error: 'Erro ao realizar login', details: error.message });
-    }
+// Catch all for API routes
+app.all('/api/*', (req, res) => {
+    res.status(404).json({
+        error: 'Endpoint não encontrado',
+        method: req.method,
+        path: req.path
+    });
 });
 
 // Error handler
 app.use((err, req, res, next) => {
-    console.error('Error:', err);
-    res.status(500).json({ error: 'Internal Server Error', message: err.message });
+    console.error('Unhandled Error:', err);
+    res.status(500).json({
+        error: 'Internal Server Error',
+        message: err.message,
+        stack: process.env.NODE_ENV === 'production' ? undefined : err.stack
+    });
 });
 
-// Local dev
+// Local dev only
 if (process.env.NODE_ENV !== 'production') {
     const PORT = process.env.PORT || 3001;
     app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
+        console.log(`[DEBUG] Server running on port ${PORT}`);
     });
 }
 

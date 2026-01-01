@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 type CookiePreferences = {
     necessary: boolean;
@@ -16,14 +16,25 @@ const CookieConsent = () => {
         marketing: true,
     });
 
+    const location = useLocation();
+
+    // Paths where cookie consent should NOT appear
+    const restrictedPaths = ['/auth'];
+
     useEffect(() => {
+        // Don't show on restricted paths
+        if (restrictedPaths.some(path => location.pathname.startsWith(path))) {
+            setIsVisible(false);
+            return;
+        }
+
         const consent = localStorage.getItem('influetech_cookie_consent');
         if (!consent) {
             // Small delay to not feel jarring on load
             const timer = setTimeout(() => setIsVisible(true), 1000);
             return () => clearTimeout(timer);
         }
-    }, []);
+    }, [location.pathname]); // Re-run when path changes
 
     const handleAcceptAll = () => {
         saveConsent({ necessary: true, analytics: true, marketing: true });

@@ -167,7 +167,7 @@ const BRAZILIAN_EVENTS = [
         reasons: [
             'Pais e familiares compram presentes para as crianças',
             'Alta demanda por brinquedos, roupas e calçados infantis',
-            'Momento de alegria e celebração da infância'
+            'Momento de celebração da infância'
         ],
         tips: [
             'Destaque produtos infantis: brinquedos, roupas, calçados',
@@ -424,10 +424,11 @@ export const getSuggestions = (req: Request, res: Response) => {
 };
 
 // Lista eventos de bazar
-export const listBazarEvents = (req: Request, res: Response) => {
+export const listBazarEvents = async (req: Request, res: Response) => {
     try {
-        const stmt = db.prepare('SELECT * FROM BazarEvent ORDER BY date ASC');
-        const events = stmt.all();
+        const events = await db.bazarEvent.findMany({
+            orderBy: { date: 'asc' }
+        });
         res.json(events);
     } catch (error) {
         console.error('Error listing bazar events:', error);
@@ -440,46 +441,64 @@ export const createBazarEvent = async (req: Request, res: Response) => {
     const { title, description, date, location, productIds, userId } = req.body;
 
     try {
-        const id = uuidv4();
         const finalUserId = userId === 'mock-id' ? '327aa8c1-7c26-41c2-95d7-b375c25eb896' : (userId || '327aa8c1-7c26-41c2-95d7-b375c25eb896');
+        const id = uuidv4();
 
-        const stmt = db.prepare(`
-            INSERT INTO BazarEvent (
-                id, userId, title, description, date, location, productIds, status, createdAt, updatedAt
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, 'PLANNED', datetime('now'), datetime('now'))
-        `);
+        await db.$transaction(async (tx) => {
+            // 1. Create Bazar Event
+            await tx.bazarEvent.create({
+                data: {
+                    id,
+                    userId: finalUserId,
+                    title,
+                    description,
+                    date: new Date(date),
+                    location,
+                    productIds: productIds || '[]', // JSON string? schema says String.
+                    status: 'PLANNED'
+                }
+            });
 
-        stmt.run(id, finalUserId, title, description || null, date, location || null, productIds);
+            // 2. Create Scheduled Post for Agenda
+            await tx.scheduledPost.create({
+                data: {
+                    userId: finalUserId,
+                    title: `🛍️ ${title}`,
+                    caption: description || 'Bazar agendado',
+                    scheduledFor: new Date(date),
+                    platforms: '["Bazar"]',
+                    status: 'SCHEDULED'
+                }
+            });
 
-        const agendaId = uuidv4();
-        db.prepare(`
-            INSERT INTO ScheduledPost (
-                id, userId, productId, title, caption, platforms, scheduledFor, status, createdAt, updatedAt
-            ) VALUES (?, ?, NULL, ?, ?, '["Bazar"]', ?, 'SCHEDULED', datetime('now'), datetime('now'))
-        `).run(agendaId, finalUserId, `🛍️ ${title}`, description || 'Bazar agendado', date);
+            // 3. Create Alerts
+            const bazarDate = new Date(date);
+            const alerts = [
+                { days: 30, title: 'Bazar Agendado', message: `Bazar "${title}" agendado para ${bazarDate.toLocaleDateString('pt-BR')}` },
+                { days: 15, title: 'Criar Artes de Divulgação', message: `Prepare as artes para divulgar o bazar "${title}"` },
+                { days: 7, title: 'Iniciar Divulgação', message: `Comece a divulgar o bazar "${title}" nas redes sociais` },
+                { days: 3, title: 'Últimos Preparativos', message: `Bazar "${title}" se aproxima - revisar produtos e local` },
+                { days: 1, title: 'Bazar Amanhã', message: `Bazar "${title}" acontece amanhã - últimas verificações` }
+            ];
 
-        const bazarDate = new Date(date);
-        const alerts = [
-            { days: 30, title: 'Bazar Agendado', message: `Bazar "${title}" agendado para ${bazarDate.toLocaleDateString('pt-BR')}` },
-            { days: 15, title: 'Criar Artes de Divulgação', message: `Prepare as artes para divulgar o bazar "${title}"` },
-            { days: 7, title: 'Iniciar Divulgação', message: `Comece a divulgar o bazar "${title}" nas redes sociais` },
-            { days: 3, title: 'Últimos Preparativos', message: `Bazar "${title}" se aproxima - revisar produtos e local` },
-            { days: 1, title: 'Bazar Amanhã', message: `Bazar "${title}" acontece amanhã - últimas verificações` }
-        ];
+            for (const alert of alerts) {
+                const alertDate = new Date(bazarDate);
+                alertDate.setDate(alertDate.getDate() - alert.days);
 
-        for (const alert of alerts) {
-            const alertDate = new Date(bazarDate);
-            alertDate.setDate(alertDate.getDate() - alert.days);
-
-            if (alertDate > new Date()) {
-                const alertId = uuidv4();
-                db.prepare(`
-                    INSERT INTO Alert (
-                        id, userId, type, title, message, relatedId, isRead, createdAt
-                    ) VALUES (?, ?, 'POST_UPCOMING', ?, ?, ?, 0, datetime('now'))
-                `).run(alertId, finalUserId, alert.title, alert.message, id);
+                if (alertDate > new Date()) {
+                    await tx.alert.create({
+                        data: {
+                            userId: finalUserId,
+                            type: 'POST_UPCOMING',
+                            title: alert.title,
+                            message: alert.message,
+                            relatedId: id,
+                            isRead: 0
+                        }
+                    });
+                }
             }
-        }
+        });
 
         res.status(201).json({ id, title, message: 'Bazar criado com sucesso e alertas gerados' });
     } catch (error) {
@@ -489,40 +508,46 @@ export const createBazarEvent = async (req: Request, res: Response) => {
 };
 
 // Atualiza evento de bazar
-export const updateBazarEvent = (req: Request, res: Response) => {
+export const updateBazarEvent = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { title, description, date, location, productIds, status } = req.body;
 
     try {
-        const stmt = db.prepare(`
-            UPDATE BazarEvent 
-            SET title = ?, description = ?, date = ?, location = ?, productIds = ?, status = ?, updatedAt = datetime('now')
-            WHERE id = ?
-        `);
+        await db.bazarEvent.update({
+            where: { id },
+            data: {
+                title,
+                description,
+                date: date ? new Date(date) : undefined,
+                location,
+                productIds,
+                status
+            }
+        });
 
-        const result = stmt.run(title, description, date, location, productIds, status, id);
-        if (result.changes === 0) return res.status(404).json({ error: 'Bazar não encontrado' });
         res.json({ message: 'Bazar atualizado' });
-    } catch (error) {
+    } catch (error: any) {
+        if (error.code === 'P2025') return res.status(404).json({ error: 'Bazar não encontrado' });
         console.error('Error updating bazar event:', error);
         res.status(500).json({ error: 'Erro ao atualizar bazar' });
     }
 };
 
 // Exclui evento de bazar e alertas relacionados
-export const deleteBazarEvent = (req: Request, res: Response) => {
+export const deleteBazarEvent = async (req: Request, res: Response) => {
     const { id } = req.params;
     try {
-        // Primeiro, exclui os alertas relacionados ao bazar
-        const deleteAlertsStmt = db.prepare('DELETE FROM Alert WHERE relatedId = ?');
-        deleteAlertsStmt.run(id);
+        await db.$transaction(async (tx) => {
+            // Remove alerts
+            await tx.alert.deleteMany({ where: { relatedId: id } });
 
-        // Depois, exclui o bazar
-        const stmt = db.prepare('DELETE FROM BazarEvent WHERE id = ?');
-        const result = stmt.run(id);
-        if (result.changes === 0) return res.status(404).json({ error: 'Bazar não encontrado' });
+            // Remove event
+            await tx.bazarEvent.delete({ where: { id } });
+        });
+
         res.json({ message: 'Bazar e alertas relacionados excluídos' });
-    } catch (error) {
+    } catch (error: any) {
+        if (error.code === 'P2025') return res.status(404).json({ error: 'Bazar não encontrado' });
         console.error('Error deleting bazar event:', error);
         res.status(500).json({ error: 'Erro ao excluir bazar' });
     }

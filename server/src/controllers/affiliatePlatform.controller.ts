@@ -4,10 +4,13 @@ import { v4 as uuidv4 } from 'uuid';
 
 const MOCK_USER_ID = '327aa8c1-7c26-41c2-95d7-b375c25eb896';
 
-export const listPlatforms = (req: Request, res: Response) => {
+export const listPlatforms = async (req: Request, res: Response) => {
     try {
         const userId = MOCK_USER_ID;
-        const platforms = db.prepare('SELECT * FROM AffiliatePlatform WHERE userId = ? ORDER BY name ASC').all(userId);
+        const platforms = await db.affiliatePlatform.findMany({
+            where: { userId },
+            orderBy: { name: 'asc' }
+        });
         res.json(platforms);
     } catch (error) {
         console.error('Failed to fetch platforms:', error);
@@ -15,35 +18,37 @@ export const listPlatforms = (req: Request, res: Response) => {
     }
 };
 
-export const createPlatform = (req: Request, res: Response) => {
+export const createPlatform = async (req: Request, res: Response) => {
     try {
         const { name, paymentTermDays, icon } = req.body;
         const userId = MOCK_USER_ID;
-        const id = uuidv4();
-        const now = new Date().toISOString();
 
-        const stmt = db.prepare(`
-            INSERT INTO AffiliatePlatform (id, userId, name, paymentTermDays, icon, createdAt, updatedAt)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        `);
+        const platform = await db.affiliatePlatform.create({
+            data: {
+                id: uuidv4(),
+                userId,
+                name,
+                paymentTermDays: paymentTermDays || 30,
+                icon: icon || 'store'
+            }
+        });
 
-        stmt.run(id, userId, name, paymentTermDays || 30, icon || 'store', now, now);
-
-        res.json({ id, userId, name, paymentTermDays: paymentTermDays || 30, icon, createdAt: now });
+        res.json(platform);
     } catch (error: any) {
         console.error('Failed to create platform:', error);
         res.status(500).json({ error: error.message });
     }
 };
 
-export const deletePlatform = (req: Request, res: Response) => {
+export const deletePlatform = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        // Check for dependencies? Ideally yes, but for now simple delete
-        const stmt = db.prepare('DELETE FROM AffiliatePlatform WHERE id = ?');
-        stmt.run(id);
+        await db.affiliatePlatform.delete({
+            where: { id }
+        });
         res.json({ message: 'Platform deleted' });
     } catch (error: any) {
+        if (error.code === 'P2025') return res.status(404).json({ error: 'Platform not found' });
         console.error('Failed to delete platform:', error);
         res.status(500).json({ error: error.message });
     }

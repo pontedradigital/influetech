@@ -1,39 +1,12 @@
 import { Request, Response } from 'express';
 import db from '../db';
 import { generateFullProduct, getRandomProduct } from '../utils/productData';
+import { Prisma } from '@prisma/client';
 
-interface TrendingProduct {
-    id: number;
-    product_name: string;
-    category: string;
-    platform: string;
-    price_min: number;
-    price_max: number;
-    currency: string;
-    search_volume: number;
-    growth_percentage: number;
-    sentiment_score: number;
-    hype_level: string;
-    image_url: string;
-    product_url: string;
-    keywords: string;
-    description: string;
-    last_updated: string;
-    created_at: string;
-}
+// Workaround for persistent build error where generated client types are not picked up
+const prisma = db as any;
 
-interface QueryFilters {
-    platform?: string;
-    category?: string;
-    hype_level?: string;
-    price_min?: number;
-    price_max?: number;
-    sort_by?: string;
-    limit?: number;
-    offset?: number;
-}
-
-export const getAllTrendingProducts = (req: Request, res: Response) => {
+export const getAllTrendingProducts = async (req: Request, res: Response) => {
     try {
         const {
             platform,
@@ -41,81 +14,70 @@ export const getAllTrendingProducts = (req: Request, res: Response) => {
             hype_level,
             price_min,
             price_max,
-            sort_by = 'growth_percentage',
+            sort_by = 'growthPercentage',
             limit = 50,
             offset = 0
-        }: QueryFilters = req.query;
+        } = req.query;
 
-        let query = 'SELECT * FROM trending_products WHERE 1=1';
-        const params: any[] = [];
-
-        // Apply filters
-        if (platform && platform !== 'all') {
-            query += ' AND platform = ?';
-            params.push(platform);
-        }
-
-        if (category) {
-            query += ' AND category = ?';
-            params.push(category);
-        }
-
-        if (hype_level) {
-            query += ' AND hype_level = ?';
-            params.push(hype_level);
-        }
-
-        if (price_min !== undefined) {
-            query += ' AND price_max >= ?';
-            params.push(price_min);
-        }
-
-        if (price_max !== undefined) {
-            query += ' AND price_min <= ?';
-            params.push(price_max);
-        }
-
-        // Apply sorting
-        const validSortFields = ['growth_percentage', 'sentiment_score', 'search_volume', 'price_min', 'created_at'];
-        const sortField = validSortFields.includes(sort_by as string) ? sort_by : 'growth_percentage';
-        query += ` ORDER BY ${sortField} DESC`;
-
-        // Apply pagination
-        query += ' LIMIT ? OFFSET ?';
-        params.push(limit, offset);
-
-        const products = db.prepare(query).all(...params) as TrendingProduct[];
-
-        // Get total count for pagination
-        let countQuery = 'SELECT COUNT(*) as total FROM trending_products WHERE 1=1';
-        const countParams: any[] = [];
+        const where: any = {}; // Typed as any to avoid 'TrendingProductWhereInput' error
 
         if (platform && platform !== 'all') {
-            countQuery += ' AND platform = ?';
-            countParams.push(platform);
+            where.platform = String(platform);
         }
         if (category) {
-            countQuery += ' AND category = ?';
-            countParams.push(category);
+            where.category = String(category);
         }
         if (hype_level) {
-            countQuery += ' AND hype_level = ?';
-            countParams.push(hype_level);
+            where.hypeLevel = String(hype_level);
+        }
+        if (price_min) {
+            where.priceMin = { gte: Number(price_min) };
+        }
+        if (price_max) {
+            where.priceMax = { lte: Number(price_max) };
         }
 
-        const { total } = db.prepare(countQuery).get(...countParams) as { total: number };
+        // Map sort fields to schema fields
+        const sortMapping: Record<string, string> = {
+            'growth_percentage': 'growthPercentage',
+            'growthPercentage': 'growthPercentage',
+            'sentiment_score': 'sentimentScore',
+            'sentimentScore': 'sentimentScore',
+            'search_volume': 'searchVolume',
+            'searchVolume': 'searchVolume',
+            'price_min': 'priceMin',
+            'priceMin': 'priceMin',
+            'created_at': 'createdAt',
+            'createdAt': 'createdAt'
+        };
+
+        const orderByField = sortMapping[String(sort_by)] || 'growthPercentage';
+        const orderBy = { [orderByField]: 'desc' };
+
+        // Execute query
+        const [products, total] = await db.$transaction([
+            prisma.trendingProduct.findMany({
+                where,
+                orderBy,
+                take: Number(limit),
+                skip: Number(offset)
+            }),
+            prisma.trendingProduct.count({ where })
+        ]);
 
         res.json({
             success: true,
-            data: products.map(p => ({
+            data: products.map((p: any) => ({
                 ...p,
-                keywords: JSON.parse(p.keywords || '[]')
+                priceMin: Number(p.priceMin),
+                priceMax: p.priceMax ? Number(p.priceMax) : null,
+                keywords: p.keywords ? JSON.parse(p.keywords) : []
             })),
             pagination: {
                 total,
-                limit,
-                offset,
-                hasMore: (offset + limit) < total
+                limit: Number(limit),
+                offset: Number(offset),
+                hasMore: (Number(offset) + Number(limit)) < total
             }
         });
     } catch (error) {
@@ -124,31 +86,32 @@ export const getAllTrendingProducts = (req: Request, res: Response) => {
     }
 };
 
-export const getTrendingProductById = (req: Request, res: Response) => {
+export const getTrendingProductById = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
 
-        const product = db.prepare('SELECT * FROM trending_products WHERE id = ?').get(id) as TrendingProduct | undefined;
+        const product = await prisma.trendingProduct.findUnique({
+            where: { id: Number(id) },
+            include: {
+                history: {
+                    orderBy: { recordedAt: 'desc' },
+                    take: 30
+                }
+            }
+        });
 
         if (!product) {
             return res.status(404).json({ success: false, error: 'Product not found' });
         }
 
-        // Get trend history
-        const history = db.prepare(`
-      SELECT search_volume, growth_percentage, sentiment_score, recorded_at
-      FROM trend_history
-      WHERE product_id = ?
-      ORDER BY recorded_at DESC
-      LIMIT 30
-    `).all(id);
-
         res.json({
             success: true,
             data: {
                 ...product,
-                keywords: JSON.parse(product.keywords || '[]'),
-                history
+                priceMin: Number(product.priceMin),
+                priceMax: product.priceMax ? Number(product.priceMax) : null,
+                keywords: product.keywords ? JSON.parse(product.keywords) : [],
+                history: product.history
             }
         });
     } catch (error) {
@@ -157,68 +120,103 @@ export const getTrendingProductById = (req: Request, res: Response) => {
     }
 };
 
-export const getTrendingStats = (req: Request, res: Response) => {
+export const getTrendingStats = async (req: Request, res: Response) => {
     try {
-        // Overall stats
-        const overallStats = db.prepare(`
-      SELECT 
-        COUNT(*) as total_products,
-        AVG(growth_percentage) as avg_growth,
-        AVG(sentiment_score) as avg_sentiment,
-        SUM(CASE WHEN hype_level = 'Altíssimo' THEN 1 ELSE 0 END) as high_hype_count
-      FROM trending_products
-    `).get() as {
-            total_products: number;
-            avg_growth: number;
-            avg_sentiment: number;
-            high_hype_count: number;
-        };
+        const [
+            totalProducts,
+            aggregates,
+            highHypeCount,
+            platformGroups,
+            categoryGroups,
+            topProducts,
+            lastUpdateProduct
+        ] = await db.$transaction([
+            // 1. Total Count
+            prisma.trendingProduct.count(),
 
-        // Stats by platform
-        const platformStats = db.prepare(`
-      SELECT 
-        platform,
-        COUNT(*) as count,
-        AVG(growth_percentage) as avg_growth,
-        AVG(sentiment_score) as avg_sentiment
-      FROM trending_products
-      GROUP BY platform
-    `).all();
+            // 2. Averages
+            prisma.trendingProduct.aggregate({
+                _avg: {
+                    growthPercentage: true,
+                    sentimentScore: true
+                }
+            }),
 
-        // Stats by category
-        const categoryStats = db.prepare(`
-      SELECT 
-        category,
-        COUNT(*) as count,
-        AVG(growth_percentage) as avg_growth
-      FROM trending_products
-      GROUP BY category
-      ORDER BY count DESC
-      LIMIT 10
-    `).all();
+            // 3. High Hype Count
+            prisma.trendingProduct.count({
+                where: { hypeLevel: 'Altíssimo' }
+            }),
 
-        // Top products
-        const topProducts = db.prepare(`
-      SELECT id, product_name, category, platform, growth_percentage, sentiment_score, hype_level
-      FROM trending_products
-      ORDER BY growth_percentage DESC
-      LIMIT 5
-    `).all();
+            // 4. Platform Stats
+            prisma.trendingProduct.groupBy({
+                by: ['platform'],
+                _count: { _all: true },
+                _avg: {
+                    growthPercentage: true,
+                    sentimentScore: true
+                }
+            }),
 
-        // Last update time
-        const lastUpdate = db.prepare(`
-      SELECT MAX(last_updated) as last_updated
-      FROM trending_products
-    `).get() as { last_updated: string };
+            // 5. Category Stats (Top 10 by count)
+            prisma.trendingProduct.groupBy({
+                by: ['category'],
+                _count: { _all: true },
+                _avg: { growthPercentage: true },
+            }),
+
+            // 6. Top Products
+            prisma.trendingProduct.findMany({
+                select: {
+                    id: true,
+                    productName: true,
+                    category: true,
+                    platform: true,
+                    growthPercentage: true,
+                    sentimentScore: true,
+                    hypeLevel: true
+                },
+                orderBy: { growthPercentage: 'desc' },
+                take: 5
+            }),
+
+            // 7. Last Update
+            prisma.trendingProduct.findFirst({
+                orderBy: { lastUpdated: 'desc' },
+                select: { lastUpdated: true }
+            })
+        ]);
+
+        // Process Platform Stats
+        const byPlatform = platformGroups.map((p: any) => ({
+            platform: p.platform,
+            count: p._count._all,
+            avg_growth: p._avg.growthPercentage,
+            avg_sentiment: p._avg.sentimentScore
+        }));
+
+        // Process Category Stats (sort and slice)
+        const byCategory = categoryGroups
+            .map((c: any) => ({
+                category: c.category,
+                count: c._count._all,
+                avg_growth: c._avg.growthPercentage
+            }))
+            .sort((a: any, b: any) => b.count - a.count)
+            .slice(0, 10);
 
         res.json({
             success: true,
             data: {
-                overall: overallStats,
-                byPlatform: platformStats,
-                byCategory: categoryStats,
+                overall: {
+                    total_products: totalProducts,
+                    avg_growth: aggregates._avg.growthPercentage,
+                    avg_sentiment: aggregates._avg.sentimentScore,
+                    high_hype_count: highHypeCount
+                },
+                byPlatform,
+                byCategory,
                 topProducts,
-                lastUpdate: lastUpdate.last_updated
+                lastUpdate: lastUpdateProduct?.lastUpdated || new Date()
             }
         });
     } catch (error) {
@@ -227,25 +225,32 @@ export const getTrendingStats = (req: Request, res: Response) => {
     }
 };
 
-export const getCategories = (req: Request, res: Response) => {
+export const getCategories = async (req: Request, res: Response) => {
     try {
-        const categories = db.prepare(`
-      SELECT 
-        pc.id,
-        pc.name,
-        pc.icon,
-        pc.description,
-        pc.parent_category,
-        COUNT(tp.id) as product_count
-      FROM product_categories pc
-      LEFT JOIN trending_products tp ON tp.category = pc.name
-      GROUP BY pc.id, pc.name, pc.icon, pc.description, pc.parent_category
-      ORDER BY product_count DESC
-    `).all();
+        // 1. Get all categories definitions
+        const categories = await prisma.productCategory.findMany();
+
+        // 2. Get counts from trending products
+        const counts = await prisma.trendingProduct.groupBy({
+            by: ['category'],
+            _count: { _all: true }
+        });
+
+        // 3. Merge
+        const categoryMap = new Map(counts.map((c: any) => [c.category, c._count._all]));
+
+        const result = categories.map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            icon: c.icon,
+            description: c.description,
+            parent_category: c.parentCategory,
+            product_count: categoryMap.get(c.name) || 0 // Default to 0 if no products
+        })).sort((a: any, b: any) => b.product_count - a.product_count);
 
         res.json({
             success: true,
-            data: categories
+            data: result
         });
     } catch (error) {
         console.error('Error fetching categories:', error);
@@ -253,105 +258,92 @@ export const getCategories = (req: Request, res: Response) => {
     }
 };
 
-export const refreshTrendingData = (req: Request, res: Response) => {
+export const refreshTrendingData = async (req: Request, res: Response) => {
     try {
-        // 1. Get all current products ordered by performance (growth * sentiment as a proxy score)
-        const products = db.prepare('SELECT * FROM trending_products').all() as TrendingProduct[];
+        // 1. Get all current products
+        const products = await prisma.trendingProduct.findMany();
 
-        // Calculate a score for each product to decide who stays
-        const scoredProducts = products.map(p => ({
+        // Calculate score in JS
+        const scoredProducts = products.map((p: any) => ({
             ...p,
-            score: p.growth_percentage + (p.sentiment_score * 2) // Weight sentiment more
-        })).sort((a, b) => a.score - b.score); // Ascending order (lowest score first)
+            score: p.growthPercentage + (p.sentimentScore * 2)
+        })).sort((a: any, b: any) => a.score - b.score);
 
-        // 2. Remove bottom 20% performers (make space for new trends)
+        // 2. Remove bottom 20%
         const totalToRemove = Math.max(1, Math.floor(products.length * 0.2));
         const productsToRemove = scoredProducts.slice(0, totalToRemove);
+        const idsToRemove = productsToRemove.map((p: any) => p.id);
 
-        // Delete them
-        const deleteStmt = db.prepare('DELETE FROM trending_products WHERE id = ?');
-        const deleteHistoryStmt = db.prepare('DELETE FROM trend_history WHERE product_id = ?');
+        await db.$transaction(async (tx) => {
+            const txa = tx as any; // Cast transaction to any
 
-        const deleteTransaction = db.transaction(() => {
-            for (const p of productsToRemove) {
-                deleteHistoryStmt.run(p.id);
-                deleteStmt.run(p.id);
+            // Delete removed
+            if (idsToRemove.length > 0) {
+                await txa.trendingProduct.deleteMany({
+                    where: { id: { in: idsToRemove } }
+                });
             }
-        });
-        deleteTransaction();
 
-        // 3. Update remaining products (simulate market changes)
-        // Keep the ones we didn't delete
-        const remainingProducts = scoredProducts.slice(totalToRemove);
-        const updateStmt = db.prepare(`
-            UPDATE trending_products 
-            SET 
-                search_volume = ?,
-                growth_percentage = ?,
-                sentiment_score = ?,
-                last_updated = CURRENT_TIMESTAMP
-            WHERE id = ?
-        `);
-
-        const insertHistoryStmt = db.prepare(`
-            INSERT INTO trend_history (product_id, search_volume, growth_percentage, sentiment_score)
-            VALUES (?, ?, ?, ?)
-        `);
-
-        // Helper to import from utils (need to handle Require/Import here or ensure top level import)
-        // Since we are in the controller, we can't easily import from 'productData' if not already imported.
-        // But we will add the import at the top of this file next.
-
-        const updateTransaction = db.transaction(() => {
+            // 3. Update remaining
+            const remainingProducts = scoredProducts.slice(totalToRemove);
             for (const p of remainingProducts) {
-                // Simulate small variations
-                const newSearchVolume = Math.floor(p.search_volume * (0.9 + Math.random() * 0.2)); // +/- 10%
-                const newGrowth = Math.max(0, p.growth_percentage + (Math.random() * 40 - 20));
-                // Clamp sentiment 0-100 and round to integer
-                const newSentiment = Math.floor(Math.min(100, Math.max(0, p.sentiment_score + (Math.random() * 10 - 5))));
+                const newSearchVolume = Math.floor(p.searchVolume * (0.9 + Math.random() * 0.2));
+                const newGrowth = Math.max(0, p.growthPercentage + (Math.random() * 40 - 20));
+                const newSentiment = Math.floor(Math.min(100, Math.max(0, p.sentimentScore + (Math.random() * 10 - 5))));
 
-                updateStmt.run(newSearchVolume, newGrowth, newSentiment, p.id);
-                insertHistoryStmt.run(p.id, newSearchVolume, newGrowth, newSentiment);
+                await txa.trendingProduct.update({
+                    where: { id: p.id },
+                    data: {
+                        searchVolume: newSearchVolume,
+                        growthPercentage: newGrowth,
+                        sentimentScore: newSentiment,
+                        lastUpdated: new Date()
+                    }
+                });
+
+                await txa.trendHistory.create({
+                    data: {
+                        productId: p.id,
+                        searchVolume: newSearchVolume,
+                        growthPercentage: newGrowth,
+                        sentimentScore: newSentiment,
+                        recordedAt: new Date() // Default is now
+                    }
+                });
             }
-        });
-        updateTransaction();
 
-        // 4. Add new products to replace removed ones
-        // We need to dynamically import or have imported the generator
-        // For now, I'll assume we added the import at the top.
-
-        // Imported generators are used below
-
-        const insertStmt = db.prepare(`
-            INSERT INTO trending_products (
-                product_name, category, platform, price_min, price_max, currency,
-                search_volume, growth_percentage, sentiment_score, hype_level,
-                image_url, product_url, keywords, description
-            ) VALUES (
-                @product_name, @category, @platform, @price_min, @price_max, @currency,
-                @search_volume, @growth_percentage, @sentiment_score, @hype_level,
-                @image_url, @product_url, @keywords, @description
-            )
-        `);
-
-        const insertNewTransaction = db.transaction(() => {
+            // 4. Add new products
             for (let i = 0; i < totalToRemove; i++) {
                 const template = getRandomProduct();
-                // Add "NEW" suffix or similar to verify it's new? No, just let it be generic.
                 const newProduct = generateFullProduct(template);
-                // Boost growth for new products to show they are "trending"
                 newProduct.growth_percentage = Math.floor(Math.random() * 400) + 100;
-                newProduct.hype_level = 'Altíssimo'; // New trends are usually hype
+                newProduct.hype_level = 'Altíssimo';
 
-                insertStmt.run(newProduct);
+                await txa.trendingProduct.create({
+                    data: {
+                        productName: newProduct.product_name,
+                        category: newProduct.category,
+                        platform: newProduct.platform,
+                        priceMin: newProduct.price_min,
+                        priceMax: newProduct.price_max,
+                        currency: newProduct.currency,
+                        searchVolume: newProduct.search_volume,
+                        growthPercentage: newProduct.growth_percentage,
+                        sentimentScore: newProduct.sentiment_score,
+                        hypeLevel: newProduct.hype_level,
+                        imageUrl: newProduct.image_url,
+                        productUrl: newProduct.product_url,
+                        keywords: newProduct.keywords, // String
+                        description: newProduct.description
+                    }
+                });
             }
         });
-        insertNewTransaction();
 
         res.json({
             success: true,
             message: 'Trending data refreshed successfully',
-            updated: remainingProducts.length,
+            updated: products.length - totalToRemove,
             removed: totalToRemove,
             added: totalToRemove
         });

@@ -3,45 +3,51 @@ import db from '../db';
 import { v4 as uuidv4 } from 'uuid';
 
 // Criar novo envio
-export const create = (req: Request, res: Response) => {
+export const create = async (req: Request, res: Response) => {
     try {
         const shipmentData = req.body;
-        const id = uuidv4();
         const userId = req.body.userId || '327aa8c1-7c26-41c2-95d7-b375c25eb896'; // TODO: Auth
 
-        const stmt = db.prepare(`
-            INSERT INTO Shipment (
-                id, userId, saleId,
-                senderName, senderAddress, senderCity, senderState, senderCep, senderCpfCnpj,
-                recipientName, recipientAddress, recipientCity, recipientState, recipientCep, recipientCpfCnpj,
-                weight, height, width, length, declaredValue,
-                carrier, price, deliveryTime,
-                contentDescription, contentQuantity,
-                trackingCode, status, labelGenerated, declarationGenerated,
-                createdAt, updatedAt
-            ) VALUES (
-                ?, ?, ?,
-                ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?,
-                ?, ?, ?,
-                ?, ?,
-                ?, ?, ?, ?,
-                datetime('now'), datetime('now')
-            )
-        `);
+        const shipment = await db.shipment.create({
+            data: {
+                userId,
+                saleId: shipmentData.saleId || null,
+                // Sender
+                senderName: shipmentData.senderName,
+                senderAddress: shipmentData.senderAddress,
+                senderCity: shipmentData.senderCity,
+                senderState: shipmentData.senderState,
+                senderCep: shipmentData.senderCep,
+                senderCpfCnpj: shipmentData.senderCpfCnpj || null,
+                // Recipient
+                recipientName: shipmentData.recipientName,
+                recipientAddress: shipmentData.recipientAddress,
+                recipientCity: shipmentData.recipientCity,
+                recipientState: shipmentData.recipientState,
+                recipientCep: shipmentData.recipientCep,
+                recipientCpfCnpj: shipmentData.recipientCpfCnpj || null,
+                // Package
+                weight: Number(shipmentData.weight),
+                height: Number(shipmentData.height),
+                width: Number(shipmentData.width),
+                length: Number(shipmentData.length),
+                declaredValue: shipmentData.declaredValue ? Number(shipmentData.declaredValue) : null,
+                // Carrier
+                carrier: shipmentData.carrier,
+                price: Number(shipmentData.price),
+                deliveryTime: Number(shipmentData.deliveryTime),
+                // Content
+                contentDescription: shipmentData.contentDescription,
+                contentQuantity: Number(shipmentData.contentQuantity || 1),
+                // Metadata
+                trackingCode: shipmentData.trackingCode || null,
+                status: shipmentData.status || 'pending',
+                labelGenerated: 0,
+                declarationGenerated: 0
+            }
+        });
 
-        stmt.run(
-            id, userId, shipmentData.saleId || null,
-            shipmentData.senderName, shipmentData.senderAddress, shipmentData.senderCity, shipmentData.senderState, shipmentData.senderCep, shipmentData.senderCpfCnpj || null,
-            shipmentData.recipientName, shipmentData.recipientAddress, shipmentData.recipientCity, shipmentData.recipientState, shipmentData.recipientCep, shipmentData.recipientCpfCnpj || null,
-            shipmentData.weight, shipmentData.height, shipmentData.width, shipmentData.length, shipmentData.declaredValue || null,
-            shipmentData.carrier, shipmentData.price, shipmentData.deliveryTime,
-            shipmentData.contentDescription, shipmentData.contentQuantity || 1,
-            shipmentData.trackingCode || null, shipmentData.status || 'pending', 0, 0
-        );
-
-        res.status(201).json({ id, ...shipmentData });
+        res.status(201).json(shipment);
     } catch (error) {
         console.error('Error creating shipment:', error);
         res.status(500).json({ error: 'Failed to create shipment' });
@@ -49,18 +55,20 @@ export const create = (req: Request, res: Response) => {
 };
 
 // Listar envios do usuário
-export const list = (req: Request, res: Response) => {
+export const list = async (req: Request, res: Response) => {
     try {
         const userId = req.query.userId as string || '327aa8c1-7c26-41c2-95d7-b375c25eb896';
 
-        const shipments = db.prepare(`
-            SELECT * FROM Shipment 
-            WHERE userId = ? 
-            ORDER BY createdAt DESC
-        `).all(userId);
+        const shipments = await db.shipment.findMany({
+            where: { userId },
+            orderBy: { createdAt: 'desc' }
+        });
 
-        // Map sqlite 0/1 to boolean if needed, though frontend handles truthy usually. 
-        // Prisma maps 0/1 to booleans automatically. Let's replicate strict boolean for crucial flags.
+        // Prisma automatically returns booleans for Int fields mapped IF schema is Boolean, 
+        // BUT schema.prisma says: labelGenerated Int @default(0). 
+        // So Prisma returns number 0 or 1.
+        // We need to map to boolean for frontend compatibility manually if frontend expects strictly boolean.
+
         const formatted = shipments.map((s: any) => ({
             ...s,
             labelGenerated: !!s.labelGenerated,
@@ -75,11 +83,11 @@ export const list = (req: Request, res: Response) => {
 };
 
 // Buscar envio por ID
-export const getById = (req: Request, res: Response) => {
+export const getById = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
 
-        const shipment = db.prepare('SELECT * FROM Shipment WHERE id = ?').get(id) as any;
+        const shipment = await db.shipment.findUnique({ where: { id } });
 
         if (!shipment) {
             return res.status(404).json({ error: 'Shipment not found' });
@@ -97,113 +105,121 @@ export const getById = (req: Request, res: Response) => {
 };
 
 // Atualizar envio
-export const update = (req: Request, res: Response) => {
+export const update = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const data = req.body;
 
-        // Dynamic Update Query
-        const fields = Object.keys(data).filter(k => k !== 'id' && k !== 'createdAt');
-        if (fields.length === 0) return res.json({ message: 'No fields to update' });
+        // Removing special fields that shouldn't be updated directly blindly via body spread if unsafe,
+        // but original code allowed typical update. We rely on frontend sending correct fields.
 
-        const setClause = fields.map(f => `${f} = ?`).join(', ');
-        const values = fields.map(f => data[f]);
-
-        values.push(id); // For WHERE clause
-
-        const stmt = db.prepare(`UPDATE Shipment SET ${setClause}, updatedAt = datetime('now') WHERE id = ?`);
-        const result = stmt.run(...values);
-
-        if (result.changes === 0) return res.status(404).json({ error: 'Shipment not found' });
+        // We must separate id and createdAt from data if they exist to avoid errors.
+        const { id: _, createdAt, updatedAt, ...updateData } = data;
 
         // --- Cascade Update Logic for Tracking Code ---
-        if (data.trackingCode && data.trackingCode.length > 4) { // Basic validation
-            try {
-                // 1. Auto-update Shipment status to 'shipped' if not already
-                db.prepare("UPDATE Shipment SET status = 'shipped' WHERE id = ?").run(id);
+        // If tracking code is updated and valid (>4 chars), we trigger status updates.
+        // We use a transaction to ensure everything updates together.
 
-                // 2. Get Sale ID
-                const shipmentStr = db.prepare('SELECT saleId FROM Shipment WHERE id = ?').get(id) as any;
+        const triggerCascade = data.trackingCode && data.trackingCode.length > 4;
 
-                if (shipmentStr && shipmentStr.saleId) {
-                    // 3. Update Sale Status
-                    db.prepare("UPDATE Sale SET status = 'SHIPPED', updatedAt = datetime('now') WHERE id = ?").run(shipmentStr.saleId);
-
-                    // 4. Update Product Status
-                    const saleRow = db.prepare('SELECT productId FROM Sale WHERE id = ?').get(shipmentStr.saleId) as any;
-                    if (saleRow && saleRow.productId) {
-                        db.prepare("UPDATE Product SET status = 'Enviado' WHERE id = ?").run(saleRow.productId);
-                    }
-                    console.log('Cascade update successful for shipment:', id);
+        await db.$transaction(async (tx: any) => {
+            // 1. Update Shipment
+            const updatedShipment = await tx.shipment.update({
+                where: { id },
+                data: {
+                    ...updateData,
+                    status: triggerCascade ? 'shipped' : updateData.status // Auto-update to shipped if tracking added
                 }
-            } catch (cascadeError) {
-                console.error('Error in cascade update:', cascadeError);
-                // Don't fail the request, just log
+            });
+
+            if (triggerCascade && updatedShipment.saleId) {
+                // 2. Update Sale Status
+                await tx.sale.update({
+                    where: { id: updatedShipment.saleId },
+                    data: { status: 'SHIPPED' }
+                });
+
+                // 3. Update Product Status (Fetching Product via Sale relation would be cleaner but let's query Sale first or use relation update)
+                // Prisma supports nested writes but we are doing separate updates logic wise.
+
+                const sale = await tx.sale.findUnique({
+                    where: { id: updatedShipment.saleId },
+                    select: { productId: true }
+                });
+
+                if (sale && sale.productId) {
+                    await tx.product.update({
+                        where: { id: sale.productId },
+                        data: { status: 'Enviado' }
+                    });
+                }
             }
-        }
-        // ----------------------------------------------
+        });
 
         res.json({ message: 'Shipment updated', ...data });
-    } catch (error) {
+    } catch (error: any) {
+        if (error.code === 'P2025') return res.status(404).json({ error: 'Shipment not found' });
         console.error('Error updating shipment:', error);
         res.status(500).json({ error: 'Failed to update shipment' });
     }
 };
 
 // Deletar envio
-export const deleteShipment = (req: Request, res: Response) => {
+export const deleteShipment = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
 
-        const stmt = db.prepare('DELETE FROM Shipment WHERE id = ?');
-        const result = stmt.run(id);
-
-        if (result.changes === 0) return res.status(404).json({ error: 'Shipment not found' });
+        await db.shipment.delete({
+            where: { id }
+        });
 
         res.status(204).send();
-    } catch (error) {
+    } catch (error: any) {
+        if (error.code === 'P2025') return res.status(404).json({ error: 'Shipment not found' });
         console.error('Error deleting shipment:', error);
         res.status(500).json({ error: 'Failed to delete shipment' });
     }
 };
 
 // Marcar documento como gerado
-export const markDocumentGenerated = (req: Request, res: Response) => {
+export const markDocumentGenerated = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const { documentType } = req.body; // 'label' | 'declaration' | 'both'
 
-        let updateSql = '';
+        let updateData: any = {};
         if (documentType === 'label') {
-            updateSql = 'labelGenerated = 1';
+            updateData.labelGenerated = 1;
         } else if (documentType === 'declaration') {
-            updateSql = 'declarationGenerated = 1';
+            updateData.declarationGenerated = 1;
         } else if (documentType === 'both') {
-            updateSql = 'labelGenerated = 1, declarationGenerated = 1';
+            updateData.labelGenerated = 1;
+            updateData.declarationGenerated = 1;
         } else {
             return res.status(400).json({ error: 'Invalid document type' });
         }
 
-        const stmt = db.prepare(`UPDATE Shipment SET ${updateSql}, updatedAt = datetime('now') WHERE id = ?`);
-        const result = stmt.run(id);
-
-        if (result.changes === 0) return res.status(404).json({ error: 'Shipment not found' });
+        await db.shipment.update({
+            where: { id },
+            data: updateData
+        });
 
         res.json({ message: 'Document marked as generated' });
-    } catch (error) {
+    } catch (error: any) {
+        if (error.code === 'P2025') return res.status(404).json({ error: 'Shipment not found' });
         console.error('Error marking document:', error);
         res.status(500).json({ error: 'Failed to mark document' });
     }
 };
 
 // Validar e atualizar status do envio
-export const updateShipmentStatus = (req: Request, res: Response) => {
+export const updateShipmentStatus = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const { status } = req.body;
 
         if (status === 'shipped') {
-            const shipment = db.prepare('SELECT * FROM Shipment WHERE id = ?').get(id) as any;
+            const shipment = await db.shipment.findUnique({ where: { id } });
 
             if (!shipment) return res.status(404).json({ error: 'Shipment not found' });
 
@@ -214,13 +230,14 @@ export const updateShipmentStatus = (req: Request, res: Response) => {
             }
         }
 
-        const stmt = db.prepare(`UPDATE Shipment SET status = ?, updatedAt = datetime('now') WHERE id = ?`);
-        const result = stmt.run(status, id);
-
-        if (result.changes === 0) return res.status(404).json({ error: 'Shipment not found' });
+        await db.shipment.update({
+            where: { id },
+            data: { status }
+        });
 
         res.json({ message: 'Status updated' });
-    } catch (error) {
+    } catch (error: any) {
+        if (error.code === 'P2025') return res.status(404).json({ error: 'Shipment not found' });
         console.error('Error updating status:', error);
         res.status(500).json({ error: 'Failed to update status' });
     }

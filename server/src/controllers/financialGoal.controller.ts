@@ -4,10 +4,13 @@ import { v4 as uuidv4 } from 'uuid';
 
 const MOCK_USER_ID = '327aa8c1-7c26-41c2-95d7-b375c25eb896';
 
-export const listGoals = (req: Request, res: Response) => {
+export const listGoals = async (req: Request, res: Response) => {
     try {
         const userId = MOCK_USER_ID;
-        const goals = db.prepare('SELECT * FROM FinancialGoal WHERE userId = ? ORDER BY createdAt DESC').all(userId);
+        const goals = await db.financialGoal.findMany({
+            where: { userId },
+            orderBy: { createdAt: 'desc' }
+        });
         res.json(goals);
     } catch (error) {
         console.error('Failed to fetch goals:', error);
@@ -15,117 +18,129 @@ export const listGoals = (req: Request, res: Response) => {
     }
 };
 
-export const createGoal = (req: Request, res: Response) => {
+export const createGoal = async (req: Request, res: Response) => {
     try {
         const { name, targetAmount, deadline, color, icon } = req.body;
         const userId = MOCK_USER_ID;
-        const id = uuidv4();
-        const now = new Date().toISOString();
 
-        const stmt = db.prepare(`
-            INSERT INTO FinancialGoal (id, userId, name, targetAmount, currentAmount, deadline, color, icon, status, createdAt, updatedAt)
-            VALUES (?, ?, ?, ?, 0, ?, ?, ?, 'ACTIVE', ?, ?)
-        `);
-
-        stmt.run(id, userId, name, targetAmount, deadline || null, color, icon, now, now);
-
-        res.json({
-            id, userId, name, targetAmount, currentAmount: 0, deadline, color, icon, status: 'ACTIVE', createdAt: now, updatedAt: now
+        const goal = await db.financialGoal.create({
+            data: {
+                userId,
+                name,
+                targetAmount,
+                currentAmount: 0,
+                deadline: deadline ? new Date(deadline) : null,
+                color,
+                icon,
+                status: 'ACTIVE'
+            }
         });
+
+        res.json(goal);
     } catch (error: any) {
         console.error('Failed to create goal:', error);
         res.status(500).json({ error: `Failed to create goal: ${error.message}` });
     }
 };
 
-export const updateGoalAmount = (req: Request, res: Response) => {
+export const updateGoalAmount = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const { amount } = req.body; // Can be positive (add) or negative (remove)
-        const now = new Date().toISOString();
 
-        const goal: any = db.prepare('SELECT * FROM FinancialGoal WHERE id = ?').get(id);
+        const goal = await db.financialGoal.findUnique({ where: { id } });
         if (!goal) return res.status(404).json({ error: 'Goal not found' });
 
         const newAmount = Number(goal.currentAmount) + Number(amount);
         const status = newAmount >= Number(goal.targetAmount) ? 'COMPLETED' : 'ACTIVE';
 
-        const stmt = db.prepare(`
-            UPDATE FinancialGoal 
-            SET currentAmount = ?, status = ?, updatedAt = ? 
-            WHERE id = ?
-        `);
+        const updatedGoal = await db.financialGoal.update({
+            where: { id },
+            data: {
+                currentAmount: newAmount,
+                status
+            }
+        });
 
-        stmt.run(newAmount, status, now, id);
-
-        res.json({ ...goal, currentAmount: newAmount, status, updatedAt: now });
+        res.json(updatedGoal);
     } catch (error: any) {
         console.error('Failed to update goal:', error);
         res.status(500).json({ error: `Failed to update goal: ${error.message}` });
     }
 };
 
-export const addFundsWithTransaction = (req: Request, res: Response) => {
+export const addFundsWithTransaction = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const { amount, createTransaction } = req.body;
-        const now = new Date().toISOString();
         const userId = MOCK_USER_ID;
 
-        const result = db.transaction(() => {
+        const result = await db.$transaction(async (tx) => {
             // 1. Get Goal
-            const goal: any = db.prepare('SELECT * FROM FinancialGoal WHERE id = ?').get(id);
+            const goal = await tx.financialGoal.findUnique({ where: { id } });
             if (!goal) throw new Error('Goal not found');
 
             // 2. Update Goal Amount
             const newAmount = Number(goal.currentAmount) + Number(amount);
             const status = newAmount >= Number(goal.targetAmount) ? 'COMPLETED' : 'ACTIVE';
 
-            db.prepare(`
-                UPDATE FinancialGoal 
-                SET currentAmount = ?, status = ?, updatedAt = ? 
-                WHERE id = ?
-            `).run(newAmount, status, now, id);
+            const updatedGoal = await tx.financialGoal.update({
+                where: { id },
+                data: {
+                    currentAmount: newAmount,
+                    status
+                }
+            });
 
             // 3. Create Transaction if requested
             if (createTransaction) {
-                const transactionId = uuidv4();
-                db.prepare(`
-                    INSERT INTO FinancialTransaction (id, userId, type, amount, category, date, description, name, relatedId, relatedType, createdAt, updatedAt)
-                    VALUES (?, ?, 'EXPENSE', ?, 'Investimento/Meta', ?, ?, ?, ?, 'GOAL_FUNDING', ?, ?)
-                `).run(transactionId, userId, amount, now, `Aporte na Meta: ${goal.name}`, `Aporte: ${goal.name}`, id, now, now);
+                await tx.financialTransaction.create({
+                    data: {
+                        userId,
+                        type: 'EXPENSE',
+                        amount: Number(amount),
+                        category: 'Investimento/Meta',
+                        date: new Date(),
+                        description: `Aporte na Meta: ${goal.name}`,
+                        name: `Aporte: ${goal.name}`,
+                        relatedId: id,
+                        relatedType: 'GOAL_FUNDING',
+                        status: 'COMPLETED'
+                    }
+                });
             }
 
-            return { ...goal, currentAmount: newAmount, status, updatedAt: now };
-        })();
+            return updatedGoal;
+        });
 
         res.json(result);
     } catch (error: any) {
+        if (error.message === 'Goal not found') return res.status(404).json({ error: 'Goal not found' });
         console.error('Failed to add funds:', error);
         res.status(500).json({ error: error.message });
     }
 };
 
-export const deleteGoal = (req: Request, res: Response) => {
+export const deleteGoal = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
 
-        const deleteTransaction = db.transaction(() => {
+        await db.$transaction(async (tx) => {
             // 1. Delete Linked Transactions
-            db.prepare('DELETE FROM FinancialTransaction WHERE relatedId = ? AND relatedType = ?')
-                .run(id, 'GOAL_FUNDING');
+            await tx.financialTransaction.deleteMany({
+                where: {
+                    relatedId: id,
+                    relatedType: 'GOAL_FUNDING'
+                }
+            });
 
             // 2. Delete Goal
-            const result = db.prepare('DELETE FROM FinancialGoal WHERE id = ?').run(id);
-            return result;
+            await tx.financialGoal.delete({ where: { id } });
         });
-
-        const result = deleteTransaction();
-
-        if (result.changes === 0) return res.status(404).json({ error: 'Goal not found' });
 
         res.json({ message: 'Goal deleted' });
     } catch (error: any) {
+        if (error.code === 'P2025') return res.status(404).json({ error: 'Goal not found' });
         console.error('Failed to delete goal:', error);
         res.status(500).json({ error: `Failed to delete goal: ${error.message}` });
     }

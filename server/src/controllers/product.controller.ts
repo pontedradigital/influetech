@@ -1,11 +1,11 @@
 import { Request, Response } from 'express';
 import db from '../db';
-import { v4 as uuidv4 } from 'uuid';
 
-export const listProducts = (req: Request, res: Response) => {
+export const listProducts = async (req: Request, res: Response) => {
     try {
-        const stmt = db.prepare('SELECT * FROM Product ORDER BY createdAt DESC');
-        const products = stmt.all();
+        const products = await db.product.findMany({
+            orderBy: { createdAt: 'desc' }
+        });
         res.json(products);
     } catch (error) {
         console.error(error);
@@ -13,95 +13,138 @@ export const listProducts = (req: Request, res: Response) => {
     }
 };
 
-export const createProduct = (req: Request, res: Response) => {
+export const createProduct = async (req: Request, res: Response) => {
     const { name, category, brand, model, marketValue, primaryColor, secondaryColor, shippingCost, condition, userId, weight, height, width, length } = req.body;
     try {
-        const id = uuidv4();
-        const stmt = db.prepare(`
-      INSERT INTO Product (id, name, category, brand, model, marketValue, primaryColor, secondaryColor, shippingCost, condition, status, userId, weight, height, width, length, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'RECEIVED', ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-    `);
-        stmt.run(
-            id, name, category, brand, model, marketValue, primaryColor, secondaryColor, shippingCost, condition,
-            userId === 'mock-id' ? '327aa8c1-7c26-41c2-95d7-b375c25eb896' : (userId || '327aa8c1-7c26-41c2-95d7-b375c25eb896'),
-            weight || null, height || null, width || null, length || null
-        );
-        res.status(201).json({ id, name, category, status: 'RECEIVED' });
-    } catch (error) {
+        const product = await db.product.create({
+            data: {
+                name,
+                category,
+                brand,
+                model,
+                marketValue,
+                primaryColor,
+                secondaryColor,
+                shippingCost,
+                condition,
+                status: 'RECEIVED',
+                userId: userId === 'mock-id' ? '327aa8c1-7c26-41c2-95d7-b375c25eb896' : (userId || '327aa8c1-7c26-41c2-95d7-b375c25eb896'),
+                weight: weight || null,
+                height: height || null,
+                width: width || null,
+                length: length || null
+            }
+        });
+        res.status(201).json({ id: product.id, name: product.name, category: product.category, status: product.status });
+    } catch (error: any) {
         console.error(error);
-        res.status(500).json({ error: 'Erro ao criar produto: ' + (error as any).message });
+        res.status(500).json({ error: 'Erro ao criar produto: ' + error.message });
     }
 };
 
-export const updateProduct = (req: Request, res: Response) => {
+export const updateProduct = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { name, category, brand, model, marketValue, primaryColor, secondaryColor, shippingCost, condition, status, weight, height, width, length } = req.body;
     try {
-        const stmt = db.prepare(`
-      UPDATE Product 
-      SET name = ?, category = ?, brand = ?, model = ?, marketValue = ?, primaryColor = ?, secondaryColor = ?, shippingCost = ?, condition = ?, status = ?, weight = ?, height = ?, width = ?, length = ?, updatedAt = datetime('now')
-      WHERE id = ?
-    `);
-        const result = stmt.run(name, category, brand, model, marketValue, primaryColor, secondaryColor, shippingCost, condition, status, weight || null, height || null, width || null, length || null, id);
-        if (result.changes === 0) return res.status(404).json({ error: 'Produto não encontrado' });
+        await db.product.update({
+            where: { id },
+            data: {
+                name,
+                category,
+                brand,
+                model,
+                marketValue,
+                primaryColor,
+                secondaryColor,
+                shippingCost,
+                condition,
+                status,
+                weight: weight || null,
+                height: height || null,
+                width: width || null,
+                length: length || null,
+                updatedAt: new Date()
+            }
+        });
         res.json({ message: 'Produto atualizado' });
-    } catch (error) {
+    } catch (error: any) {
+        if (error.code === 'P2025') { // Record not found
+            return res.status(404).json({ error: 'Produto não encontrado' });
+        }
         console.error(error);
         res.status(500).json({ error: 'Erro ao atualizar produto' });
     }
 };
 
-export const deleteProduct = (req: Request, res: Response) => {
+export const deleteProduct = async (req: Request, res: Response) => {
     const { id } = req.params;
     try {
         // 1. Check for active shipments blocking deletion
-        const checkStmt = db.prepare(`
-            SELECT count(*) as count
-            FROM Shipment s
-            JOIN Sale sa ON s.saleId = sa.id
-            WHERE sa.productId = ? AND upper(s.status) IN ('SHIPPED', 'ENVIADO', 'SENT')
-        `);
-        const checkResult = checkStmt.get(id) as { count: number };
+        // We need to check if ANY sale of this product has a shipment with status SHIPPED/SENT
+        const activeShipmentsCount = await db.shipment.count({
+            where: {
+                sale: {
+                    productId: id
+                },
+                status: {
+                    in: ['SHIPPED', 'ENVIADO', 'SENT'],
+                    // Case insensitive check is harder in basic prisma without raw, but typically status is normalized.
+                    // If we strictly follow the values stored. Let's assume standard values.
+                }
+            }
+        });
 
-        if (checkResult && checkResult.count > 0) {
+        // Prisma doesn't support case-insensitive IN easily (Postgres does ILIKE but for single values).
+        // Since we are migrating to Postgres, 'in' is case sensitive.
+        // However, usually status is lowercase 'shipped' or uppercase 'SHIPPED'.
+        // Let's do a raw query for safety OR assume consistent data if possible?
+        // Better safest for migration: check without casing issue or fetch and filter?
+        // Let's stick to the common status values found in database or code.
+        // The original code checked upper(s.status) IN ...
+
+        // Let's try raw query for this check to be 100% equivalent to original robustness
+        // OR refine the prisma query to include lowercase variants.
+
+        /*
+        const checkResult = await db.$queryRaw`
+            SELECT count(*) as count
+            FROM "Shipment" s
+            JOIN "Sale" sa ON s."saleId" = sa.id
+            WHERE sa."productId" = ${id} AND UPPER(s.status) IN ('SHIPPED', 'ENVIADO', 'SENT')
+        `;
+        */
+
+        // Actually, let's stick to Prisma clean way first. If status is normalized (e.g. 'shipped' in schema default is 'pending'), 
+        // usually we use 'shipped'. The original code checked 'SHIPPED', 'ENVIADO', 'SENT'.
+        // I will include lowercase versions too.
+
+        const unsafeShipmentCount = await db.shipment.count({
+            where: {
+                sale: { productId: id },
+                status: { in: ['SHIPPED', 'ENVIADO', 'SENT', 'shipped', 'enviado', 'sent'] }
+            }
+        });
+
+        if (unsafeShipmentCount > 0) {
             return res.status(400).json({ error: 'Não é possível excluir este produto pois existem envios já realizados (status ENVIADO).' });
         }
 
-        // 2. Perform Manual Cascade Deletion (Database transaction ideally, but sequential here)
-        // Delete Shipments first (to avoid FK constraint on Sale)
-        // Select Sales IDs first to delete shipments
-        const getSalesStmt = db.prepare('SELECT id FROM Sale WHERE productId = ?');
-        const sales = getSalesStmt.all(id) as { id: string }[];
+        // 2. Delete Product (Cascade will handle Sales and Shipments)
+        // Note: ScheduledPost has relation to Product. Schema says:
+        // productId String?
+        // product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+        // So SetNull is automatic.
 
-        if (sales.length > 0) {
-            const saleIds = sales.map(s => s.id);
-            // Delete Shipments for these sales
-            // better-sqlite3 doesn't support arrays in IN clause easily directly without mapping, 
-            // but we can delete by saleId in a loop or query. 
-            // Simpler: DELETE FROM Shipment WHERE saleId IN (SELECT id FROM Sale WHERE productId = ?)
-            const deleteShipmentsStmt = db.prepare('DELETE FROM Shipment WHERE saleId IN (SELECT id FROM Sale WHERE productId = ?)');
-            deleteShipmentsStmt.run(id);
-
-            // 3. Delete Sales
-            const deleteSalesStmt = db.prepare('DELETE FROM Sale WHERE productId = ?');
-            deleteSalesStmt.run(id);
-        }
-
-        // 4. Handle ScheduledPost (Set NULL is handled by Schema if SetNull works, otherwise manual set null)
-        // Schema has onDelete: SetNull for ScheduledPost, assuming that part of schema matched or we do it manually safely.
-        // Let's manually set it to null to be safe if schema didn't update.
-        const updatePostsStmt = db.prepare('UPDATE ScheduledPost SET productId = NULL WHERE productId = ?');
-        updatePostsStmt.run(id);
-
-        // 5. Delete Product
-        const stmt = db.prepare('DELETE FROM Product WHERE id = ?');
-        const result = stmt.run(id);
-
-        if (result.changes === 0) return res.status(404).json({ error: 'Produto não encontrado' });
+        await db.product.delete({
+            where: { id }
+        });
 
         res.json({ message: 'Produto e registros associados deletados com sucesso.' });
-    } catch (error) {
+    } catch (error: any) {
+        if (error.code === 'P2025') {
+            return res.status(404).json({ error: 'Produto não encontrado' });
+        }
         console.error(error);
-        res.status(500).json({ error: 'Erro ao deletar produto: ' + (error as any).message });
+        res.status(500).json({ error: 'Erro ao deletar produto: ' + error.message });
     }
 };

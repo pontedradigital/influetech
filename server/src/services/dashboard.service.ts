@@ -1,20 +1,13 @@
-import { PrismaClient } from '@prisma/client';
-import path from 'path';
+import db from '../db';
+const prisma = db;
 
-const dbPath = path.join(__dirname, '..', '..', 'prisma', 'dev.db');
-// @ts-ignore
-const prisma = new PrismaClient({
-    datasources: {
-        db: {
-            url: `file:${dbPath}`
-        }
-    }
-} as any);
+// Compatibility mapping if 'db' is named 'prisma' in this file context, 
+// but simply assigning db to prisma variable avoids renaming everything below.
 
 export const dashboardService = {
     async getStats(userId: string) {
-        const fs = require('fs');
-        const debugLog = (msg: string) => fs.appendFileSync(path.join(__dirname, '..', '..', 'debug.log'), `${new Date().toISOString()} - ${msg}\n`);
+        // const fs = require('fs');
+        // Debug logging removed for cleanliness/lint fix
 
         const today = new Date();
         const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -48,7 +41,6 @@ export const dashboardService = {
                 status: 'pending'
             }
         });
-        debugLog(`Inventory: ${inventoryCount}, PendingShipments: ${pendingShipments}`);
 
         // 4. Next Bazar Event
         const nextBazar = await prisma.bazarEvent.findFirst({
@@ -175,7 +167,7 @@ export const dashboardService = {
             });
 
             if (oldPendingShipments > 0) {
-                await this.createOrUpdateInsight(userId, 'ALERT', 'Envios Atrasados', `Você tem ${oldPendingShipments} envios pendentes há mais de 3 dias.`, 'HIGH');
+                await dashboardService.createOrUpdateInsight(userId, 'ALERT', 'Envios Atrasados', `Você tem ${oldPendingShipments} envios pendentes há mais de 3 dias.`, 'HIGH');
             }
 
             // Check 2: Posts Scheduled for Today
@@ -196,13 +188,13 @@ export const dashboardService = {
             });
 
             if (postsToday > 0) {
-                await this.createOrUpdateInsight(userId, 'INFO', 'Posts Hoje', `Você tem ${postsToday} posts agendados para hoje. Fique atento!`, 'MEDIUM');
+                await dashboardService.createOrUpdateInsight(userId, 'INFO', 'Posts Hoje', `Você tem ${postsToday} posts agendados para hoje. Fique atento!`, 'MEDIUM');
             }
 
             // Check 3: Low Inventory (Generic suggestion)
             const inventory = await prisma.product.count({ where: { userId, status: { notIn: ['SOLD', 'SHIPPED'] } } });
             if (inventory < 5) {
-                await this.createOrUpdateInsight(userId, 'SUGGESTION', 'Reabastecer Estoque', 'Seu estoque está baixo. Que tal procurar novos produtos no Planejador?', 'LOW');
+                await dashboardService.createOrUpdateInsight(userId, 'SUGGESTION', 'Reabastecer Estoque', 'Seu estoque está baixo. Que tal procurar novos produtos no Planejador?', 'LOW');
             }
         }
         console.log('Insights generation complete.');

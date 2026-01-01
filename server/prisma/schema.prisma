@@ -64,7 +64,51 @@ model User {
   financialGoals    FinancialGoal[]
   recurringExpenses RecurringExpense[]
   mediaKitBrands    MediaKitBrand[]
+  
+  // Community
+  posts         CommunityPost[]
+  postComments  PostComment[]
+  postReactions PostReaction[]
 }
+
+model CommunityPost {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  content       String
+  likesCount    Int      @default(0)
+  hypesCount    Int      @default(0)
+  commentsCount Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  comments      PostComment[]
+  reactions     PostReaction[]
+}
+
+model PostComment {
+  id        String        @id @default(uuid())
+  postId    String
+  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User          @relation(fields: [userId], references: [id])
+  content   String
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model PostReaction {
+  id        String        @id @default(uuid())
+  postId    String
+  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User          @relation(fields: [userId], references: [id])
+  type      String        // LIKE, HYPE
+  createdAt DateTime      @default(now())
+
+  @@unique([postId, userId, type])
+}
+
 
 model Opportunity {
   id          String   @id @default(uuid())
@@ -397,4 +441,49 @@ model MediaKitBrand {
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model TrendingProduct {
+  id                Int            @id @default(autoincrement())
+  productName       String         @map("product_name")
+  category          String
+  platform          String
+  priceMin          Decimal        @map("price_min")
+  priceMax          Decimal?       @map("price_max")
+  currency          String
+  searchVolume      Int            @map("search_volume")
+  growthPercentage  Float          @map("growth_percentage")
+  sentimentScore    Float          @map("sentiment_score")
+  hypeLevel         String         @map("hype_level")
+  imageUrl          String         @map("image_url")
+  productUrl        String         @map("product_url")
+  keywords          String         // Storing JSON string
+  description       String
+  createdAt         DateTime       @default(now()) @map("created_at")
+  lastUpdated       DateTime       @default(now()) @map("last_updated")
+  history           TrendHistory[]
+
+  @@map("trending_products")
+}
+
+model TrendHistory {
+  id               Int             @id @default(autoincrement())
+  productId        Int             @map("product_id")
+  product          TrendingProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  searchVolume     Int             @map("search_volume")
+  growthPercentage Float           @map("growth_percentage")
+  sentimentScore   Float           @map("sentiment_score")
+  recordedAt       DateTime        @default(now()) @map("recorded_at")
+
+  @@map("trend_history")
+}
+
+model ProductCategory {
+  id             Int     @id @default(autoincrement())
+  name           String  @unique
+  icon           String
+  description    String
+  parentCategory String? @map("parent_category")
+
+  @@map("product_categories")
 }

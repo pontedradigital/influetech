@@ -32,8 +32,8 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiUrl}/api/auth/login`, {
+      // Use relative path - Vercel handles rewrite to backend, Vite proxy handles dev
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

@@ -1,15 +1,13 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import db from '../db';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-
-const prisma = new PrismaClient();
 
 export const login = async (req: Request, res: Response): Promise<void> => {
     const { email, password } = req.body;
 
     try {
-        const user = await prisma.user.findUnique({
+        const user = await db.user.findUnique({
             where: { email }
         });
 

@@ -1,8 +1,7 @@
-
 import { Request, Response } from 'express';
 import db from '../db';
 
-export const updateProfile = (req: Request, res: Response) => {
+export const updateProfile = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const {
@@ -18,84 +17,54 @@ export const updateProfile = (req: Request, res: Response) => {
             socialWhatsapp
         } = req.body;
 
-        // First check if user exists
-        const checkStmt = db.prepare('SELECT id FROM User WHERE id = ?');
-        const user = checkStmt.get(id);
+        // Check if user exists
+        const existingUser = await db.user.findUnique({ where: { id } });
 
-        if (!user) {
+        if (!existingUser) {
             return res.status(404).json({ error: 'Usuário não encontrado' });
         }
 
-        // Helper to handle undefined values for update (skip update if undefined)
-        // Since sqlite3 needs explicit SQL, we'll construct the SET clause dynamically or just update everything.
-        // For simplicity and to match the other controller style, I'll update all fields, 
-        // assuming the frontend sends the current values for fields that didn't change, 
-        // OR better: fetch current values first. 
-        // Actually, looking at company controller, it updates all fields. 
-        // Let's assume the frontend sends everything or we use COALESCE in SQL.
+        // Prepare data for update.
+        // Prisma updates only what is provided in 'data'.
+        // We use undefined for fields not present in req.body so Prisma ignores them.
+        // Since sqlite had explicit COALESCE logic, effectively keeping old value if new is null/undefined.
+        // Prisma does this automatically if we only pass defined fields.
+        // However, we need to handle the isPublicProfile conversion (boolean <-> int) if schema still uses Int.
+        // Checking schema: isPublicProfile Int @default(0)
 
-        // But COALESCE(?, field) works only if we pass NULL for missing values.
+        const updateData: any = {
+            name: name ?? undefined,
+            isPublicProfile: isPublicProfile !== undefined ? (isPublicProfile ? 1 : 0) : undefined,
+            bio: bio ?? undefined,
+            niche: niche ?? undefined,
+            location: location ?? undefined,
+            socialInstagram: socialInstagram ?? undefined,
+            socialLinkedin: socialLinkedin ?? undefined,
+            socialYoutube: socialYoutube ?? undefined,
+            socialTikTok: socialTikTok ?? undefined,
+            socialWhatsapp: socialWhatsapp ?? undefined,
+            cep: req.body.cep ?? undefined,
+            street: req.body.street ?? undefined,
+            number: req.body.number ?? undefined,
+            complement: req.body.complement ?? undefined,
+            neighborhood: req.body.neighborhood ?? undefined,
+            city: req.body.city ?? undefined,
+            state: req.body.state ?? undefined,
+            cpfCnpj: req.body.cpfCnpj ?? undefined,
+        };
 
-        const stmt = db.prepare(`
-            UPDATE User 
-            SET 
-                name = COALESCE(?, name),
-                isPublicProfile = COALESCE(?, isPublicProfile),
-                bio = COALESCE(?, bio),
-                niche = COALESCE(?, niche),
-                location = COALESCE(?, location),
-                socialInstagram = COALESCE(?, socialInstagram),
-                socialLinkedin = COALESCE(?, socialLinkedin),
-                socialYoutube = COALESCE(?, socialYoutube),
-                socialTikTok = COALESCE(?, socialTikTok),
-                socialWhatsapp = COALESCE(?, socialWhatsapp),
-                cep = COALESCE(?, cep),
-                street = COALESCE(?, street),
-                number = COALESCE(?, number),
-                complement = COALESCE(?, complement),
-                neighborhood = COALESCE(?, neighborhood),
-                city = COALESCE(?, city),
-                state = COALESCE(?, state),
-                cpfCnpj = COALESCE(?, cpfCnpj),
-                updatedAt = datetime('now')
-            WHERE id = ?
-        `);
+        const updatedUser = await db.user.update({
+            where: { id },
+            data: updateData,
+            select: {
+                id: true, name: true, email: true, plan: true, isPublicProfile: true, bio: true, niche: true, location: true,
+                socialInstagram: true, socialLinkedin: true, socialYoutube: true, socialTikTok: true, socialWhatsapp: true
+            }
+        });
 
-        stmt.run(
-            name,
-            isPublicProfile === undefined ? null : (isPublicProfile ? 1 : 0), // SQLite stores booleans as 1/0
-            bio,
-            niche,
-            location,
-            socialInstagram,
-            socialLinkedin,
-            socialYoutube,
-            socialTikTok,
-            socialWhatsapp,
-            req.body.cep,
-            req.body.street,
-            req.body.number,
-            req.body.complement,
-            req.body.neighborhood,
-            req.body.city,
-            req.body.state,
-            req.body.cpfCnpj,
-            id
-        );
-
-        // Fetch updated user to return
-        const getStmt = db.prepare(`
-            SELECT 
-                id, name, email, plan, isPublicProfile, bio, niche, location, 
-                socialInstagram, socialLinkedin, socialYoutube, socialTikTok, socialWhatsapp 
-            FROM User WHERE id = ?
-        `);
-        const updatedUserRaw: any = getStmt.get(id);
-
-        // Convert 1/0 back to boolean for isPublicProfile
         const result = {
-            ...updatedUserRaw,
-            isPublicProfile: Boolean(updatedUserRaw.isPublicProfile)
+            ...updatedUser,
+            isPublicProfile: Boolean(updatedUser.isPublicProfile)
         };
 
         res.json(result);
@@ -105,23 +74,22 @@ export const updateProfile = (req: Request, res: Response) => {
     }
 };
 
-export const getUser = (req: Request, res: Response) => {
+export const getUser = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const stmt = db.prepare(`
-            SELECT 
-                id, name, email, plan, isPublicProfile, bio, niche, location, 
-                socialInstagram, socialLinkedin, socialYoutube, socialTikTok, socialWhatsapp,
-                cep, street, number, complement, neighborhood, city, state, cpfCnpj
-            FROM User WHERE id = ?
-        `);
-        const user: any = stmt.get(id);
+        const user = await db.user.findUnique({
+            where: { id },
+            select: {
+                id: true, name: true, email: true, plan: true, isPublicProfile: true, bio: true, niche: true, location: true,
+                socialInstagram: true, socialLinkedin: true, socialYoutube: true, socialTikTok: true, socialWhatsapp: true,
+                cep: true, street: true, number: true, complement: true, neighborhood: true, city: true, state: true, cpfCnpj: true
+            }
+        });
 
         if (!user) {
             return res.status(404).json({ error: 'Usuário não encontrado' });
         }
 
-        // Convert 1/0 back to boolean
         const result = {
             ...user,
             isPublicProfile: Boolean(user.isPublicProfile)
@@ -134,41 +102,40 @@ export const getUser = (req: Request, res: Response) => {
     }
 };
 
-export const getPublicUsers = (req: Request, res: Response) => {
+export const getPublicUsers = async (req: Request, res: Response) => {
     try {
         const { search, niche, location } = req.query;
 
-        let query = `
-            SELECT 
-                id, name, plan, bio, niche, location, 
-                socialInstagram, socialLinkedin, socialYoutube, socialTikTok, socialWhatsapp,
-                createdAt
-            FROM User 
-            WHERE isPublicProfile = 1 AND active = 1
-        `;
-
-        const params: any[] = [];
+        const where: any = {
+            isPublicProfile: 1,
+            active: 1
+        };
 
         if (search) {
-            query += ` AND (name LIKE ? OR bio LIKE ? OR niche LIKE ?)`;
-            const searchPattern = `%${search}%`;
-            params.push(searchPattern, searchPattern, searchPattern);
+            where.OR = [
+                { name: { contains: String(search), mode: 'insensitive' } },
+                { bio: { contains: String(search), mode: 'insensitive' } },
+                { niche: { contains: String(search), mode: 'insensitive' } }
+            ];
         }
 
         if (niche) {
-            query += ` AND niche LIKE ?`;
-            params.push(`%${niche}%`);
+            where.niche = { contains: String(niche), mode: 'insensitive' };
         }
 
         if (location) {
-            query += ` AND location LIKE ?`;
-            params.push(`%${location}%`);
+            where.location = { contains: String(location), mode: 'insensitive' };
         }
 
-        query += ` ORDER BY createdAt DESC`;
-
-        const stmt = db.prepare(query);
-        const users = stmt.all(...params);
+        const users = await db.user.findMany({
+            where,
+            select: {
+                id: true, name: true, plan: true, bio: true, niche: true, location: true,
+                socialInstagram: true, socialLinkedin: true, socialYoutube: true, socialTikTok: true, socialWhatsapp: true,
+                createdAt: true
+            },
+            orderBy: { createdAt: 'desc' }
+        });
 
         res.json(users);
     } catch (error: any) {
@@ -177,27 +144,29 @@ export const getPublicUsers = (req: Request, res: Response) => {
     }
 };
 
-export const toggleLike = (req: Request, res: Response) => {
+export const toggleLike = async (req: Request, res: Response) => {
     const { fromUserId, toUserId } = req.body;
 
     try {
         // Check if like exists
-        const checkStmt = db.prepare('SELECT id FROM ProfileLike WHERE fromUserId = ? AND toUserId = ?');
-        const existingLike = checkStmt.get(fromUserId, toUserId);
+        const existingLike = await db.profileLike.findFirst({
+            where: { fromUserId, toUserId }
+        });
 
         if (existingLike) {
             // Remove like (Unlike)
-            const deleteStmt = db.prepare('DELETE FROM ProfileLike WHERE fromUserId = ? AND toUserId = ?');
-            deleteStmt.run(fromUserId, toUserId);
+            await db.profileLike.delete({
+                where: { id: existingLike.id }
+            });
             res.json({ liked: false });
         } else {
             // Add like
-            const id = require('uuid').v4(); // We need uuid here, ensure it's imported or require it
-            const insertStmt = db.prepare(`
-                INSERT INTO ProfileLike (id, fromUserId, toUserId, createdAt)
-                VALUES (?, ?, ?, datetime('now'))
-            `);
-            insertStmt.run(id, fromUserId, toUserId);
+            await db.profileLike.create({
+                data: {
+                    fromUserId,
+                    toUserId
+                }
+            });
             res.json({ liked: true });
         }
     } catch (error: any) {
@@ -206,20 +175,20 @@ export const toggleLike = (req: Request, res: Response) => {
     }
 };
 
-export const getProfileStats = (req: Request, res: Response) => {
+export const getProfileStats = async (req: Request, res: Response) => {
     const { id } = req.params;
     try {
-        // Count likes received
-        const likeStmt = db.prepare('SELECT COUNT(*) as count FROM ProfileLike WHERE toUserId = ?');
-        const likeCount = likeStmt.get(id) as { count: number };
+        const likesReceived = await db.profileLike.count({
+            where: { toUserId: id }
+        });
 
-        // Count opportunities
-        const oppStmt = db.prepare('SELECT COUNT(*) as count FROM Opportunity WHERE userId = ?');
-        const oppCount = oppStmt.get(id) as { count: number };
+        const opportunitiesPosted = await db.opportunity.count({
+            where: { userId: id }
+        });
 
         res.json({
-            likesReceived: likeCount.count,
-            opportunitiesPosted: oppCount.count
+            likesReceived,
+            opportunitiesPosted
         });
     } catch (error: any) {
         console.error('Error getting stats:', error);

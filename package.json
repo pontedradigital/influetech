@@ -6,8 +6,7 @@
   "scripts": {
     "dev": "concurrently -n \"FE,BE\" -c \"cyan,magenta\" \"vite\" \"npm run dev --prefix server\"",
     "build": "vite build",
-    "preview": "vite preview",
-    "postinstall": "npx prisma generate --schema=./server/prisma/schema.prisma"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@prisma/client": "5.22.0",

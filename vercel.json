@@ -1,28 +1,12 @@
 {
     "version": 2,
-    "builds": [
-        {
-            "src": "server/src/server.ts",
-            "use": "@vercel/node",
-            "config": {
-                "includeFiles": [
-                    "server/prisma/schema.prisma",
-                    "server/prisma/migrations/**"
-                ]
-            }
-        },
-        {
-            "src": "package.json",
-            "use": "@vercel/static-build",
-            "config": {
-                "distDir": "dist"
-            }
-        }
-    ],
+    "buildCommand": "npm run build",
+    "installCommand": "npm install && npx prisma generate --schema=./server/prisma/schema.prisma",
+    "framework": "vite",
     "rewrites": [
         {
             "source": "/api/(.*)",
-            "destination": "/server/src/server.ts"
+            "destination": "/api"
         },
         {
             "source": "/(.*)",

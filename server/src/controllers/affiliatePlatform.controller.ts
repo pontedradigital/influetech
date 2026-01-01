@@ -2,11 +2,11 @@ import { Request, Response } from 'express';
 import db from '../db';
 import { v4 as uuidv4 } from 'uuid';
 
-const MOCK_USER_ID = '327aa8c1-7c26-41c2-95d7-b375c25eb896';
+
 
 export const listPlatforms = async (req: Request, res: Response) => {
     try {
-        const userId = MOCK_USER_ID;
+        const userId = req.query.userId as string; // Auth required
         const platforms = await db.affiliatePlatform.findMany({
             where: { userId },
             orderBy: { name: 'asc' }
@@ -21,7 +21,7 @@ export const listPlatforms = async (req: Request, res: Response) => {
 export const createPlatform = async (req: Request, res: Response) => {
     try {
         const { name, paymentTermDays, icon } = req.body;
-        const userId = MOCK_USER_ID;
+        const userId = req.body.userId; // Auth required
 
         const platform = await db.affiliatePlatform.create({
             data: {

@@ -59,7 +59,15 @@ export const TransactionModal = ({ isOpen, onClose, type, onSuccess }: {
                     currency,
                     date,
                     category,
-                    userId: 'mock-id'
+                    userId: (() => {
+                        const userStr = localStorage.getItem('user');
+                        if (userStr) {
+                            try {
+                                return JSON.parse(userStr).id;
+                            } catch { return null; }
+                        }
+                        return null;
+                    })()
                 })
             });
 

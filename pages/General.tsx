@@ -64,6 +64,18 @@ const COLOR_MAP: Record<string, string> = {
   'Prateado': '#C0C0C0'
 };
 
+// Helper to get user ID
+const getUserId = () => {
+  const userStr = localStorage.getItem('user');
+  if (userStr) {
+    try {
+      const user = JSON.parse(userStr);
+      return user.id;
+    } catch { return null; }
+  }
+  return null;
+};
+
 // Imagens por Categoria (Unsplash IDs)
 const CATEGORY_IMAGES: Record<string, string> = {
   'Cadeiras': 'https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=300&q=80',
@@ -653,7 +665,8 @@ const NewProductModal = ({ isOpen, onClose, onSave, editingProduct }: {
           shippingCost: shipping || null,
           condition: 'Novo',
           status,
-          userId: 'mock-id',
+
+          userId: getUserId(),
           companyId: companyId,
           weight: parseFloat(weight) || null,
           height: parseFloat(height) || null,
@@ -1497,7 +1510,7 @@ const NewCompanyModal = ({ isOpen, onClose, onSave, editingCompany }: {
           contactMethod,
           contactValue,
           partnershipStatus,
-          userId: 'mock-id'
+          userId: getUserId()
         })
       });
 
@@ -2064,7 +2077,7 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
           city: city || null,
           state: state || null,
           salePrice: parseFloat(salePrice),
-          userId: 'mock-id'
+          userId: getUserId()
         })
       });
 

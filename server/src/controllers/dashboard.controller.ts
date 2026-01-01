@@ -8,8 +8,7 @@ export const dashboardController = {
             // or passed as query param for dev/testing if auth not full strict yet
             // In this project, usually req.user.id from JWT
             // If auth middleware is missing, fallback to default admin ID (like ProductController)
-            const defaultId = '327aa8c1-7c26-41c2-95d7-b375c25eb896';
-            const userId = (req as any).user?.id || defaultId;
+            const userId = (req as any).user?.id || req.query.userId as string;
 
             if (!userId) {
                 return res.status(401).json({ error: 'User not authenticated' });

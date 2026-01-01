@@ -458,6 +458,13 @@ function BazarModal({ suggestion, products, onClose, onSuccess }: {
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const getUserId = () => {
+    try {
+      const u = localStorage.getItem('user');
+      return u ? JSON.parse(u).id : null;
+    } catch { return null; }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -470,7 +477,7 @@ function BazarModal({ suggestion, products, onClose, onSuccess }: {
           date: suggestion.date,
           location,
           productIds: JSON.stringify(selectedProducts),
-          userId: 'mock-id'
+          userId: getUserId()
         })
       });
       onSuccess();

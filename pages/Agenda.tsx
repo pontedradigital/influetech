@@ -532,6 +532,13 @@ function NewPostModal({ onClose, products }: { onClose: () => void; products: Pr
     const [scheduledFor, setScheduledFor] = useState('');
     const [platforms, setPlatforms] = useState<string[]>([]);
 
+    const getUserId = () => {
+        try {
+            const u = localStorage.getItem('user');
+            return u ? JSON.parse(u).id : null;
+        } catch { return null; }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
@@ -544,7 +551,7 @@ function NewPostModal({ onClose, products }: { onClose: () => void; products: Pr
                     productId: productId || null,
                     scheduledFor,
                     platforms: JSON.stringify(platforms),
-                    userId: 'mock-id'
+                    userId: getUserId()
                 })
             });
             onClose();
@@ -663,6 +670,13 @@ function NewTaskModal({ onClose }: { onClose: () => void }) {
     const [priority, setPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH'>('MEDIUM');
     const [dueDate, setDueDate] = useState('');
 
+    const getUserId = () => {
+        try {
+            const u = localStorage.getItem('user');
+            return u ? JSON.parse(u).id : null;
+        } catch { return null; }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
@@ -675,7 +689,7 @@ function NewTaskModal({ onClose }: { onClose: () => void }) {
                     category,
                     priority,
                     dueDate: dueDate || null,
-                    userId: 'mock-id'
+                    userId: getUserId()
                 })
             });
             onClose();

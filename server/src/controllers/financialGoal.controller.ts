@@ -2,11 +2,11 @@ import { Request, Response } from 'express';
 import db from '../db';
 import { v4 as uuidv4 } from 'uuid';
 
-const MOCK_USER_ID = '327aa8c1-7c26-41c2-95d7-b375c25eb896';
+
 
 export const listGoals = async (req: Request, res: Response) => {
     try {
-        const userId = MOCK_USER_ID;
+        const userId = req.query.userId as string; // Auth required
         const goals = await db.financialGoal.findMany({
             where: { userId },
             orderBy: { createdAt: 'desc' }
@@ -21,7 +21,7 @@ export const listGoals = async (req: Request, res: Response) => {
 export const createGoal = async (req: Request, res: Response) => {
     try {
         const { name, targetAmount, deadline, color, icon } = req.body;
-        const userId = MOCK_USER_ID;
+        const userId = req.body.userId; // Auth required
 
         const goal = await db.financialGoal.create({
             data: {
@@ -73,7 +73,7 @@ export const addFundsWithTransaction = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const { amount, createTransaction } = req.body;
-        const userId = MOCK_USER_ID;
+        const userId = req.body.userId; // Auth required
 
         const result = await db.$transaction(async (tx) => {
             // 1. Get Goal

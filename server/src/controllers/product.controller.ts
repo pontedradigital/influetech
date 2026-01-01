@@ -28,7 +28,7 @@ export const createProduct = async (req: Request, res: Response) => {
                 shippingCost,
                 condition,
                 status: 'RECEIVED',
-                userId: userId === 'mock-id' ? '327aa8c1-7c26-41c2-95d7-b375c25eb896' : (userId || '327aa8c1-7c26-41c2-95d7-b375c25eb896'),
+                userId: userId,
                 weight: weight || null,
                 height: height || null,
                 width: width || null,

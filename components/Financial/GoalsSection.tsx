@@ -24,6 +24,13 @@ export const GoalsSection: React.FC<GoalsSectionProps> = ({ onTransactionCreated
     const [fundAmount, setFundAmount] = useState('');
     const [registerAsExpense, setRegisterAsExpense] = useState(false);
 
+    const getUserId = () => {
+        try {
+            const u = localStorage.getItem('user');
+            return u ? JSON.parse(u).id : null;
+        } catch { return null; }
+    };
+
     const fetchGoals = async () => {
         try {
             const res = await fetch('/api/financial-goals');
@@ -45,7 +52,8 @@ export const GoalsSection: React.FC<GoalsSectionProps> = ({ onTransactionCreated
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...newGoal,
-                    targetAmount: parseFloat(newGoal.targetAmount)
+                    targetAmount: parseFloat(newGoal.targetAmount),
+                    userId: getUserId()
                 })
             });
             if (!res.ok) throw new Error('Failed to create goal');

@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 export const create = async (req: Request, res: Response) => {
     try {
         const shipmentData = req.body;
-        const userId = req.body.userId || '327aa8c1-7c26-41c2-95d7-b375c25eb896'; // TODO: Auth
+        const userId = req.body.userId; // TODO: Auth
 
         const shipment = await db.shipment.create({
             data: {
@@ -57,7 +57,7 @@ export const create = async (req: Request, res: Response) => {
 // Listar envios do usuário
 export const list = async (req: Request, res: Response) => {
     try {
-        const userId = req.query.userId as string || '327aa8c1-7c26-41c2-95d7-b375c25eb896';
+        const userId = req.query.userId as string;
 
         const shipments = await db.shipment.findMany({
             where: { userId },

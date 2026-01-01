@@ -57,6 +57,13 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
     const [contactValue, setContactValue] = useState('');
     const [cep, setCep] = useState('');
     const [street, setStreet] = useState('');
+
+    const getUserId = () => {
+        try {
+            const u = localStorage.getItem('user');
+            return u ? JSON.parse(u).id : null;
+        } catch { return null; }
+    };
     const [number, setNumber] = useState('');
     const [complement, setComplement] = useState('');
     const [neighborhood, setNeighborhood] = useState('');
@@ -222,7 +229,7 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
                     city: city || null,
                     state: state || null,
                     salePrice: parseFloat(salePrice),
-                    userId: 'mock-id'
+                    userId: getUserId()
                 })
             });
 

@@ -30,7 +30,7 @@ export const createCompany = async (req: Request, res: Response) => {
                 partnershipStatus: partnershipStatus || 'Solicitada',
                 status: 'ACTIVE',
                 rating: 0,
-                userId: userId === 'mock-id' ? '327aa8c1-7c26-41c2-95d7-b375c25eb896' : (userId || '327aa8c1-7c26-41c2-95d7-b375c25eb896')
+                userId: userId // Must provide valid userId from frontend or auth token
             }
         });
         res.status(201).json(company);

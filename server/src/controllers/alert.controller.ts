@@ -18,7 +18,7 @@ export const createAlert = async (req: Request, res: Response) => {
     const { type, title, message, relatedId, userId } = req.body;
 
     try {
-        const finalUserId = userId === 'mock-id' ? '327aa8c1-7c26-41c2-95d7-b375c25eb896' : (userId || '327aa8c1-7c26-41c2-95d7-b375c25eb896');
+        const finalUserId = userId; // Auth should handle this
 
         const alert = await db.alert.create({
             data: {

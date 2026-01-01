@@ -19,6 +19,13 @@ export const RecurringExpenseList: React.FC<RecurringExpenseListProps> = ({ onTr
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newExpense, setNewExpense] = useState({ name: '', amount: '', frequency: 'MONTHLY', category: 'Serviço' });
 
+    const getUserId = () => {
+        try {
+            const u = localStorage.getItem('user');
+            return u ? JSON.parse(u).id : null;
+        } catch { return null; }
+    };
+
     const fetchExpenses = async () => {
         try {
             const res = await fetch('/api/recurring-expenses');
@@ -39,7 +46,8 @@ export const RecurringExpenseList: React.FC<RecurringExpenseListProps> = ({ onTr
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 ...newExpense,
-                amount: parseFloat(newExpense.amount)
+                amount: parseFloat(newExpense.amount),
+                userId: getUserId()
             })
         });
         setIsModalOpen(false);

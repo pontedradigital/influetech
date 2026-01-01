@@ -31,6 +31,13 @@ export const AffiliateSection: React.FC<AffiliateSectionProps> = ({ onTransactio
     const [newPlatform, setNewPlatform] = useState({ name: '', paymentTermDays: 30, icon: 'store' });
     const [newEarning, setNewEarning] = useState({ platformId: '', amount: '', requestDate: new Date().toISOString().split('T')[0], description: '' });
 
+    const getUserId = () => {
+        try {
+            const u = localStorage.getItem('user');
+            return u ? JSON.parse(u).id : null;
+        } catch { return null; }
+    };
+
     const fetchPlatforms = async () => {
         const res = await fetch('/api/affiliate-platforms');
         if (res.ok) setPlatforms(await res.json());
@@ -51,7 +58,7 @@ export const AffiliateSection: React.FC<AffiliateSectionProps> = ({ onTransactio
         await fetch('/api/affiliate-platforms', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newPlatform)
+            body: JSON.stringify({ ...newPlatform, userId: getUserId() })
         });
         setIsPlatformModalOpen(false);
         setNewPlatform({ name: '', paymentTermDays: 30, icon: 'store' });
@@ -65,7 +72,8 @@ export const AffiliateSection: React.FC<AffiliateSectionProps> = ({ onTransactio
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 ...newEarning,
-                amount: parseFloat(newEarning.amount)
+                amount: parseFloat(newEarning.amount),
+                userId: getUserId()
             })
         });
 

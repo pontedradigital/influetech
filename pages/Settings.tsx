@@ -9,10 +9,10 @@ import { useInfluencer, SocialNetwork } from '../context/InfluencerContext';
 const Nav = () => {
   const loc = useLocation();
   const tabs = [
-    { name: 'Perfil', path: '/meu-perfil' },
-    { name: 'Notificações', path: '/meu-perfil/notificacoes' },
-    { name: 'Segurança', path: '/meu-perfil/seguranca' },
-    { name: 'Calculadora de Importação', path: '/meu-perfil/importacao' }
+    { name: 'Perfil', path: '/app/meu-perfil' },
+    { name: 'Notificações', path: '/app/meu-perfil/notificacoes' },
+    { name: 'Segurança', path: '/app/meu-perfil/seguranca' },
+    { name: 'Calculadora de Importação', path: '/app/meu-perfil/importacao' }
   ];
 
   return (

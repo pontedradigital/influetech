@@ -63,13 +63,13 @@ const Login = () => {
       <div className="absolute bottom-[-20%] right-[-10%] w-[800px] h-[800px] bg-cyan-900/20 rounded-full mix-blend-screen filter blur-[128px] opacity-30 animate-pulse animation-delay-2000"></div>
 
       {/* Main Container with NEON GRADIENT BORDER */}
-      <div className="relative w-full max-w-5xl h-[650px] rounded-[32px] bg-gradient-to-br from-purple-600 via-cyan-500 to-pink-500 p-[1px] shadow-2xl">
+      <div className="relative w-full max-w-5xl h-auto md:h-[650px] rounded-[32px] bg-gradient-to-br from-purple-600 via-cyan-500 to-pink-500 p-[1px] shadow-2xl my-8 md:my-0">
 
         {/* Inner Content (Matte Black) */}
-        <div className="w-full h-full bg-neutral-900 rounded-[31px] flex overflow-hidden">
+        <div className="w-full h-full bg-neutral-900 rounded-[31px] flex flex-col md:flex-row overflow-hidden">
 
           {/* LEFT COLUMN: FORM */}
-          <div className="w-full md:w-1/2 flex flex-col items-center justify-center p-12 relative z-10">
+          <div className="w-full md:w-1/2 flex flex-col items-center justify-center p-6 md:p-12 relative z-10 py-12 md:py-0">
 
             <div className="w-full max-w-sm space-y-8">
               <div className="text-center flex flex-col items-center">
@@ -193,13 +193,13 @@ const Recover = () => {
       <div className="absolute bottom-[-20%] right-[-10%] w-[800px] h-[800px] bg-cyan-900/20 rounded-full mix-blend-screen filter blur-[128px] opacity-30 animate-pulse animation-delay-2000"></div>
 
       {/* Main Container with NEON GRADIENT BORDER */}
-      <div className="relative w-full max-w-5xl h-[650px] rounded-[32px] bg-gradient-to-br from-purple-600 via-cyan-500 to-pink-500 p-[1px] shadow-2xl">
+      <div className="relative w-full max-w-5xl h-auto md:h-[650px] rounded-[32px] bg-gradient-to-br from-purple-600 via-cyan-500 to-pink-500 p-[1px] shadow-2xl my-8 md:my-0">
 
         {/* Inner Content (Matte Black) */}
-        <div className="w-full h-full bg-neutral-900 rounded-[31px] flex overflow-hidden">
+        <div className="w-full h-full bg-neutral-900 rounded-[31px] flex flex-col md:flex-row overflow-hidden">
 
           {/* LEFT COLUMN: FORM */}
-          <div className="w-full md:w-1/2 flex flex-col items-center justify-center p-12 relative z-10">
+          <div className="w-full md:w-1/2 flex flex-col items-center justify-center p-6 md:p-12 relative z-10 py-12 md:py-0">
 
             <div className="w-full max-w-sm space-y-8">
               <div className="text-center flex flex-col items-center">

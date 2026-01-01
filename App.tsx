@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
+
+// Contexts
+import { InfluencerProvider } from './context/InfluencerContext';
+
+// Components
+import ScrollToTop from './components/ScrollToTop';
+import CookieConsent from './components/CookieConsent';
+
+// Pages
 import Dashboard from './pages/Dashboard';
 import Products from './pages/General';
 import { Companies } from './pages/General';
@@ -12,8 +22,11 @@ import ProductPlanner from './pages/ProductPlanner';
 import Auth from './pages/Auth';
 import Sales from './pages/Sales';
 import MediaKit from './pages/MediaKit';
-
 import Networking from './pages/Networking';
+import BrandRadar from './pages/BrandRadar';
+import Home from './pages/Home';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
 
 const SidebarItem: React.FC<{ to: string; icon: string; label: string; active: boolean; onClick?: () => void }> = ({ to, icon, label, active, onClick }) => (
   <Link
@@ -49,8 +62,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }
   }, [isDarkMode]);
 
-  // ...
-
   const navItems = [
     { to: '/app', icon: 'dashboard', label: 'Dashboard' },
     { to: '/app/meu-perfil', icon: 'person', label: 'Meu Perfil' },
@@ -67,8 +78,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     { to: '/app/planejador-produtos', icon: 'trending_up', label: 'Planejador de Produtos' },
     { to: '/app/bazar', icon: 'auto_awesome', label: 'Planejador de Bazares' },
   ];
-
-  // ...
 
   return (
     <div className="flex min-h-screen w-full bg-background-light dark:bg-background-dark font-sans text-gray-900 dark:text-gray-100 transition-colors duration-200">
@@ -141,7 +150,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             </button>
 
             {/* Logout */}
-            {/* Logout */}
             <button
               onClick={() => {
                 localStorage.removeItem('token');
@@ -166,14 +174,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   );
 };
 
-import { InfluencerProvider } from './context/InfluencerContext';
-import BrandRadar from './pages/BrandRadar';
-import ScrollToTop from './components/ScrollToTop';
-import CookieConsent from './components/CookieConsent';
-import Home from './pages/Home';
-import Terms from './pages/Terms';
-import Privacy from './pages/Privacy';
-
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const token = localStorage.getItem('token');
   if (!token) {
@@ -181,8 +181,6 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   }
   return <>{children}</>;
 };
-
-import { HelmetProvider } from 'react-helmet-async';
 
 const App: React.FC = () => {
   return (
@@ -230,7 +228,7 @@ const App: React.FC = () => {
 
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes >
+          </Routes>
         </Router>
       </HelmetProvider>
     </InfluencerProvider>

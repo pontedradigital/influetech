@@ -75,6 +75,11 @@ setTimeout(() => {
     dashboardService.generateInsights().catch(console.error);
 }, 10000); // Run 10s after startup
 
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-});
+// Only start the server if not running in Vercel (local development)
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+    app.listen(PORT, () => {
+        console.log(`🚀 Server running on port ${PORT}`);
+    });
+}
+
+export default app;

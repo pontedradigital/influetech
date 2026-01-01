@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "concurrently -n \"FE,BE\" -c \"cyan,magenta\" \"vite\" \"npm run dev --prefix server\"",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "postinstall": "cd server && npm install && npx prisma generate"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.3.1",

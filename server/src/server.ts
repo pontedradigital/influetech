@@ -51,8 +51,17 @@ app.use('/api/shipments', shipmentRoutes);
 app.use('/api/community', communityRoutes);
 app.use('/api/media-kit-brands', mediaKitBrandRoutes);
 
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date() });
+import db from './db';
+
+app.get('/api/health', async (req, res) => {
+    try {
+        // Simple DB check
+        await db.$queryRaw`SELECT 1`;
+        res.json({ status: 'ok', database: 'connected', timestamp: new Date() });
+    } catch (error: any) {
+        console.error('Health Check Failed:', error);
+        res.status(500).json({ status: 'error', database: 'disconnected', error: error.message });
+    }
 });
 
 import dashboardRoutes from './routes/dashboard.routes';
@@ -60,20 +69,18 @@ import { dashboardService } from './services/dashboard.service';
 
 app.use('/api/dashboard', dashboardRoutes);
 
-import { SchedulerService } from './services/scheduler.service';
-SchedulerService.init();
+// Note: SchedulerService and Intervals removed for Serverless compatibility.
+// Use Vercel Cron Jobs if needed.
 
-// Insights Generator Job (Every 3 hours)
-const INSIGHT_INTERVAL = 3 * 60 * 60 * 1000; // 3 hours
-setInterval(() => {
-    console.log('Running scheduled insights generation...');
-    dashboardService.generateInsights().catch(console.error);
-}, INSIGHT_INTERVAL);
-
-// Initial run on startup (optional, maybe delay it a bit)
-setTimeout(() => {
-    dashboardService.generateInsights().catch(console.error);
-}, 10000); // Run 10s after startup
+// Global Error Handler
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error('Unhandled Error:', err);
+    res.status(500).json({
+        error: 'Internal Server Error',
+        message: err.message,
+        path: req.path
+    });
+});
 
 // Only start the server if not running in Vercel (local development)
 if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {

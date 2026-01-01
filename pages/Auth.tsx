@@ -100,12 +100,14 @@ const Login = () => {
                 <div className="space-y-2 group">
                   <label className="text-xs font-bold text-slate-400 tracking-widest uppercase ml-1">Email / Usuário</label>
                   <input
-                    type="email"
+                    type="text"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full h-12 px-4 rounded-xl bg-neutral-800 border border-neutral-700 text-white placeholder:text-neutral-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all text-sm"
                     placeholder="seu@email.com"
                     required
+                    autoComplete="email"
+                    inputMode="email"
                   />
                 </div>
 

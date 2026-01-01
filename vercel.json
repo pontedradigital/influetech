@@ -1,24 +1,10 @@
 {
-    "version": 2,
-    "buildCommand": "npm run build",
-    "installCommand": "npm install && npx prisma generate --schema=./server/prisma/schema.prisma",
-    "framework": "vite",
-    "functions": {
-        "api/**/*.ts": {
-            "runtime": "nodejs20.x"
+    "rewrites": [
+        {
+            "source": "/api/:path*",
+            "destination": "/api"
         }
-    },
-    "routes": [
-        {
-            "src": "/api/(.*)",
-            "dest": "/api/index.ts"
-        },
-        {
-            "handle": "filesystem"
-        },
-        {
-            "src": "/(.*)",
-            "dest": "/index.html"
-        }
-    ]
+    ],
+    "buildCommand": "npx prisma generate --schema=./server/prisma/schema.prisma && npm run build",
+    "installCommand": "npm install"
 }

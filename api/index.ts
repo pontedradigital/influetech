@@ -68,4 +68,5 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     res.status(500).json({ error: 'Internal Server Error', message: err.message });
 });
 
+// Export for Vercel serverless functions
 export default app;

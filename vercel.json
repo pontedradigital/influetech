@@ -3,7 +3,13 @@
     "builds": [
         {
             "src": "server/src/server.ts",
-            "use": "@vercel/node"
+            "use": "@vercel/node",
+            "config": {
+                "includeFiles": [
+                    "server/prisma/schema.prisma",
+                    "server/prisma/migrations/**"
+                ]
+            }
         },
         {
             "src": "package.json",

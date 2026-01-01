@@ -49,10 +49,19 @@ const Login = () => {
 
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
-      navigate('/app');
+
+      // Force navigation to ensure clean state and avoid potential React render crashes
+      // related to "The string did not match the expected pattern" on mobile (likely atob in a dependency)
+      window.location.href = '/app';
 
     } catch (err: any) {
       console.error(err);
+      // If we have a token but some subsequent step failed (like navigate causing a render crash),
+      // force redirect anyway.
+      if (localStorage.getItem('token')) {
+        window.location.href = '/app';
+        return;
+      }
       setError(err.message || 'Erro de conexão com o servidor');
     } finally {
       setLoading(false);

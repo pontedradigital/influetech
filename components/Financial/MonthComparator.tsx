@@ -86,6 +86,8 @@ export const MonthComparator: React.FC = () => {
     const monthNameA = months.find(m => m.value === monthA)?.label.substring(0, 3);
     const monthNameB = months.find(m => m.value === monthB)?.label.substring(0, 3);
 
+    const years = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i); // Current year +/- 2
+
     return (
         <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm">
             <h3 className="text-xl font-bold mb-8 text-gray-900 dark:text-white flex items-center gap-3">
@@ -96,31 +98,57 @@ export const MonthComparator: React.FC = () => {
             </h3>
 
             {/* Selectors */}
-            <div className="flex flex-wrap justify-center items-center gap-4 mb-8 bg-gray-50 dark:bg-gray-700/30 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50 max-w-2xl mx-auto">
-                <div className="flex flex-col">
-                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Mês Base</span>
-                    <select
-                        value={monthA}
-                        onChange={e => setMonthA(Number(e.target.value))}
-                        className="bg-transparent font-bold text-lg text-gray-900 dark:text-white border-none focus:ring-0 cursor-pointer hover:text-indigo-600 transition-colors"
-                    >
-                        {months.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
-                    </select>
+            <div className="flex flex-wrap justify-center items-center gap-4 mb-8 bg-gray-50 dark:bg-gray-700/30 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50 max-w-3xl mx-auto">
+                {/* Month A Selector */}
+                <div className="flex gap-2">
+                    <div className="flex flex-col">
+                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Mês Base</span>
+                        <select
+                            value={monthA}
+                            onChange={e => setMonthA(Number(e.target.value))}
+                            className="bg-transparent font-bold text-lg text-gray-900 dark:text-white border-none focus:ring-0 cursor-pointer hover:text-indigo-600 transition-colors [&>option]:text-gray-900 [&>option]:bg-white dark:[&>option]:bg-gray-800 dark:[&>option]:text-white"
+                        >
+                            {months.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                        </select>
+                    </div>
+                    <div className="flex flex-col w-24">
+                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Ano</span>
+                        <select
+                            value={yearA}
+                            onChange={e => setYearA(Number(e.target.value))}
+                            className="bg-transparent font-bold text-lg text-gray-900 dark:text-white border-none focus:ring-0 cursor-pointer hover:text-indigo-600 transition-colors [&>option]:text-gray-900 [&>option]:bg-white dark:[&>option]:bg-gray-800 dark:[&>option]:text-white"
+                        >
+                            {years.map(y => <option key={y} value={y}>{y}</option>)}
+                        </select>
+                    </div>
                 </div>
 
-                <div className="text-gray-400">
+                <div className="text-gray-400 px-2">
                     <span className="material-symbols-outlined text-3xl">arrow_right_alt</span>
                 </div>
 
-                <div className="flex flex-col text-right">
-                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Mês Comparado</span>
-                    <select
-                        value={monthB}
-                        onChange={e => setMonthB(Number(e.target.value))}
-                        className="bg-transparent font-bold text-lg text-gray-900 dark:text-white border-none focus:ring-0 cursor-pointer hover:text-indigo-600 transition-colors text-right"
-                    >
-                        {months.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
-                    </select>
+                {/* Month B Selector */}
+                <div className="flex gap-2 text-right">
+                    <div className="flex flex-col w-24">
+                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Ano</span>
+                        <select
+                            value={yearB}
+                            onChange={e => setYearB(Number(e.target.value))}
+                            className="bg-transparent font-bold text-lg text-gray-900 dark:text-white border-none focus:ring-0 cursor-pointer hover:text-indigo-600 transition-colors text-right [&>option]:text-gray-900 [&>option]:bg-white dark:[&>option]:bg-gray-800 dark:[&>option]:text-white"
+                        >
+                            {years.map(y => <option key={y} value={y}>{y}</option>)}
+                        </select>
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Mês Comparado</span>
+                        <select
+                            value={monthB}
+                            onChange={e => setMonthB(Number(e.target.value))}
+                            className="bg-transparent font-bold text-lg text-gray-900 dark:text-white border-none focus:ring-0 cursor-pointer hover:text-indigo-600 transition-colors text-right [&>option]:text-gray-900 [&>option]:bg-white dark:[&>option]:bg-gray-800 dark:[&>option]:text-white"
+                        >
+                            {months.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -137,8 +165,8 @@ export const MonthComparator: React.FC = () => {
                                 cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
                             />
                             <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                            <Bar dataKey="A" name={monthNameA} fill="#94A3B8" radius={[4, 4, 0, 0]} />
-                            <Bar dataKey="B" name={monthNameB} fill="#6366F1" radius={[4, 4, 0, 0]} >
+                            <Bar dataKey="A" name={`${monthNameA}/${yearA}`} fill="#94A3B8" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="B" name={`${monthNameB}/${yearB}`} fill="#6366F1" radius={[4, 4, 0, 0]} >
                                 {
                                     chartData.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={index === 0 ? '#10B981' : (index === 1 ? '#EF4444' : '#6366F1')} />

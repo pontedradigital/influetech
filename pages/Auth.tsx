@@ -32,36 +32,36 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // Use relative path - Vercel handles rewrite to backend, Vite proxy handles dev
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email, password })
+      // Import Supabase client
+      const { supabase } = await import('../src/lib/supabase');
+
+      // Use Supabase Auth
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Falha ao autenticar');
+      if (authError) {
+        throw new Error(authError.message || 'Falha ao autenticar');
       }
 
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      if (!data.session) {
+        throw new Error('Sessão não criada');
+      }
 
-      // Force navigation to ensure clean state and avoid potential React render crashes
-      // related to "The string did not match the expected pattern" on mobile (likely atob in a dependency)
+      // Store session
+      localStorage.setItem('token', data.session.access_token);
+      localStorage.setItem('user', JSON.stringify({
+        id: data.user.id,
+        email: data.user.email,
+        name: data.user.user_metadata?.name || data.user.email
+      }));
+
+      // Navigate to app
       window.location.href = '/app';
 
     } catch (err: any) {
       console.error(err);
-      // If we have a token but some subsequent step failed (like navigate causing a render crash),
-      // force redirect anyway.
-      if (localStorage.getItem('token')) {
-        window.location.href = '/app';
-        return;
-      }
       setError(err.message || 'Erro de conexão com o servidor');
     } finally {
       setLoading(false);

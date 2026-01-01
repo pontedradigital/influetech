@@ -76,5 +76,8 @@ if (process.env.NODE_ENV !== 'production') {
     });
 }
 
-// Export for Vercel serverless functions
+// Export for Vercel serverless - Dual export for compatibility
 export default app;
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = app;
+}

@@ -6,8 +6,9 @@ import { v4 as uuidv4 } from 'uuid';
 export const listSales = async (req: Request, res: Response) => {
     try {
         const { search } = req.query;
+        const userId = (req as any).user.id;
 
-        const where: any = {};
+        const where: any = { userId };
 
         if (search && typeof search === 'string') {
             where.OR = [
@@ -54,6 +55,7 @@ export const listSales = async (req: Request, res: Response) => {
 // Get sale by ID
 export const getSale = async (req: Request, res: Response) => {
     const { id } = req.params;
+    const userId = (req as any).user.id;
 
     try {
         const sale = await db.sale.findUnique({
@@ -109,7 +111,7 @@ export const createSale = async (req: Request, res: Response) => {
     } = req.body;
 
     try {
-        const finalUserId = userId; // Auth should handle this
+        const finalUserId = (req as any).user.id; // Auth handled
         const saleDate = new Date();
 
         // 1. Get Product info
@@ -232,8 +234,13 @@ export const createSale = async (req: Request, res: Response) => {
 export const updateSale = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { status } = req.body;
+    const userId = (req as any).user.id;
 
     try {
+        // Verify ownership
+        const existing = await db.sale.findUnique({ where: { id } });
+        if (!existing) return res.status(404).json({ error: 'Venda não encontrada' });
+        if (existing.userId !== userId) return res.status(403).json({ error: 'Acesso negado' });
         await db.sale.update({
             where: { id },
             data: { status }
@@ -251,6 +258,7 @@ export const updateSale = async (req: Request, res: Response) => {
 // Delete sale (with cascade delete for related records)
 export const deleteSale = async (req: Request, res: Response) => {
     const { id } = req.params;
+    const userId = (req as any).user.id;
 
     try {
         // 1. Get sale info
@@ -258,6 +266,10 @@ export const deleteSale = async (req: Request, res: Response) => {
 
         if (!sale) {
             return res.status(404).json({ error: 'Venda não encontrada' });
+        }
+
+        if (sale.userId !== userId) {
+            return res.status(403).json({ error: 'Acesso negado' });
         }
 
         // 2. Delete related Financial Transactions (Manual)

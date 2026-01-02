@@ -1,19 +1,10 @@
 import { supabase } from '../src/lib/supabase';
 import { MediaKitService } from './MediaKitService';
+import { api } from './api';
 
 export const CompanyService = {
     async getAll() {
-        const userId = localStorage.getItem('userId');
-        if (!userId) throw new Error('User not authenticated');
-
-        const { data, error } = await supabase
-            .from('Company')
-            .select('*')
-            .eq('userId', userId)
-            .order('createdAt', { ascending: false });
-
-        if (error) throw error;
-        return data;
+        return api.get('/companies');
     },
 
     /**
@@ -41,44 +32,30 @@ export const CompanyService = {
     },
 
     async create(company: any, logoFile?: File) {
-        const userId = localStorage.getItem('userId');
-        if (!userId) throw new Error('User not authenticated');
-
         console.log('[CompanyService] Creating company payload:', company);
 
-        // 1. Criar empresa
-        // ID e timestamps são gerados automaticamente pelo banco agora
-        const { data, error } = await supabase
-            .from('Company')
-            .insert([{ ...company, userId }])
-            .select()
-            .single();
-
-        if (error) {
-            console.error('[CompanyService] Error creating company record:', error);
-            throw error;
-        }
+        // 1. Criar empresa via API
+        const data = await api.post('/companies', company);
 
         console.log('[CompanyService] Company created:', data.id);
 
-        // 2. Upload de logo (se fornecido)
         let logoUrl = null;
+
+        // 2. Upload de logo (se fornecido)
         if (logoFile) {
             try {
+                // Need userId to construct path, assume API returns it or we get it from local
+                const userId = localStorage.getItem('userId');
+                if (!userId) throw new Error('User not authenticated locally');
+
                 console.log('[CompanyService] Uploading logo...');
                 logoUrl = await this.uploadLogo(logoFile, userId, data.id);
 
-                // Atualizar empresa com URL do logo
+                // Atualizar empresa com URL do logo via API
                 console.log('[CompanyService] Updating company with logoUrl...');
-                const { error: updateError } = await supabase
-                    .from('Company')
-                    .update({ logoUrl })
-                    .eq('id', data.id);
+                await api.put(`/companies/${data.id}`, { logoUrl });
+                data.logoUrl = logoUrl;
 
-                if (updateError) {
-                    console.error('[CompanyService] Error updating logoUrl column:', updateError);
-                    console.warn('Check if "logoUrl" column exists in "Company" table.');
-                }
             } catch (logoError) {
                 console.error('[CompanyService] Logo upload failed:', logoError);
                 // Non-blocking error for logo
@@ -99,30 +76,22 @@ export const CompanyService = {
             }
         }
 
-        return { ...data, logoUrl };
+        return data;
     },
 
     async update(id: string, updates: any, logoFile?: File) {
-        const userId = localStorage.getItem('userId');
-        if (!userId) throw new Error('User not authenticated');
-
         let logoUrl = updates.logoUrl;
 
         // Upload de novo logo
         if (logoFile) {
+            const userId = localStorage.getItem('userId');
+            if (!userId) throw new Error('User not authenticated locally');
+
             logoUrl = await this.uploadLogo(logoFile, userId, id);
             updates = { ...updates, logoUrl };
         }
 
-        const { data, error } = await supabase
-            .from('Company')
-            .update(updates)
-            .eq('id', id)
-            .eq('userId', userId)
-            .select()
-            .single();
-
-        if (error) throw error;
+        const data = await api.put(`/companies/${id}`, updates);
 
         // Adicionar no MediaKit se logo foi adicionado agora
         if (logoFile && logoUrl) {
@@ -146,16 +115,6 @@ export const CompanyService = {
     },
 
     async delete(id: string) {
-        const userId = localStorage.getItem('userId');
-        if (!userId) throw new Error('User not authenticated');
-
-        const { error } = await supabase
-            .from('Company')
-            .delete()
-            .eq('id', id)
-            .eq('userId', userId);
-
-        if (error) throw error;
-        return { success: true };
+        return api.delete(`/companies/${id}`);
     }
 };

@@ -1,4 +1,5 @@
 import { supabase } from '../src/lib/supabase';
+import { calculateDateScore } from '../src/utils/dateScoring';
 
 export const BazarService = {
     async getAll() {
@@ -61,30 +62,44 @@ export const BazarService = {
 
     // Alias methods for Bazar planner
     async getSuggestions() {
-        // Mock suggestions for now - in future could fetch from Supabase
         const suggestions = [];
         const today = new Date();
+        // Look ahead 180 days
+        const daysToLookAhead = 180;
 
-        // Generate 6 months of suggestions (2 per month)
-        for (let monthOffset = 0; monthOffset < 6; monthOffset++) {
-            const targetMonth = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
+        for (let i = 1; i <= daysToLookAhead; i++) {
+            const date = new Date(today);
+            date.setDate(today.getDate() + i);
 
-            // Weekend suggestion
-            const weekendDate = new Date(targetMonth);
-            weekendDate.setDate(15); // Mid-month weekend
+            const scoreData = calculateDateScore(date);
 
-            suggestions.push({
-                date: weekendDate.toISOString(),
-                score: 85 + Math.floor(Math.random() * 15),
-                reasons: ['Fim de semana - maior movimento', 'Boa data para vendas online'],
-                dayOfWeek: weekendDate.toLocaleDateString('pt-BR', { weekday: 'long' }),
-                isWeekend: weekendDate.getDay() === 0 || weekendDate.getDay() === 6,
-                isPayday: false,
-                tips: ['Divulgue com 1 semana de antecedência', 'Prepare estoque adequado']
-            });
+            // Filter logic: Only keep dates with "Good" score (>= 70) OR if it's a weekend OR if it has an event
+            // But user also wants to see "Bad" dates? Or just suggestions?
+            // "Show bad dates" implies we might return them but categorize them.
+            // However, listing EVERY day is too much.
+            // Let's prioritize: Weekends, Fridays, and any date > 60 score.
+            const dayOfWeek = date.getDay();
+            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+            const isFriday = dayOfWeek === 5;
+
+            if (scoreData.score >= 60 || isWeekend || isFriday || scoreData.nearbyEvent) {
+                // Ensure we don't spam. Limit to top choices per week?
+                // For now, let's collect them all and maybe slice later or Frontend groups them.
+                suggestions.push({
+                    date: date.toISOString(),
+                    score: scoreData.score,
+                    reasons: scoreData.reasons,
+                    nearbyEvent: scoreData.nearbyEvent,
+                    dayOfWeek: date.toLocaleDateString('pt-BR', { weekday: 'long' }),
+                    isWeekend: isWeekend,
+                    isPayday: scoreData.reasons.some(r => r.includes('pagamento')),
+                    tips: scoreData.tips
+                });
+            }
         }
 
-        return suggestions;
+        // Sort by date ascending (Chronological order)
+        return suggestions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     },
 
     async getEvents() {

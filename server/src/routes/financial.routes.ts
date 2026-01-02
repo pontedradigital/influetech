@@ -8,8 +8,11 @@ import {
     getSummary,
     getHistory
 } from '../controllers/financial.controller';
+import { authenticate } from '../middleware/auth.middleware';
 
 const router = Router();
+
+router.use(authenticate);
 
 router.get('/', listTransactions);
 router.get('/summary', getSummary);

@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { SaleService } from '../services/SaleService';
+import { ProductService } from '../services/ProductService';
 
 const CONTACT_CHANNELS = [
     'WhatsApp',
@@ -73,12 +75,18 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
     const [loadingCep, setLoadingCep] = useState(false);
 
     React.useEffect(() => {
-        if (isOpen) {
-            fetch('/api/products')
-                .then(res => res.json())
-                .then(data => setProducts(data))
-                .catch(err => console.error('Erro ao buscar produtos:', err));
-        }
+        const loadProducts = async () => {
+            if (isOpen) {
+                try {
+                    const data = await ProductService.getAll();
+                    setProducts(Array.isArray(data) ? data : []);
+                } catch (err) {
+                    console.error('Erro ao buscar produtos:', err);
+                    setProducts([]);
+                }
+            }
+        };
+        loadProducts();
     }, [isOpen]);
 
     React.useEffect(() => {
@@ -212,34 +220,27 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
         }
 
         try {
-            const response = await fetch('/api/sales', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    productId: selectedProductId,
-                    customerName,
-                    customerCpf: customerCpf || null,
-                    contactChannel,
-                    contactValue,
-                    cep: cep || null,
-                    street: street || null,
-                    number: number || null,
-                    complement: complement || null,
-                    neighborhood: neighborhood || null,
-                    city: city || null,
-                    state: state || null,
-                    salePrice: parseFloat(salePrice),
-                    userId: getUserId()
-                })
+            await SaleService.create({
+                productId: selectedProductId,
+                customerName,
+                customerCpf: customerCpf || null,
+                contactChannel,
+                contactValue,
+                cep: cep || null,
+                street: street || null,
+                number: number || null,
+                complement: complement || null,
+                neighborhood: neighborhood || null,
+                city: city || null,
+                state: state || null,
+                salePrice: parseFloat(salePrice),
+                userId: getUserId()
             });
 
-            if (response.ok) {
-                onSave();
-                resetForm();
-                onClose();
-            } else {
-                alert('Erro ao criar venda');
-            }
+            onSave();
+            resetForm();
+            onClose();
+
         } catch (error) {
             console.error('Erro ao criar venda:', error);
             alert('Erro ao criar venda');
@@ -670,11 +671,19 @@ export default function Sales() {
     const [deletingSaleId, setDeletingSaleId] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
 
-    const fetchSales = () => {
-        fetch(`/api/sales${searchTerm ? `?search=${searchTerm}` : ''}`)
-            .then(res => res.json())
-            .then(data => setSales(data))
-            .catch(err => console.error('Erro ao buscar vendas:', err));
+    const fetchSales = async () => {
+        try {
+            const data = await SaleService.getAll(searchTerm);
+            if (Array.isArray(data)) {
+                setSales(data);
+            } else {
+                console.error('Data received from sales is not an array:', data);
+                setSales([]);
+            }
+        } catch (err) {
+            console.error('Erro ao buscar vendas:', err);
+            setSales([]);
+        }
     };
 
     React.useEffect(() => {
@@ -689,13 +698,11 @@ export default function Sales() {
     const confirmDelete = async () => {
         if (!deletingSaleId) return;
         try {
-            const response = await fetch(`/api/sales/${deletingSaleId}`, { method: 'DELETE' });
-            if (response.ok) {
-                fetchSales();
-                setViewingSale(null);
-            }
+            await SaleService.delete(deletingSaleId);
+            fetchSales();
+            setViewingSale(null);
         } catch (error) {
-            console.error('Erro:', error);
+            console.error('Erro ao excluir venda:', error);
         }
         setDeletingSaleId(null);
     };

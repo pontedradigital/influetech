@@ -5,8 +5,9 @@ import db from '../db';
 export const listTransactions = async (req: Request, res: Response) => {
     try {
         const { month, year } = req.query;
+        const userId = (req as any).user.id;
 
-        let where: any = {};
+        let where: any = { userId };
 
         if (month && year) {
             const m = parseInt(month as string);
@@ -40,6 +41,7 @@ export const listTransactions = async (req: Request, res: Response) => {
 // Get transaction by ID
 export const getTransaction = async (req: Request, res: Response) => {
     const { id } = req.params;
+    const userId = (req as any).user.id;
 
     try {
         const transaction = await db.financialTransaction.findUnique({
@@ -48,6 +50,9 @@ export const getTransaction = async (req: Request, res: Response) => {
 
         if (!transaction) {
             return res.status(404).json({ error: 'Transação não encontrada' });
+        }
+        if (transaction.userId !== userId) {
+            return res.status(403).json({ error: 'Acesso negado' });
         }
 
         res.json(transaction);
@@ -73,7 +78,7 @@ export const createTransaction = async (req: Request, res: Response) => {
 
     try {
         // Validation handled by Prisma types mostly, but logic fallback for userId needed
-        const finalUserId = userId; // Auth should handle this
+        const finalUserId = (req as any).user.id; // Auth handled
 
         const transaction = await db.financialTransaction.create({
             data: {
@@ -107,8 +112,13 @@ export const createTransaction = async (req: Request, res: Response) => {
 export const updateTransaction = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { type, amount, description, name, currency, date, category, status } = req.body;
+    const userId = (req as any).user.id;
 
     try {
+        // Verify ownership
+        const existing = await db.financialTransaction.findUnique({ where: { id } });
+        if (!existing) return res.status(404).json({ error: 'Transação não encontrada' });
+        if (existing.userId !== userId) return res.status(403).json({ error: 'Acesso negado' });
         await db.financialTransaction.update({
             where: { id },
             data: {
@@ -134,8 +144,12 @@ export const updateTransaction = async (req: Request, res: Response) => {
 // Delete transaction
 export const deleteTransaction = async (req: Request, res: Response) => {
     const { id } = req.params;
+    const userId = (req as any).user.id;
 
     try {
+        const existing = await db.financialTransaction.findUnique({ where: { id } });
+        if (!existing) return res.status(404).json({ error: 'Transação não encontrada' });
+        if (existing.userId !== userId) return res.status(403).json({ error: 'Acesso negado' });
         await db.$transaction(async (tx: any) => {
             // 1. Get transaction
             const transaction = await tx.financialTransaction.findUnique({ where: { id } });
@@ -202,7 +216,8 @@ export const deleteTransaction = async (req: Request, res: Response) => {
 export const getSummary = async (req: Request, res: Response) => {
     try {
         const { month, year } = req.query;
-        let where: any = {};
+        const userId = (req as any).user.id;
+        let where: any = { userId };
 
         if (month && year) {
             const m = parseInt(month as string);
@@ -257,6 +272,7 @@ export const getSummary = async (req: Request, res: Response) => {
 // Get 6-month history
 export const getHistory = async (req: Request, res: Response) => {
     try {
+        const userId = (req as any).user.id;
         const months = [];
         const today = new Date();
 
@@ -273,14 +289,16 @@ export const getHistory = async (req: Request, res: Response) => {
                     _sum: { amount: true },
                     where: {
                         date: { gte: start, lte: end },
-                        type: 'INCOME'
+                        type: 'INCOME',
+                        userId
                     }
                 }),
                 db.financialTransaction.aggregate({
                     _sum: { amount: true },
                     where: {
                         date: { gte: start, lte: end },
-                        type: 'EXPENSE'
+                        type: 'EXPENSE',
+                        userId
                     }
                 })
             ]);

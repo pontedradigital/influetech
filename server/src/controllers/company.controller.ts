@@ -4,7 +4,9 @@ import { v4 as uuidv4 } from 'uuid';
 
 export const listCompanies = async (req: Request, res: Response) => {
     try {
+        const userId = (req as any).user.id;
         const companies = await db.company.findMany({
+            where: { userId },
             orderBy: { name: 'asc' }
         });
         res.json(companies);
@@ -30,7 +32,7 @@ export const createCompany = async (req: Request, res: Response) => {
                 partnershipStatus: partnershipStatus || 'Solicitada',
                 status: 'ACTIVE',
                 rating: 0,
-                userId: userId // Must provide valid userId from frontend or auth token
+                userId: (req as any).user.id // Force correct userId from auth
             }
         });
         res.status(201).json(company);
@@ -44,6 +46,13 @@ export const updateCompany = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { name, contactName, email, phone, country, website, contactMethod, contactValue, partnershipStatus, status, rating } = req.body;
     try {
+        const userId = (req as any).user.id;
+
+        // Verify ownership
+        const existing = await db.company.findUnique({ where: { id } });
+        if (!existing) return res.status(404).json({ error: 'Empresa não encontrada' });
+        if (existing.userId !== userId) return res.status(403).json({ error: 'Acesso negado' });
+
         // Prisma generic update handles partial updates if values are undefined.
         // If values are null, it sets to null (if field allows).
         // The previous SQL logic used COALESCE(?, status) which means if new value is null/undefined, keep old.
@@ -77,6 +86,13 @@ export const updateCompany = async (req: Request, res: Response) => {
 export const deleteCompany = async (req: Request, res: Response) => {
     const { id } = req.params;
     try {
+        const userId = (req as any).user.id;
+
+        // Verify ownership
+        const existing = await db.company.findUnique({ where: { id } });
+        if (!existing) return res.status(404).json({ error: 'Empresa não encontrada' });
+        if (existing.userId !== userId) return res.status(403).json({ error: 'Acesso negado' });
+
         await db.company.delete({
             where: { id }
         });

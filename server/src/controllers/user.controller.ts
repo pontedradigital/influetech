@@ -4,6 +4,13 @@ import db from '../db';
 export const updateProfile = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
+        const userId = (req as any).user.id; // From auth
+
+        // 1. Strict Check: Can only update own profile
+        if (id !== userId) {
+            return res.status(403).json({ error: 'Você só pode editar seu próprio perfil.' });
+        }
+
         const {
             name,
             isPublicProfile,
@@ -145,7 +152,8 @@ export const getPublicUsers = async (req: Request, res: Response) => {
 };
 
 export const toggleLike = async (req: Request, res: Response) => {
-    const { fromUserId, toUserId } = req.body;
+    const { toUserId } = req.body;
+    const fromUserId = (req as any).user.id; // Force from authenticated user
 
     try {
         // Check if like exists

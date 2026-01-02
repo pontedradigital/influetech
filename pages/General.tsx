@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Product, Company } from '../types';
 import { useInfluencer } from '../context/InfluencerContext';
@@ -5,6 +6,7 @@ import { CompanyService } from '../services/CompanyService';
 import { compressImage, validateImage } from '../src/utils/imageCompression';
 import { ProductService } from '../services/ProductService';
 import { SaleService } from '../services/SaleService';
+
 
 // Lista de países
 const COUNTRIES = [
@@ -388,7 +390,7 @@ const CompanyDetailsModal = ({ isOpen, onClose, company, onEdit, onDelete }: {
                   company.partnershipStatus === 'Finalizada' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' :
                     company.partnershipStatus === 'Rejeitada' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' :
                       'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
-                }`}>
+                } `}>
                 {company.partnershipStatus || 'Solicitada'}
               </span>
             </div>
@@ -985,7 +987,7 @@ const ProductDetailsModal = ({ isOpen, onClose, product, onEdit, onDelete, onSta
             <div className="text-right">
               <p className="text-sm text-gray-500 mb-1">Preço</p>
               <p className="text-2xl font-bold text-primary">
-                {product.price ? `R$ ${product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'N/A'}
+                {product.price ? `R$ ${product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} ` : 'N/A'}
               </p>
             </div>
           </div>
@@ -1110,22 +1112,23 @@ export default function Products() {
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [selectedCompany, setSelectedCompany] = useState<string>('');
 
-  const fetchProducts = () => {
-    fetch('http://localhost:3001/api/products')
-      .then(res => res.json())
-      .then(data => {
-        const mapped = data.map((p: any) => ({
-          ...p,
-          company: p.brand,
-          receiveDate: new Date(p.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }),
-          status: p.status,
-          price: p.marketValue,
-          // Use Image from Category map, fallback to p.image, then fallback to generic
-          image: CATEGORY_IMAGES[p.category] || p.image || 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=300&q=80'
-        }));
-        setProducts(mapped);
-      })
-      .catch(err => console.error('Erro ao buscar produtos:', err));
+  const fetchProducts = async () => {
+    try {
+      const data = await ProductService.getAll();
+      const mapped = data.map((p: any) => ({
+        ...p,
+        company: p.brand,
+        receiveDate: new Date(p.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }),
+        status: p.status,
+        price: p.marketValue,
+        image: CATEGORY_IMAGES[p.category] || p.image || 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=300&q=80'
+      }));
+      setProducts(mapped);
+    } catch (err) {
+      console.error('Erro ao buscar produtos:', err);
+      // Ensure products is array
+      setProducts([]);
+    }
   };
 
   React.useEffect(() => {
@@ -1135,11 +1138,9 @@ export default function Products() {
   const confirmDelete = async () => {
     if (!deletingProductId) return;
     try {
-      const response = await fetch(`/api/products/${deletingProductId}`, { method: 'DELETE' });
-      if (response.ok) {
-        fetchProducts();
-        setViewingProduct(null);
-      }
+      await ProductService.delete(deletingProductId);
+      fetchProducts();
+      setViewingProduct(null);
     } catch (error) {
       console.error('Erro:', error);
     }
@@ -1163,7 +1164,7 @@ export default function Products() {
       const product = products.find(p => p.id === productId);
       if (!product) return;
 
-      const response = await fetch(`/api/products/${productId}`, {
+      const response = await fetch(`/ api / products / ${productId} `, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1339,7 +1340,7 @@ export default function Products() {
                     </td>
                     <td className="px-6 py-4">
                       <span className="font-bold text-primary">
-                        {product.price ? `R$ ${product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'N/A'}
+                        {product.price ? `R$ ${product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} ` : 'N/A'}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -1494,7 +1495,7 @@ const NewCompanyModal = ({ isOpen, onClose, onSave, editingCompany }: {
         outputFormat: 'webp'
       });
 
-      console.log(`Imagem otimizada: ${(file.size / 1024).toFixed(0)}KB -> ${(compressedFile.size / 1024).toFixed(0)}KB`);
+      console.log(`Imagem otimizada: ${(file.size / 1024).toFixed(0)} KB -> ${(compressedFile.size / 1024).toFixed(0)} KB`);
 
       setLogoFile(compressedFile);
 
@@ -1550,7 +1551,7 @@ const NewCompanyModal = ({ isOpen, onClose, onSave, editingCompany }: {
           ? JSON.stringify(error)
           : 'Erro desconhecido');
 
-      alert(`Erro ao salvar empresa: ${errorMessage}`);
+      alert(`Erro ao salvar empresa: ${errorMessage} `);
     }
   };
 
@@ -1776,14 +1777,16 @@ export function Companies() {
   const [viewingCompany, setViewingCompany] = useState<any | null>(null);
   const [deletingCompanyId, setDeletingCompanyId] = useState<string | null>(null);
 
-  const fetchCompanies = () => {
-    fetch('/api/companies')
-      .then(res => res.json())
-      .then(data => {
-        setCompanies(data);
-        setFilteredCompanies(data);
-      })
-      .catch(err => console.error('Erro ao buscar empresas:', err));
+  const fetchCompanies = async () => {
+    try {
+      const data = await CompanyService.getAll();
+      setCompanies(data);
+      setFilteredCompanies(data);
+    } catch (err) {
+      console.error('Erro ao buscar empresas:', err);
+      setCompanies([]);
+      setFilteredCompanies([]);
+    }
   };
 
   React.useEffect(() => {
@@ -1809,16 +1812,10 @@ export function Companies() {
     if (!deletingCompanyId) return;
 
     try {
-      const response = await fetch(`/api/companies/${deletingCompanyId}`, {
-        method: 'DELETE'
-      });
-
-      if (response.ok) {
-        fetchCompanies();
-        setViewingCompany(null);
-      } else {
-        alert('Erro ao excluir empresa');
-      }
+      await CompanyService.delete(deletingCompanyId);
+      // Success
+      fetchCompanies();
+      setViewingCompany(null);
     } catch (error) {
       console.error('Erro ao excluir empresa:', error);
       alert('Erro ao excluir empresa');
@@ -1937,7 +1934,7 @@ export function Companies() {
                           company.partnershipStatus === 'Finalizada' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' :
                             company.partnershipStatus === 'Rejeitada' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' :
                               'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
-                        }`}>
+                        } `}>
                         {company.partnershipStatus || 'Solicitada'}
                       </span>
                     </td>

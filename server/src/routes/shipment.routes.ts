@@ -1,7 +1,10 @@
 import { Router } from 'express';
 import * as shipmentController from '../controllers/shipment.controller';
+import { authenticate } from '../middleware/auth.middleware';
 
 const router = Router();
+
+router.use(authenticate);
 
 // CRUD routes
 router.post('/', shipmentController.create);
@@ -9,6 +12,7 @@ router.get('/', shipmentController.list);
 router.get('/:id', shipmentController.getById);
 router.put('/:id', shipmentController.update);
 router.delete('/:id', shipmentController.delete);
+
 
 // Document and status routes
 router.post('/:id/mark-document', shipmentController.markDocumentGenerated);

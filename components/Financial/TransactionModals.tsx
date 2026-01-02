@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { api } from '../../services/api';
 
 const EXPENSE_CATEGORIES = [
     'Imposto',
@@ -48,39 +49,22 @@ export const TransactionModal = ({ isOpen, onClose, type, onSuccess }: {
         }
 
         try {
-            const response = await fetch('/api/financial', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    type,
-                    amount: parseFloat(amount),
-                    description,
-                    name,
-                    currency,
-                    date,
-                    category,
-                    userId: (() => {
-                        const userStr = localStorage.getItem('user');
-                        if (userStr) {
-                            try {
-                                return JSON.parse(userStr).id;
-                            } catch { return null; }
-                        }
-                        return null;
-                    })()
-                })
+            await api.post('/financial', {
+                type,
+                amount: parseFloat(amount),
+                description,
+                name,
+                currency,
+                date,
+                category,
+                // userId is handled by backend from token
             });
 
-            if (response.ok) {
-                onSuccess();
-                onClose();
-            } else {
-                const errData = await response.json();
-                alert(`Erro ao criar transação: ${errData.error || 'Erro desconhecido'}`);
-            }
-        } catch (error) {
+            onSuccess();
+            onClose();
+        } catch (error: any) {
             console.error('Erro ao criar transação:', error);
-            alert('Erro ao criar transação');
+            alert(`Erro ao criar transação: ${error.message || 'Erro desconhecido'}`);
         }
     };
 

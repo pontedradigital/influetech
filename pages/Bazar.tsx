@@ -39,34 +39,61 @@ export default function Bazar() {
   }, []);
 
   const fetchData = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const [suggestionsData, allProducts, eventsData] = await Promise.all([
-        BazarService.getSuggestions(),
-        ProductService.list(),
-        BazarService.getEvents()
-      ]);
+      // Fetch Suggestions (Local/Mock - should always work)
+      try {
+        const suggestionsData = await BazarService.getSuggestions();
+        setSuggestions(suggestionsData);
+      } catch (error) {
+        console.error('Error fetching suggestions:', error);
+      }
 
-      setSuggestions(suggestionsData);
-      // Filtra apenas produtos não vendidos
-      const invalidStatuses = ['SOLD', 'VENDIDO', 'SHIPPED', 'ENVIADO', 'SENT'];
-      setProducts(allProducts.filter((p) => !invalidStatuses.includes(p.status?.toUpperCase())));
-      setBazarEvents(eventsData);
+      // Fetch User Data (Products & Events) - might fail if auth issue
+      try {
+        const [allProducts, eventsData] = await Promise.all([
+          ProductService.getAll(),
+          BazarService.getEvents()
+        ]);
+
+        // Filtra apenas produtos não vendidos
+        const invalidStatuses = ['SOLD', 'VENDIDO', 'SHIPPED', 'ENVIADO', 'SENT'];
+        setProducts(allProducts.filter((p) => !invalidStatuses.includes(p.status?.toUpperCase())));
+        setBazarEvents(eventsData);
+      } catch (error) {
+        console.error('Error fetching user data (products/events):', error);
+      }
+
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('General error in fetchData:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Agrupa sugestões por mês
-  const groupedSuggestions = suggestions.reduce((acc, suggestion) => {
-    const date = new Date(suggestion.date);
-    const monthKey = `${date.getFullYear()} -${String(date.getMonth() + 1).padStart(2, '0')} `;
-    if (!acc[monthKey]) acc[monthKey] = [];
-    acc[monthKey].push(suggestion);
-    return acc;
-  }, {} as Record<string, BazarSuggestion[]>);
+  const [selectedMonth, setSelectedMonth] = useState<string>('all');
+
+  // Filter keys (YYYY-MM)
+  const allMonths = Array.from(new Set(suggestions.map(s => {
+    const d = new Date(s.date);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  }))).sort();
+
+  // Agrupa sugestões por mês (Filtered)
+  const groupedSuggestions = suggestions
+    .filter(s => {
+      if (selectedMonth === 'all') return true;
+      const d = new Date(s.date);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      return key === selectedMonth;
+    })
+    .reduce((acc, suggestion) => {
+      const date = new Date(suggestion.date);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      if (!acc[monthKey]) acc[monthKey] = [];
+      acc[monthKey].push(suggestion);
+      return acc;
+    }, {} as Record<string, BazarSuggestion[]>);
 
   const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
@@ -82,14 +109,36 @@ export default function Bazar() {
           </h1>
           <p className="text-gray-500 mt-1">Sugestões inteligentes para os próximos 6 meses</p>
         </div>
-        <div className="flex gap-3">
-          <div className="bg-primary/10 px-4 py-2 rounded-lg border border-primary/20">
-            <p className="text-xs text-gray-600 dark:text-gray-400">Produtos Disponíveis</p>
-            <p className="text-2xl font-black text-primary">{products.length}</p>
+
+        <div className="flex flex-col md:flex-row gap-3 items-end md:items-center">
+          {/* Filter Dropdown */}
+          <div className="relative">
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="appearance-none bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 py-2 pl-4 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer font-medium"
+            >
+              <option value="all">Todos os Meses</option>
+              {allMonths.map((monthKey: string) => {
+                const [year, month] = monthKey.split('-');
+                const label = `${monthNames[parseInt(month) - 1]} ${year}`;
+                return <option key={monthKey} value={monthKey}>{label}</option>;
+              })}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+              <span className="material-symbols-outlined text-sm">expand_more</span>
+            </div>
           </div>
-          <div className="bg-green-500/10 px-4 py-2 rounded-lg border border-green-500/20">
-            <p className="text-xs text-gray-600 dark:text-gray-400">Bazares Agendados</p>
-            <p className="text-2xl font-black text-green-600">{bazarEvents.length}</p>
+
+          <div className="flex gap-3">
+            <div className="bg-primary/10 px-4 py-2 rounded-lg border border-primary/20">
+              <p className="text-xs text-gray-600 dark:text-gray-400">Produtos Disponíveis</p>
+              <p className="text-2xl font-black text-primary">{products.length}</p>
+            </div>
+            <div className="bg-green-500/10 px-4 py-2 rounded-lg border border-green-500/20">
+              <p className="text-xs text-gray-600 dark:text-gray-400">Bazares Agendados</p>
+              <p className="text-2xl font-black text-green-600">{bazarEvents.length}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -195,7 +244,7 @@ export default function Bazar() {
                                 cx="45"
                                 cy="45"
                                 r="36"
-                                stroke={suggestion.score >= 90 ? '#10b981' : suggestion.score >= 80 ? '#3b82f6' : suggestion.score >= 70 ? '#f59e0b' : '#ef4444'}
+                                stroke={suggestion.score >= 90 ? '#10b981' : suggestion.score >= 80 ? '#3b82f6' : suggestion.score >= 60 ? '#f59e0b' : '#ef4444'}
                                 strokeWidth="7"
                                 fill="none"
                                 strokeDasharray={`${2 * Math.PI * 36} `}
@@ -209,7 +258,7 @@ export default function Bazar() {
                             <div className="absolute inset-0 flex flex-col items-center justify-center">
                               <span className={`text - 3xl font - black ${suggestion.score >= 90 ? 'text-green-600' :
                                 suggestion.score >= 80 ? 'text-blue-600' :
-                                  suggestion.score >= 70 ? 'text-yellow-600' :
+                                  suggestion.score >= 60 ? 'text-yellow-600' :
                                     'text-red-600'
                                 } `}>
                                 {suggestion.score}
@@ -223,13 +272,13 @@ export default function Bazar() {
                         <div className="mb-4">
                           <div className={`inline - flex items - center gap - 2 px - 3 py - 1.5 rounded - full text - xs font - bold ${suggestion.score >= 90 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
                             suggestion.score >= 80 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
-                              suggestion.score >= 70 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' :
+                              suggestion.score >= 60 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' :
                                 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
                             } `}>
                             <span className="material-symbols-outlined text-base">
                               {suggestion.score >= 90 ? 'star' : suggestion.score >= 80 ? 'thumb_up' : 'info'}
                             </span>
-                            {suggestion.score >= 90 ? 'Excelente' : suggestion.score >= 80 ? 'Muito Bom' : suggestion.score >= 70 ? 'Bom' : 'Regular'}
+                            {suggestion.score >= 90 ? 'Excelente' : suggestion.score >= 80 ? 'Muito Bom' : suggestion.score >= 60 ? 'Bom' : 'Ruim / Arriscado'}
                           </div>
                         </div>
 
@@ -328,7 +377,7 @@ export default function Bazar() {
                 <div className="flex items-center justify-center gap-3">
                   <span className={`text - 5xl font - black ${scoreModalData.score >= 90 ? 'text-green-600' :
                     scoreModalData.score >= 80 ? 'text-blue-600' :
-                      scoreModalData.score >= 70 ? 'text-yellow-600' :
+                      scoreModalData.score >= 60 ? 'text-yellow-600' :
                         'text-red-600'
                     } `}>
                     {scoreModalData.score}
@@ -342,8 +391,8 @@ export default function Bazar() {
                       } `}>
                       {scoreModalData.score >= 90 ? '🌟 Excelente' :
                         scoreModalData.score >= 80 ? '👍 Muito Bom' :
-                          scoreModalData.score >= 70 ? '✅ Bom' :
-                            '📊 Regular'}
+                          scoreModalData.score >= 60 ? '✅ Bom' :
+                            '⚠️ Ruim / Arriscado'}
                     </p>
                   </div>
                 </div>
@@ -369,15 +418,15 @@ export default function Bazar() {
                   <div className="flex items-center gap-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
                     <span className="text-2xl">✅</span>
                     <div className="flex-1">
-                      <p className="font-bold text-yellow-700 dark:text-yellow-300">Bom (70-79 pontos)</p>
+                      <p className="font-bold text-yellow-700 dark:text-yellow-300">Bom (60-79 pontos)</p>
                       <p className="text-xs text-gray-600 dark:text-gray-400">Data favorável para vendas</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                     <span className="text-2xl">📊</span>
                     <div className="flex-1">
-                      <p className="font-bold text-gray-700 dark:text-gray-300">Regular (abaixo de 70)</p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">Considere outras datas se possível</p>
+                      <p className="font-bold text-red-700 dark:text-red-300">Ruim (abaixo de 60)</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Data com histórico de vendas baixo ou feriados de viagem</p>
                     </div>
                   </div>
                 </div>

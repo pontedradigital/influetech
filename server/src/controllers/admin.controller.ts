@@ -13,8 +13,20 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
 
 export const listUsers = async (req: Request, res: Response) => {
     try {
+        const search = req.query.search as string;
+
+        const whereClause: any = {};
+        if (search) {
+            whereClause.OR = [
+                { name: { contains: search } }, // Case insensitive by default in some Prisma providers? Postgres usually needs mode: 'insensitive'
+                { email: { contains: search } }
+            ];
+        }
+
         const users = await db.user.findMany({
+            where: whereClause,
             orderBy: { createdAt: 'desc' },
+            take: search ? 10 : undefined, // Limit results if searching
             select: {
                 id: true,
                 name: true,

@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 export const create = async (req: Request, res: Response) => {
     try {
         const shipmentData = req.body;
-        const userId = req.body.userId; // TODO: Auth
+        const userId = (req as any).user.id; // From Auth
 
         const shipment = await db.shipment.create({
             data: {
@@ -57,7 +57,7 @@ export const create = async (req: Request, res: Response) => {
 // Listar envios do usuário
 export const list = async (req: Request, res: Response) => {
     try {
-        const userId = req.query.userId as string;
+        const userId = (req as any).user.id;
 
         const shipments = await db.shipment.findMany({
             where: { userId },
@@ -86,8 +86,13 @@ export const list = async (req: Request, res: Response) => {
 export const getById = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
+        const userId = (req as any).user.id;
 
         const shipment = await db.shipment.findUnique({ where: { id } });
+
+        if (shipment && shipment.userId !== userId) {
+            return res.status(403).json({ error: 'Acesso negado' });
+        }
 
         if (!shipment) {
             return res.status(404).json({ error: 'Shipment not found' });
@@ -108,7 +113,13 @@ export const getById = async (req: Request, res: Response) => {
 export const update = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
+        const userId = (req as any).user.id;
         const data = req.body;
+
+        // Verify ownership
+        const existing = await db.shipment.findUnique({ where: { id } });
+        if (!existing) return res.status(404).json({ error: 'Shipment not found' });
+        if (existing.userId !== userId) return res.status(403).json({ error: 'Acesso negado' });
 
         // Removing special fields that shouldn't be updated directly blindly via body spread if unsafe,
         // but original code allowed typical update. We rely on frontend sending correct fields.
@@ -168,6 +179,12 @@ export const update = async (req: Request, res: Response) => {
 export const deleteShipment = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
+        const userId = (req as any).user.id;
+
+        // Verify ownership
+        const existing = await db.shipment.findUnique({ where: { id } });
+        if (!existing) return res.status(404).json({ error: 'Shipment not found' });
+        if (existing.userId !== userId) return res.status(403).json({ error: 'Acesso negado' });
 
         await db.shipment.delete({
             where: { id }
@@ -185,7 +202,13 @@ export const deleteShipment = async (req: Request, res: Response) => {
 export const markDocumentGenerated = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
+        const userId = (req as any).user.id;
         const { documentType } = req.body; // 'label' | 'declaration' | 'both'
+
+        // Verify ownership
+        const existing = await db.shipment.findUnique({ where: { id } });
+        if (!existing) return res.status(404).json({ error: 'Shipment not found' });
+        if (existing.userId !== userId) return res.status(403).json({ error: 'Acesso negado' });
 
         let updateData: any = {};
         if (documentType === 'label') {
@@ -216,10 +239,15 @@ export const markDocumentGenerated = async (req: Request, res: Response) => {
 export const updateShipmentStatus = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
+        const userId = (req as any).user.id;
         const { status } = req.body;
 
+        const shipment = await db.shipment.findUnique({ where: { id } });
+
+        if (!shipment) return res.status(404).json({ error: 'Shipment not found' });
+        if (shipment.userId !== userId) return res.status(403).json({ error: 'Acesso negado' });
+
         if (status === 'shipped') {
-            const shipment = await db.shipment.findUnique({ where: { id } });
 
             if (!shipment) return res.status(404).json({ error: 'Shipment not found' });
 

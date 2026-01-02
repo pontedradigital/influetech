@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { api } from '../services/api';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, Legend } from 'recharts';
 
 import { TransactionModal, DeleteConfirmModal } from '../components/Financial/TransactionModals';
@@ -32,24 +33,23 @@ export default function Finance() {
   const [showTaxModal, setShowTaxModal] = useState(false);
   const [showROIModal, setShowROIModal] = useState(false);
 
+  // ... inside component ...
+
   // Fetch Data
   const fetchSummary = () => {
-    fetch(`/api/financial/summary?month=${selectedMonth}&year=${selectedYear}`)
-      .then(res => res.json())
+    api.get(`/financial/summary?month=${selectedMonth}&year=${selectedYear}`)
       .then(data => setSummary(data))
       .catch(err => console.error('Erro ao buscar resumo:', err));
   };
 
   const fetchHistory = () => {
-    fetch('/api/financial/history')
-      .then(res => res.json())
+    api.get('/financial/history')
       .then(data => setHistoryData(data))
       .catch(err => console.error('Erro ao buscar histórico:', err));
   };
 
   const fetchTransactions = () => {
-    fetch(`/api/financial?month=${selectedMonth}&year=${selectedYear}`)
-      .then(res => res.json())
+    api.get(`/financial?month=${selectedMonth}&year=${selectedYear}`)
       .then(data => setTransactions(data))
       .catch(err => console.error('Erro ao buscar transações:', err));
   };
@@ -71,8 +71,8 @@ export default function Finance() {
   const confirmDelete = async () => {
     if (!deletingId) return;
     try {
-      const response = await fetch(`/api/financial/${deletingId}`, { method: 'DELETE' });
-      if (response.ok) refreshData();
+      await api.delete(`/financial/${deletingId}`);
+      refreshData();
     } catch (error) {
       console.error('Erro:', error);
     }

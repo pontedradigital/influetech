@@ -1,14 +1,9 @@
 import { Request, Response } from 'express';
 import db from '../db';
-import { v4 as uuidv4 } from 'uuid';
 
 export const getAll = async (req: Request, res: Response) => {
     try {
-        const userId = req.headers['user-id'] as string; // Simple auth for now
-
-        if (!userId) {
-            return res.status(401).json({ error: 'Unauthorized' });
-        }
+        const userId = (req as any).user.id; // From auth
 
         const brands = await db.mediaKitBrand.findMany({
             where: { userId },
@@ -24,12 +19,8 @@ export const getAll = async (req: Request, res: Response) => {
 
 export const create = async (req: Request, res: Response) => {
     try {
-        const userId = req.headers['user-id'] as string;
+        const userId = (req as any).user.id;
         const { name, logo, backgroundColor } = req.body;
-
-        if (!userId) {
-            return res.status(401).json({ error: 'Unauthorized' });
-        }
 
         if (!name) {
             return res.status(400).json({ error: 'Name is required' });
@@ -53,12 +44,8 @@ export const create = async (req: Request, res: Response) => {
 
 export const deleteBrand = async (req: Request, res: Response) => {
     try {
-        const userId = req.headers['user-id'] as string;
+        const userId = (req as any).user.id;
         const { id } = req.params;
-
-        if (!userId) {
-            return res.status(401).json({ error: 'Unauthorized' });
-        }
 
         // Verify ownership
         const brand = await db.mediaKitBrand.findUnique({

@@ -29,6 +29,7 @@ import Terms from '../pages/Terms';
 import Privacy from '../pages/Privacy';
 import AdminUsers from '../pages/AdminUsers';
 import AdminFinance from '../pages/AdminFinance';
+import AdminPlans from '../pages/AdminPlans';
 
 const SidebarItem: React.FC<{ to: string; icon: string; label: string; active: boolean; onClick?: () => void }> = ({ to, icon, label, active, onClick }) => (
     <Link
@@ -259,6 +260,7 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const navItems = [
         { to: '/area-administrativa/usuarios', icon: 'group', label: 'Gestão de Usuários' },
         { to: '/area-administrativa/financeiro', icon: 'payments', label: 'Gestão Financeira' },
+        { to: '/area-administrativa/planos', icon: 'price_check', label: 'Planos e Valores' },
         { to: '/app', icon: 'arrow_back', label: 'Voltar para Plataforma' },
     ];
 
@@ -495,6 +497,7 @@ const AppContent = () => {
                             <Routes>
                                 <Route path="usuarios" element={<AdminUsers />} />
                                 <Route path="financeiro" element={<AdminFinance />} />
+                                <Route path="planos" element={<AdminPlans />} />
                             </Routes>
                         </AdminLayout>
                     </PrivateRoute>

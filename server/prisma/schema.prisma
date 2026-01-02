@@ -509,3 +509,17 @@ model Notification {
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 }
+
+model Plan {
+  id            String   @id @default(uuid())
+  name          String
+  description   String
+  priceMonthly  Decimal
+  priceAnnual   Decimal
+  features      String   // JSON array
+  recommended   Boolean  @default(false)
+  active        Boolean  @default(true)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

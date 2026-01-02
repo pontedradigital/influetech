@@ -57,9 +57,54 @@ const AdminFinance = () => {
     const [chargeAmount, setChargeAmount] = useState('');
     const [chargeDesc, setChargeDesc] = useState('');
 
+    // Autocomplete State
+    const [userSuggestions, setUserSuggestions] = useState<any[]>([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+
+    // Plans State for Auto-fill
+    const [availablePlans, setAvailablePlans] = useState<any[]>([]);
+
+    useEffect(() => {
+        const delayDebounceFn = setTimeout(async () => {
+            if (chargeUser.length > 1) {
+                try {
+                    const token = localStorage.getItem('token');
+                    const res = await fetch(`/api/admin?search=${chargeUser}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        setUserSuggestions(data);
+                        setShowSuggestions(true);
+                    }
+                } catch (error) {
+                    console.error('Error searching users:', error);
+                }
+            } else {
+                setUserSuggestions([]);
+                setShowSuggestions(false);
+            }
+        }, 300);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [chargeUser]);
+
     useEffect(() => {
         fetchData();
+        fetchPlans(); // Fetch plans on mount
     }, []);
+
+    const fetchPlans = async () => {
+        try {
+            const res = await fetch('/api/plans');
+            if (res.ok) {
+                const data = await res.json();
+                setAvailablePlans(data);
+            }
+        } catch (error) {
+            console.error('Error fetching plans for dropdown:', error);
+        }
+    };
 
     const fetchData = async () => {
         try {
@@ -197,20 +242,81 @@ const AdminFinance = () => {
                             </div>
 
                             <form onSubmit={handleCreateCharge} className="flex flex-col gap-5">
-                                <div>
+                                <div className="relative">
                                     <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 ml-1">Usuário / Email</label>
                                     <input
-                                        type="email"
+                                        type="text"
                                         required
                                         value={chargeUser}
                                         onChange={e => setChargeUser(e.target.value)}
+                                        onFocus={() => chargeUser.length > 1 && setShowSuggestions(true)}
+                                        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                                         className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3.5 text-white focus:border-emerald-500 outline-none transition-all placeholder:text-slate-600"
-                                        placeholder="ex: cliente@email.com"
+                                        placeholder="Busque por nome ou email..."
+                                        autoComplete="off"
                                     />
+
+                                    {showSuggestions && userSuggestions.length > 0 && (
+                                        <div className="absolute top-[85px] left-0 w-full bg-[#1e293b] border border-white/10 rounded-xl shadow-2xl z-50 max-h-48 overflow-y-auto custom-scrollbar ring-1 ring-white/10">
+                                            {userSuggestions.map(user => (
+                                                <div
+                                                    key={user.id}
+                                                    className="px-4 py-3 hover:bg-white/5 cursor-pointer border-b border-white/5 last:border-0 transition-colors flex items-center justify-between group"
+                                                    onClick={() => {
+                                                        setChargeUser(user.email);
+                                                        setShowSuggestions(false);
+                                                    }}
+                                                >
+                                                    <div>
+                                                        <p className="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors">{user.name}</p>
+                                                        <p className="text-xs text-slate-400">{user.email}</p>
+                                                    </div>
+                                                    <span className="material-symbols-outlined text-slate-600 text-sm group-hover:text-emerald-500">add</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
                                     <p className="text-[11px] text-slate-500 mt-1.5 ml-1 flex items-center gap-1">
                                         <span className="material-symbols-outlined text-[14px]">info</span>
                                         O usuário receberá um email com o link de pagamento.
                                     </p>
+                                </div>
+
+                                {/* Plan Selection Integration */}
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 ml-1">Preencher com Plano (Opcional)</label>
+                                    <select
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            if (!value) return;
+                                            const [planId, type] = value.split('|');
+                                            const plan = availablePlans.find(p => p.id === planId);
+
+                                            if (plan) {
+                                                if (type === 'MONTHLY') {
+                                                    setChargeAmount(plan.priceMonthly.toString());
+                                                    setChargeDesc(`Assinatura ${plan.name} - Mensal`);
+                                                } else {
+                                                    setChargeAmount(plan.priceAnnual.toString());
+                                                    setChargeDesc(`Assinatura ${plan.name} - Anual`);
+                                                }
+                                            }
+                                        }}
+                                        className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3.5 text-slate-300 focus:border-emerald-500 outline-none transition-all cursor-pointer"
+                                    >
+                                        <option value="" className="bg-[#1e293b] text-slate-300">Selecione para preencher...</option>
+                                        {availablePlans.map(plan => (
+                                            <React.Fragment key={plan.id}>
+                                                <option value={`${plan.id}|MONTHLY`} className="bg-[#1e293b] text-white">
+                                                    {plan.name} (Mensal) - R$ {parseFloat(plan.priceMonthly).toFixed(2).replace('.', ',')}
+                                                </option>
+                                                <option value={`${plan.id}|ANNUAL`} className="bg-[#1e293b] text-white">
+                                                    {plan.name} (Anual) - R$ {parseFloat(plan.priceAnnual).toFixed(2).replace('.', ',')}
+                                                </option>
+                                            </React.Fragment>
+                                        ))}
+                                    </select>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">

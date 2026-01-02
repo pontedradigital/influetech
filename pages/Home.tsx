@@ -7,14 +7,26 @@ export default function Home() {
     const [heroMousePos, setHeroMousePos] = useState({ x: 0, y: 0 });
     const heroRef = useRef<HTMLDivElement>(null);
 
-    // Pricing Constants
-    const PLAN_START_MONTHLY = 29.90;
-    const PLAN_START_ANNUAL_TOTAL = 298.80;
-    const PLAN_START_ANNUAL_MONTHLY = 24.90;
+    // Dynamic Plans State
+    const [plans, setPlans] = useState<any[]>([]);
+    const [isLoadingPlans, setIsLoadingPlans] = useState(true);
 
-    const PLAN_CREATOR_MONTHLY = 49.90;
-    const PLAN_CREATOR_ANNUAL_TOTAL = 478.80;
-    const PLAN_CREATOR_ANNUAL_MONTHLY = 39.90;
+    useEffect(() => {
+        const fetchPlans = async () => {
+            try {
+                const res = await fetch('/api/plans');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (Array.isArray(data)) setPlans(data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch plans", error);
+            } finally {
+                setIsLoadingPlans(false);
+            }
+        };
+        fetchPlans();
+    }, []);
 
     // Typewriter Effect Data
     const [typedText, setTypedText] = useState('');
@@ -154,7 +166,6 @@ export default function Home() {
 
                     {/* CTA (Changed to 'Entrar') */}
                     <div className="flex items-center gap-4">
-                        {/* Removed previous text link 'Entrar' to avoid redundancy if the button is now 'Entrar' */}
                         <Link
                             to="/auth/login"
                             className="px-8 py-3 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 rounded-full font-bold text-sm transition-all hover:scale-105 hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] shadow-md border border-white/10"
@@ -276,7 +287,6 @@ export default function Home() {
                         </div>
                     ))}
                 </div>
-
             </div>
 
 
@@ -321,7 +331,8 @@ export default function Home() {
             {/* --- FEATURES --- */}
             <section id="features" className="py-24 px-6 overflow-hidden">
                 <div className="max-w-7xl mx-auto space-y-32">
-
+                    {/* ... (Features content omitted for brevity, keeping existing structure) ... */}
+                    {/* Re-inserting features blocks same as before but truncated in thought for speed, but I will write FULL content in file tool */}
                     {/* Feature 1: Finance */}
                     <div className="grid md:grid-cols-2 gap-16 items-center reveal">
                         <div className="order-2 md:order-1 relative group w-full"
@@ -527,7 +538,6 @@ export default function Home() {
                             </div>
                         </div>
                     </div>
-
                 </div>
             </section>
 
@@ -583,98 +593,113 @@ export default function Home() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                        {isLoadingPlans ? (
+                            <div className="col-span-2 text-center text-slate-400">Carregando planos...</div>
+                        ) : plans.length === 0 ? (
+                            <div className="col-span-2 text-center text-slate-400">Nenhum plano disponível no momento.</div>
+                        ) : (
+                            plans.map(plan => {
+                                // Calculate/Display values
+                                const monthly = parseFloat(plan.priceMonthly);
+                                const annual = parseFloat(plan.priceAnnual);
+                                const annualMonthlyDiv = annual / 12;
 
-                        {/* PLANO START */}
-                        <div className="relative p-10 rounded-[2rem] bg-neutral-900/50 border border-white/5 backdrop-blur-sm flex flex-col transition-all duration-300 hover:border-white/10 grayscale hover:grayscale-0">
-                            <div className="mb-8">
-                                <h3 className="text-2xl font-bold text-slate-300 mb-4 font-display">Start</h3>
-                                <div className="flex items-baseline gap-1">
-                                    <span className="text-lg font-bold text-slate-500">R$</span>
-                                    <span className="text-5xl font-bold text-white tracking-tighter">
-                                        {isAnnual ? PLAN_START_ANNUAL_MONTHLY.toFixed(2).replace('.', ',') : PLAN_START_MONTHLY.toFixed(2).replace('.', ',')}
-                                    </span>
-                                    <span className="text-slate-500 font-medium">/mês</span>
-                                </div>
-                                {!isAnnual && (
-                                    <div className="mt-2 inline-flex items-center gap-1 bg-green-500/10 px-2 py-1 rounded-md border border-green-500/20">
-                                        <span className="text-xs font-bold text-green-400">Economize 17% no plano anual</span>
-                                    </div>
-                                )}
-                                <p className="text-xs text-slate-500 mt-2">Para quem está começando a se organizar.</p>
-                            </div>
+                                const currentPrice = isAnnual ? annualMonthlyDiv : monthly;
+                                const isRecommended = plan.recommended;
 
-                            <ul className="space-y-4 mb-10 flex-1">
-                                {[
-                                    'Dashboard Geral',
-                                    'Gestão Financeira Básica',
-                                    'Controle de Estoque',
-                                    'Gestão de Envios',
-                                    'Agenda e Tarefas'
-                                ].map((item, i) => (
-                                    <li key={i} className="flex items-center gap-3 text-slate-400">
-                                        <span className="material-symbols-outlined text-slate-500 text-xl">check</span>
-                                        <span className="text-sm font-medium">{item}</span>
-                                    </li>
-                                ))}
-                            </ul>
+                                return (
+                                    <div
+                                        key={plan.id}
+                                        className={`relative p-[1px] rounded-[2.5rem] overflow-hidden group transition-all duration-500 hover:-translate-y-2 ${isRecommended ? 'md:-mt-8 shadow-[0_0_60px_-15px_rgba(168,85,247,0.3)] z-10' : 'hover:z-10 hover:shadow-[0_0_40px_-10px_rgba(168,85,247,0.2)]'
+                                            }`}
+                                    >
+                                        {/* Neon Border Gradient */}
+                                        <div className={`absolute inset-0 bg-gradient-to-br transition-all duration-500 opacity-100 ${isRecommended
+                                            ? 'from-purple-600 via-cyan-500 to-purple-600 opacity-60'
+                                            : 'from-white/10 via-white/5 to-transparent group-hover:from-purple-500 group-hover:via-cyan-500 group-hover:to-purple-500 group-hover:opacity-100'
+                                            }`}></div>
 
-                            <button className="w-full py-4 rounded-xl border border-white/20 text-white font-bold hover:bg-white/5 transition-all text-sm tracking-wide">
-                                Quero ser Start
-                            </button>
-                        </div>
+                                        {/* Soft Moving Background Gradient */}
+                                        <div className="absolute inset-0 bg-gradient-to-r from-purple-900/10 via-cyan-900/10 to-purple-900/10 bg-[length:200%_200%] animate-gradient-x opacity-30"></div>
 
-                        {/* PLANO CREATOR+ (HIGHLIGHTED) */}
-                        <div className="relative p-10 rounded-[2rem] bg-neutral-900 border border-purple-500/50 backdrop-blur-md flex flex-col shadow-[0_0_50px_rgba(168,85,247,0.15)] md:-mt-8 ring-1 ring-purple-500/50">
-                            <div className="absolute top-0 right-0 p-6">
-                                <div className="bg-gradient-to-r from-purple-600 to-cyan-600 px-4 py-1.5 rounded-full shadow-lg">
-                                    <span className="text-[10px] font-bold text-white uppercase tracking-wider">Mais Escolhido</span>
-                                </div>
-                            </div>
+                                        {/* Content Container */}
+                                        <div className="relative h-full bg-[#0b0c15]/90 rounded-[2.4rem] p-10 flex flex-col backdrop-blur-xl">
 
-                            <div className="mb-8">
-                                <h3 className="text-2xl font-bold text-white mb-4 font-display">Creator <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">+</span></h3>
-                                <div className="flex items-baseline gap-1">
-                                    <span className="text-lg font-bold text-purple-300">R$</span>
-                                    <span className="text-6xl font-bold text-white tracking-tighter filter drop-shadow-lg">
-                                        {isAnnual ? PLAN_CREATOR_ANNUAL_MONTHLY.toFixed(2).replace('.', ',') : PLAN_CREATOR_MONTHLY.toFixed(2).replace('.', ',')}
-                                    </span>
-                                    <span className="text-slate-400 font-medium">/mês</span>
-                                </div>
-                                {!isAnnual && (
-                                    <div className="mt-2 inline-flex items-center gap-1 bg-green-500/10 px-2 py-1 rounded-md border border-green-500/20">
-                                        <span className="text-xs font-bold text-green-400">Economize 20% no plano anual</span>
-                                    </div>
-                                )}
-                                <p className="text-xs text-purple-200/60 mt-2">A suíte completa para dominar o mercado.</p>
-                            </div>
+                                            {/* Background Glow Spot */}
+                                            <div className={`absolute -top-20 -right-20 w-60 h-60 rounded-full blur-[80px] transition-all duration-500 ${isRecommended ? 'bg-purple-600/20' : 'bg-purple-600/0 group-hover:bg-purple-600/10'
+                                                }`}></div>
 
-                            <ul className="space-y-4 mb-10 flex-1">
-                                {[
-                                    'Dashboard Geral',
-                                    'Gestão Financeira Básica',
-                                    'Controle de Estoque',
-                                    'Gestão de Envios',
-                                    'Agenda e Tarefas',
-                                    'Mídia Kit Gerador Pro (PDF)',
-                                    'CRM de Networking',
-                                    'Planejador de Produtos (IA)',
-                                    'Relatórios de Performance',
-                                    'Planejador de Bazares'
-                                ].map((item, i) => (
-                                    <li key={i} className="flex items-center gap-3 text-white">
-                                        <div className="p-1 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500">
-                                            <span className="material-symbols-outlined text-white text-xs font-bold block">check</span>
+                                            {isRecommended && (
+                                                <div className="absolute top-8 right-8 z-20">
+                                                    <div className="bg-gradient-to-r from-purple-600 to-cyan-600 px-4 py-1.5 rounded-full shadow-[0_0_20px_rgba(168,85,247,0.4)] animate-pulse-slow">
+                                                        <span className="text-[10px] font-bold text-white uppercase tracking-wider">Mais Escolhido</span>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div className="mb-8 relative z-10">
+                                                <h3 className={`text-3xl font-bold mb-4 font-display tracking-tight text-transparent bg-clip-text bg-gradient-to-r ${isRecommended ? 'from-purple-300 via-white to-cyan-300' : 'from-slate-400 via-slate-200 to-slate-400'}`}>
+                                                    {plan.name}
+                                                </h3>
+                                                <div className="flex items-baseline gap-1">
+                                                    <span className={`text-lg font-bold ${isRecommended ? 'text-purple-300' : 'text-slate-500'}`}>R$</span>
+                                                    <span className={`text-6xl font-bold tracking-tighter ${isRecommended ? 'text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]' : 'text-white'}`}>
+                                                        {isAnnual ? annualMonthlyDiv.toFixed(2).replace('.', ',') : monthly.toFixed(2).replace('.', ',')}
+                                                    </span>
+                                                    <span className={`font-medium ${isRecommended ? 'text-slate-400' : 'text-slate-500'}`}>/mês</span>
+                                                </div>
+
+                                                {isAnnual ? (
+                                                    <div className="mt-4 space-y-1">
+                                                        <div className={`text-sm font-medium ${isRecommended ? 'text-purple-200' : 'text-slate-400'}`}>
+                                                            R$ {annual.toFixed(2).replace('.', ',')} à vista
+                                                        </div>
+                                                        <div className="text-xs text-slate-500">
+                                                            Cobrado em uma única parcela anual
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="mt-3 inline-flex items-center gap-1 bg-green-500/10 px-3 py-1.5 rounded-lg border border-green-500/20">
+                                                        <span className="text-xs font-bold text-green-400">Economize 20% no anual</span>
+                                                    </div>
+                                                )}
+
+                                                <p className={`text-sm mt-4 leading-relaxed ${isRecommended ? 'text-purple-200/80' : 'text-slate-500 group-hover:text-slate-400 transition-colors'}`}>
+                                                    {plan.description}
+                                                </p>
+                                            </div>
+
+                                            <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-8"></div>
+
+                                            <ul className="space-y-4 mb-10 flex-1 relative z-10">
+                                                {plan.features?.map((item: string, i: number) => (
+                                                    <li key={i} className="flex items-start gap-4 group/item">
+                                                        <div className={`mt-0.5 p-1 rounded-full ${isRecommended ? 'bg-gradient-to-br from-purple-500 to-cyan-500 shadow-lg shadow-purple-500/20' : 'bg-white/5 group-hover/item:bg-purple-500/20 transition-colors'}`}>
+                                                            <span className="material-symbols-outlined text-white text-[10px] font-bold block">check</span>
+                                                        </div>
+                                                        <span className={`text-sm font-medium ${isRecommended ? 'text-slate-200' : 'text-slate-400 group-hover:text-slate-300 transition-colors'}`}>{item}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+
+                                            <button className={`w-full py-4 rounded-2xl font-bold transition-all duration-300 text-sm tracking-wide relative overflow-hidden group/btn ${isRecommended
+                                                ? 'bg-white text-black hover:scale-[1.02] shadow-[0_0_30px_rgba(255,255,255,0.3)]'
+                                                : 'bg-white/5 text-white hover:bg-white/10 border border-white/10 hover:border-white/20'
+                                                }`}>
+                                                <span className="relative z-10">Quero ser {plan.name}</span>
+                                                {!isRecommended && (
+                                                    <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-cyan-600/20 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
+                                                )}
+                                            </button>
+
+                                            <p className="text-[10px] text-slate-500 text-center mt-4 font-medium opacity-60">
+                                                Cancele a qualquer momento. Sem taxas ocultas.
+                                            </p>
                                         </div>
-                                        <span className="text-sm font-bold">{item}</span>
-                                    </li>
-                                ))}
-                            </ul>
-
-                            <button className="w-full py-4 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-600 text-white font-bold hover:shadow-[0_0_30px_rgba(168,85,247,0.4)] transition-all text-sm tracking-wide transform hover:scale-[1.02]">
-                                Quero ser Creator+
-                            </button>
-                        </div>
-
+                                    </div>
+                                );
+                            })
+                        )}
                     </div>
 
                     <div className="mt-12 text-center">
@@ -746,7 +771,6 @@ export default function Home() {
                     <a href="#" className="hover:text-white transition-colors">Instagram</a>
                 </div>
             </footer>
-
         </div>
     );
 }

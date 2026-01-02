@@ -1,4 +1,4 @@
-import { supabase } from '../src/lib/supabase';
+import { api } from './api';
 
 export interface Product {
     id: string;
@@ -23,98 +23,29 @@ export interface Product {
 }
 
 export class ProductService {
-    static async list(): Promise<Product[]> {
-        try {
-            const userId = localStorage.getItem('userId');
-            if (!userId) throw new Error('User not authenticated');
-
-            const { data, error } = await supabase
-                .from('Product')
-                .select('*')
-                .eq('userId', userId)
-                .order('createdAt', { ascending: false });
-
-            if (error) throw error;
-            return data || [];
-        } catch (error) {
-            console.error('Error fetching products:', error);
-            throw error;
-        }
+    static async getAll(): Promise<Product[]> {
+        return api.get('/products');
     }
 
     static async getAvailableForShipping(): Promise<Product[]> {
-        try {
-            const userId = localStorage.getItem('userId');
-            if (!userId) throw new Error('User not authenticated');
-
-            const { data, error } = await supabase
-                .from('Product')
-                .select('*')
-                .eq('userId', userId)
-                .eq('status', 'SOLD')
-                .order('createdAt', { ascending: false });
-
-            if (error) throw error;
-            return data || [];
-        } catch (error) {
-            console.error('Error fetching available products:', error);
-            throw error;
-        }
+        // Backend doesn't have a specific endpoint for this filter yet, but we can list all and filter on client 
+        // OR add a query param to listProducts. 
+        // For now, let's filter on client side to keep backend simple, or assume list returns all.
+        // Wait, listProducts returns all for user.
+        const products: Product[] = await api.get('/products');
+        return products.filter(p => p.status === 'SOLD');
     }
 
     static async create(product: Partial<Product>): Promise<Product> {
-        try {
-            const userId = localStorage.getItem('userId');
-            if (!userId) throw new Error('User not authenticated');
-
-            const { data, error } = await supabase
-                .from('Product')
-                .insert([{ ...product, userId }])
-                .select()
-                .single();
-
-            if (error) throw error;
-            return data;
-        } catch (error) {
-            console.error('Error creating product:', error);
-            throw error;
-        }
+        return api.post('/products', product);
     }
 
     static async update(id: string, product: Partial<Product>): Promise<void> {
-        try {
-            const userId = localStorage.getItem('userId');
-            if (!userId) throw new Error('User not authenticated');
-
-            const { error } = await supabase
-                .from('Product')
-                .update(product)
-                .eq('id', id)
-                .eq('userId', userId);
-
-            if (error) throw error;
-        } catch (error) {
-            console.error('Error updating product:', error);
-            throw error;
-        }
+        return api.put(`/products/${id}`, product);
     }
 
     static async delete(id: string): Promise<void> {
-        try {
-            const userId = localStorage.getItem('userId');
-            if (!userId) throw new Error('User not authenticated');
-
-            const { error } = await supabase
-                .from('Product')
-                .delete()
-                .eq('id', id)
-                .eq('userId', userId);
-
-            if (error) throw error;
-        } catch (error) {
-            console.error('Error deleting product:', error);
-            throw error;
-        }
+        return api.delete(`/products/${id}`);
     }
 }
 

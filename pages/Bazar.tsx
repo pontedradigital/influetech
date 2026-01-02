@@ -50,7 +50,7 @@ export default function Bazar() {
       setSuggestions(suggestionsData);
       // Filtra apenas produtos não vendidos
       const invalidStatuses = ['SOLD', 'VENDIDO', 'SHIPPED', 'ENVIADO', 'SENT'];
-      setProducts(allProducts.filter((p: Product) => !invalidStatuses.includes(p.status?.toUpperCase())));
+      setProducts(allProducts.filter((p) => !invalidStatuses.includes(p.status?.toUpperCase())));
       setBazarEvents(eventsData);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -208,9 +208,9 @@ export default function Bazar() {
                             {/* Score number in center */}
                             <div className="absolute inset-0 flex flex-col items-center justify-center">
                               <span className={`text - 3xl font - black ${suggestion.score >= 90 ? 'text-green-600' :
-                                  suggestion.score >= 80 ? 'text-blue-600' :
-                                    suggestion.score >= 70 ? 'text-yellow-600' :
-                                      'text-red-600'
+                                suggestion.score >= 80 ? 'text-blue-600' :
+                                  suggestion.score >= 70 ? 'text-yellow-600' :
+                                    'text-red-600'
                                 } `}>
                                 {suggestion.score}
                               </span>
@@ -222,9 +222,9 @@ export default function Bazar() {
                         {/* Score Label */}
                         <div className="mb-4">
                           <div className={`inline - flex items - center gap - 2 px - 3 py - 1.5 rounded - full text - xs font - bold ${suggestion.score >= 90 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
-                              suggestion.score >= 80 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
-                                suggestion.score >= 70 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' :
-                                  'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                            suggestion.score >= 80 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
+                              suggestion.score >= 70 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' :
+                                'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
                             } `}>
                             <span className="material-symbols-outlined text-base">
                               {suggestion.score >= 90 ? 'star' : suggestion.score >= 80 ? 'thumb_up' : 'info'}
@@ -327,18 +327,18 @@ export default function Bazar() {
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Score desta data:</p>
                 <div className="flex items-center justify-center gap-3">
                   <span className={`text - 5xl font - black ${scoreModalData.score >= 90 ? 'text-green-600' :
-                      scoreModalData.score >= 80 ? 'text-blue-600' :
-                        scoreModalData.score >= 70 ? 'text-yellow-600' :
-                          'text-red-600'
+                    scoreModalData.score >= 80 ? 'text-blue-600' :
+                      scoreModalData.score >= 70 ? 'text-yellow-600' :
+                        'text-red-600'
                     } `}>
                     {scoreModalData.score}
                   </span>
                   <div className="text-left">
                     <p className="text-xs text-gray-500">/ 100</p>
                     <p className={`text - sm font - bold ${scoreModalData.score >= 90 ? 'text-green-600' :
-                        scoreModalData.score >= 80 ? 'text-blue-600' :
-                          scoreModalData.score >= 70 ? 'text-yellow-600' :
-                            'text-red-600'
+                      scoreModalData.score >= 80 ? 'text-blue-600' :
+                        scoreModalData.score >= 70 ? 'text-yellow-600' :
+                          'text-red-600'
                       } `}>
                       {scoreModalData.score >= 90 ? '🌟 Excelente' :
                         scoreModalData.score >= 80 ? '👍 Muito Bom' :
@@ -567,8 +567,8 @@ function BazarModal({ suggestion, products, onClose, onSuccess }: {
                 <label
                   key={product.id}
                   className={`flex items - center gap - 3 p - 3 rounded - lg cursor - pointer transition - all ${selectedProducts.includes(product.id)
-                      ? 'bg-primary/10 border-2 border-primary'
-                      : 'bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 hover:border-primary/50'
+                    ? 'bg-primary/10 border-2 border-primary'
+                    : 'bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 hover:border-primary/50'
                     } `}
                 >
                   <input

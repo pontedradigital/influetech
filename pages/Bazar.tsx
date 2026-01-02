@@ -296,10 +296,14 @@ export default function Bazar() {
 
                         {/* Razões */}
                         <div className="space-y-2 mb-4">
-                          <h4 className="text-xs font-bold uppercase text-gray-400">Por que esta data?</h4>
+                          <h4 className={`text-xs font-bold uppercase ${suggestion.score >= 60 ? 'text-gray-400' : 'text-red-500'}`}>
+                            {suggestion.score >= 60 ? 'POR QUE ESTA DATA?' : 'POR QUE RECOMENDAMOS PULAR?'}
+                          </h4>
                           {suggestion.reasons.map((reason, idx) => (
                             <div key={idx} className="flex items-start gap-2">
-                              <span className="material-symbols-outlined text-green-600 text-sm mt-0.5">check_circle</span>
+                              <span className={`material-symbols-outlined text-sm mt-0.5 ${suggestion.score >= 60 ? 'text-green-600' : 'text-red-500'}`}>
+                                {suggestion.score >= 60 ? 'check_circle' : 'warning'}
+                              </span>
                               <p className="text-sm text-gray-700 dark:text-gray-300">{reason}</p>
                             </div>
                           ))}

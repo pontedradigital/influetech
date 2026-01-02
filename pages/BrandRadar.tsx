@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 
 interface Brand {
@@ -235,11 +235,46 @@ const TierInfoModule = () => {
 const BrandRadar = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedTier, setSelectedTier] = useState<string>('');
-    const [brands] = useState<Brand[]>(MOCK_BRANDS);
+    const [brands, setBrands] = useState<Brand[]>([]); // Start empty
     const [scanning, setScanning] = useState(false);
     const [unlockedContacts, setUnlockedContacts] = useState<string[]>([]);
     const [isDecrypting, setIsDecrypting] = useState<string | null>(null);
     const [viewBrand, setViewBrand] = useState<Brand | null>(null); // Modal State
+
+    useEffect(() => {
+        const loadBrands = async () => {
+            try {
+                const token = localStorage.getItem('token');
+
+                const response = await fetch('/api/radar-brands', {
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    const mappedData = data.map((b: any) => ({
+                        ...b,
+                        categories: Array.isArray(b.categories) ? b.categories : [],
+                        salesChannels: Array.isArray(b.salesChannels) ? b.salesChannels : []
+                    }));
+
+                    if (mappedData.length > 0) {
+                        setBrands(mappedData);
+                    } else {
+                        setBrands(MOCK_BRANDS);
+                    }
+                } else {
+                    console.warn('Using mock data due to API error');
+                    setBrands(MOCK_BRANDS);
+                }
+            } catch (error) {
+                console.error('Failed to load brands', error);
+                setBrands(MOCK_BRANDS);
+            }
+        };
+        loadBrands();
+    }, []);
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         const term = e.target.value;

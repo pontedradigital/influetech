@@ -51,10 +51,12 @@ app.use('/api/trending-products', trendingProductRoutes);
 app.use('/api/shipments', shipmentRoutes);
 app.use('/api/plans', planRoutes);
 import adminRoutes from './routes/admin.routes';
+import radarBrandRoutes from './routes/radarBrand.routes';
 
 app.use('/api/community', communityRoutes);
 app.use('/api/media-kit-brands', mediaKitBrandRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/radar-brands', radarBrandRoutes);
 
 import db from './db';
 

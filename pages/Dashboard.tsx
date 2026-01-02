@@ -285,7 +285,7 @@ const Dashboard = () => {
                 <div className="mt-auto">
                   <div className="flex justify-between items-end mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-3xl font-bold">{Math.round((displayStats.widgets.goal.currentAmount / displayStats.widgets.goal.targetAmount) * 100)}%</span>
+                      <span className="text-3xl font-bold">{displayStats.widgets.goal.targetAmount > 0 ? Math.round((displayStats.widgets.goal.currentAmount / displayStats.widgets.goal.targetAmount) * 100) : 0}%</span>
                       <span className="text-sm opacity-80 pb-1">concluído</span>
                     </div>
                     <p className="text-sm font-medium opacity-90 pb-1">
@@ -297,7 +297,7 @@ const Dashboard = () => {
                   <div className="w-full bg-black/20 rounded-full h-3 backdrop-blur-sm overflow-hidden border border-white/10">
                     <div
                       className="bg-emerald-400 h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(52,211,153,0.5)]"
-                      style={{ width: `${Math.min((displayStats.widgets.goal.currentAmount / displayStats.widgets.goal.targetAmount) * 100, 100)}%` }}
+                      style={{ width: `${displayStats.widgets.goal.targetAmount > 0 ? Math.min((displayStats.widgets.goal.currentAmount / displayStats.widgets.goal.targetAmount) * 100, 100) : 0}%` }}
                     ></div>
                   </div>
 

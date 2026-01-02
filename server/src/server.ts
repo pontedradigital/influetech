@@ -48,8 +48,11 @@ app.use('/api/alerts', alertRoutes);
 app.use('/api/bazares', bazarRoutes);
 app.use('/api/trending-products', trendingProductRoutes);
 app.use('/api/shipments', shipmentRoutes);
+import adminRoutes from './routes/admin.routes';
+
 app.use('/api/community', communityRoutes);
 app.use('/api/media-kit-brands', mediaKitBrandRoutes);
+app.use('/api/admin', adminRoutes);
 
 import db from './db';
 

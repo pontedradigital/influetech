@@ -49,34 +49,40 @@ const Login = () => {
         throw new Error('Sessão não criada');
       }
 
-      // Create/Update user in public.User table
+      // Create/Update user in public.User table (only basic info, preserve role/plan)
+      const { data: existingUser } = await supabase
+        .from('User')
+        .select('role, plan')
+        .eq('id', data.user.id)
+        .single();
+
       const { error: userError } = await supabase
         .from('User')
         .upsert({
           id: data.user.id,
           email: data.user.email,
-          password: 'auth_managed', // Placeholder - real auth is via Supabase Auth
+          password: 'auth_managed',
           name: data.user.user_metadata?.name || data.user.email?.split('@')[0] || 'Usuário',
-          plan: 'START',
           active: 1,
-          createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         }, {
-          onConflict: 'id'
+          onConflict: 'id',
+          ignoreDuplicates: false // We want to update name/email/active, but careful with others
         });
 
       if (userError) {
         console.warn('Warning: Could not sync user to public.User table:', userError);
-        // Don't throw - auth succeeded, just warn about sync
       }
 
       // Store session and userId
       localStorage.setItem('token', data.session.access_token);
-      localStorage.setItem('userId', data.user.id); // CRITICAL: needed for all Supabase queries
+      localStorage.setItem('userId', data.user.id);
       localStorage.setItem('user', JSON.stringify({
         id: data.user.id,
         email: data.user.email,
-        name: data.user.user_metadata?.name || data.user.email
+        name: data.user.user_metadata?.name || data.user.email,
+        role: existingUser?.role || 'USER', // CRITICAL: Store role
+        plan: existingUser?.plan || 'START'
       }));
 
       // Navigate to app
@@ -323,11 +329,98 @@ const Recover = () => {
   );
 };
 
+const SetPassword = () => {
+  const [password, setPassword] = React.useState('');
+  const [confirmPassword, setConfirmPassword] = React.useState('');
+  const [error, setError] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const navigate = useNavigate();
+
+  React.useEffect(() => {
+    // Check if we have a session (handled by Supabase generic link verification on load)
+    const checkSession = async () => {
+      const { supabase } = await import('../src/lib/supabase');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        // If coming from email link, supabase client usually handles the hash fragment and sets session.
+        // If not set, maybe link expired or invalid.
+        // Wait a bit for auto-refresh? Or just show UI.
+      }
+    };
+    checkSession();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password !== confirmPassword) {
+      setError('As senhas não coincidem');
+      return;
+    }
+    setLoading(true);
+    setError('');
+
+    try {
+      const { supabase } = await import('../src/lib/supabase');
+      const { error } = await supabase.auth.updateUser({ password });
+
+      if (error) throw error;
+
+      alert('Senha definida com sucesso!');
+      navigate('/app');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen w-full flex items-center justify-center p-4 bg-neutral-950 overflow-hidden relative">
+      <div className="w-full max-w-lg bg-[#0f172a] rounded-2xl border border-white/5 shadow-2xl p-8 relative z-20">
+        <h2 className="text-2xl font-bold text-white mb-6 text-center">Definir Senha</h2>
+        {error && <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-3 rounded-lg mb-4 text-sm">{error}</div>}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-slate-400 text-xs font-bold uppercase mb-1">Nova Senha</label>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              className="w-full bg-neutral-900 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-purple-500 outline-none"
+              placeholder="••••••••"
+            />
+          </div>
+          <div>
+            <label className="block text-slate-400 text-xs font-bold uppercase mb-1">Confirmar Senha</label>
+            <input
+              type="password"
+              required
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              className="w-full bg-neutral-900 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-purple-500 outline-none"
+              placeholder="••••••••"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-4 bg-gradient-to-r from-purple-600 to-cyan-600 text-white font-bold rounded-xl mt-6 hover:shadow-lg hover:shadow-purple-500/20 transition-all disabled:opacity-50"
+          >
+            {loading ? 'Salvando...' : 'Definir Senha e Entrar'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 export default function Auth() {
   return (
     <Routes>
       <Route path="login" element={<Login />} />
       <Route path="recuperar" element={<Recover />} />
+      <Route path="definir-senha" element={<SetPassword />} />
     </Routes>
   );
 }

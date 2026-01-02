@@ -30,7 +30,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
                 id: user.id,
                 name: user.name,
                 email: user.email,
-                plan: user.plan
+                plan: user.plan,
+                role: user.role,
             }
         });
     } catch (error) {

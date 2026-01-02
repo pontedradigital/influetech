@@ -47,12 +47,10 @@ export const CompanyService = {
         console.log('[CompanyService] Creating company payload:', company);
 
         // 1. Criar empresa
-        // Generate ID manually as DB might not have default gen_random_uuid
-        const newId = crypto.randomUUID();
-
+        // ID e timestamps são gerados automaticamente pelo banco agora
         const { data, error } = await supabase
             .from('Company')
-            .insert([{ ...company, id: newId, userId }])
+            .insert([{ ...company, userId }])
             .select()
             .single();
 

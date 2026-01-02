@@ -1556,146 +1556,148 @@ const NewCompanyModal = ({ isOpen, onClose, onSave, editingCompany }: {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-[#1A202C] w-full max-w-lg rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden max-h-[90vh] overflow-y-auto transform transition-all scale-100">
-        <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-700">
+      <div className="bg-white dark:bg-[#1A202C] w-full max-w-lg rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden max-h-[90vh] flex flex-col transform transition-all scale-100">
+        <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-700 flex-none bg-white dark:bg-[#1A202C] z-10">
           <h3 className="text-xl font-bold text-gray-900 dark:text-white">{editingCompany ? 'Editar Empresa' : 'Nova Empresa'}</h3>
           <button onClick={() => { if (!editingCompany) resetForm(); onClose(); }} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-500">
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Nome da Empresa</label>
-            <input required type="text" value={name} onChange={e => setName(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" placeholder="Ex: Fifine" />
-          </div>
+        <div className="flex-1 overflow-y-auto p-6 scrollbar-thin custom-scrollbar">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Form Content matches previous logic */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Nome da Empresa</label>
+              <input required type="text" value={name} onChange={e => setName(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" placeholder="Ex: Fifine" />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Nome do Contato</label>
-            <input required type="text" value={contact} onChange={e => setContact(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" placeholder="Ex: João Silva" />
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Nome do Contato</label>
+              <input required type="text" value={contact} onChange={e => setContact(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" placeholder="Ex: João Silva" />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              Forma de Contato <span className="text-gray-400 text-xs">(opcional)</span>
-            </label>
-            <select
-              value={contactMethod}
-              onChange={(e) => {
-                setContactMethod(e.target.value);
-                setContactValue('');
-              }}
-              className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white"
-            >
-              <option value="">Selecione uma forma de contato</option>
-              <option value="Email">Email</option>
-              <option value="Site">Diretamente do Site</option>
-              <option value="Forms">Forms</option>
-            </select>
-          </div>
-
-          {/* Campo condicional baseado na forma de contato */}
-          {contactMethod === 'Email' && (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Email de Contato
+                Forma de Contato <span className="text-gray-400 text-xs">(opcional)</span>
+              </label>
+              <select
+                value={contactMethod}
+                onChange={(e) => {
+                  setContactMethod(e.target.value);
+                  setContactValue('');
+                }}
+                className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white"
+              >
+                <option value="">Selecione uma forma de contato</option>
+                <option value="Email">Email</option>
+                <option value="Site">Diretamente do Site</option>
+                <option value="Forms">Forms</option>
+              </select>
+            </div>
+
+            {/* Campo condicional baseado na forma de contato */}
+            {contactMethod === 'Email' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  Email de Contato
+                </label>
+                <input
+                  type="email"
+                  value={contactValue}
+                  onChange={e => setContactValue(e.target.value)}
+                  className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white"
+                  placeholder="contato@empresa.com"
+                />
+              </div>
+            )}
+
+            {contactMethod === 'Site' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  URL do Site de Contato
+                </label>
+                <input
+                  type="url"
+                  value={contactValue}
+                  onChange={e => setContactValue(e.target.value)}
+                  className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white"
+                  placeholder="https://www.empresa.com/contato"
+                />
+              </div>
+            )}
+
+            {contactMethod === 'Forms' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  Link do Formulário
+                </label>
+                <input
+                  type="url"
+                  value={contactValue}
+                  onChange={e => setContactValue(e.target.value)}
+                  className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white"
+                  placeholder="https://forms.google.com/..."
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Email <span className="text-gray-400 text-xs">(opcional)</span>
+              </label>
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" placeholder="contato@empresa.com" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">País de Origem</label>
+              <select value={country} onChange={e => setCountry(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white">
+                <option value="">Selecione um país</option>
+                {COUNTRIES.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Telefone <span className="text-gray-400 text-xs">(opcional)</span>
               </label>
               <input
-                type="email"
-                value={contactValue}
-                onChange={e => setContactValue(e.target.value)}
-                className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white"
-                placeholder="contato@empresa.com"
+                type="text"
+                value={phone}
+                onChange={e => handlePhoneChange(e.target.value)}
+                className={`w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border ${phoneError ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'} focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white`}
+                placeholder="+55 (11) 98765-4321"
               />
+              {phoneError && <p className="text-red-500 text-xs mt-1">{phoneError}</p>}
+              <p className="text-gray-400 text-xs mt-1">Formato: +[DDI] ([DDD]) [Número]</p>
             </div>
-          )}
 
-          {contactMethod === 'Site' && (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                URL do Site de Contato
+                URL do Site <span className="text-gray-400 text-xs">(opcional)</span>
               </label>
               <input
                 type="url"
-                value={contactValue}
-                onChange={e => setContactValue(e.target.value)}
+                value={website}
+                onChange={e => setWebsite(e.target.value)}
                 className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white"
-                placeholder="https://www.empresa.com/contato"
+                placeholder="https://www.exemplo.com"
               />
             </div>
-          )}
 
-          {contactMethod === 'Forms' && (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Link do Formulário
+                Logo da Empresa <span className="text-gray-400 text-xs">(opcional)</span>
               </label>
-              <input
-                type="url"
-                value={contactValue}
-                onChange={e => setContactValue(e.target.value)}
-                className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white"
-                placeholder="https://forms.google.com/..."
-              />
-            </div>
-          )}
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              Email <span className="text-gray-400 text-xs">(opcional)</span>
-            </label>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white" placeholder="contato@empresa.com" />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">País de Origem</label>
-            <select value={country} onChange={e => setCountry(e.target.value)} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white">
-              <option value="">Selecione um país</option>
-              {COUNTRIES.map(c => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              Telefone <span className="text-gray-400 text-xs">(opcional)</span>
-            </label>
-            <input
-              type="text"
-              value={phone}
-              onChange={e => handlePhoneChange(e.target.value)}
-              className={`w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border ${phoneError ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'} focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white`}
-              placeholder="+55 (11) 98765-4321"
-            />
-            {phoneError && <p className="text-red-500 text-xs mt-1">{phoneError}</p>}
-            <p className="text-gray-400 text-xs mt-1">Formato: +[DDI] ([DDD]) [Número]</p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              URL do Site <span className="text-gray-400 text-xs">(opcional)</span>
-            </label>
-            <input
-              type="url"
-              value={website}
-              onChange={e => setWebsite(e.target.value)}
-              className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white"
-              placeholder="https://www.exemplo.com"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              Logo da Empresa <span className="text-gray-400 text-xs">(opcional)</span>
-            </label>
-            <div className="space-y-3">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleLogoChange}
-                disabled={isCompressing}
-                className="block w-full text-sm text-gray-500
+              <div className="space-y-3">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoChange}
+                  disabled={isCompressing}
+                  className="block w-full text-sm text-gray-500
                   file:mr-4 file:py-2 file:px-4
                   file:rounded-full file:border-0
                   file:text-sm file:font-semibold
@@ -1703,61 +1705,62 @@ const NewCompanyModal = ({ isOpen, onClose, onSave, editingCompany }: {
                   hover:file:bg-primary/20
                   dark:file:bg-primary/20 dark:file:text-primary
                 "
-              />
+                />
 
-              {isCompressing && (
-                <div className="flex items-center gap-2 text-sm text-blue-500">
-                  <span className="animate-spin material-symbols-outlined text-sm">progress_activity</span>
-                  Otimizando imagem...
-                </div>
-              )}
+                {isCompressing && (
+                  <div className="flex items-center gap-2 text-sm text-blue-500">
+                    <span className="animate-spin material-symbols-outlined text-sm">progress_activity</span>
+                    Otimizando imagem...
+                  </div>
+                )}
 
-              {logoPreview && (
-                <div className="relative inline-block group">
-                  <img
-                    src={logoPreview}
-                    alt="Logo preview"
-                    className="h-20 w-20 object-contain rounded-lg border border-gray-200 dark:border-gray-700 bg-white"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLogoFile(null);
-                      setLogoPreview(null);
-                    }}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg hover:bg-red-600 transition-colors"
-                    title="Remover logo"
-                  >
-                    <span className="material-symbols-outlined text-sm">close</span>
-                  </button>
-                  <p className="text-xs text-green-600 mt-1">✓ Imagem pronta</p>
-                </div>
-              )}
+                {logoPreview && (
+                  <div className="relative inline-block group">
+                    <img
+                      src={logoPreview}
+                      alt="Logo preview"
+                      className="h-20 w-20 object-contain rounded-lg border border-gray-200 dark:border-gray-700 bg-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLogoFile(null);
+                        setLogoPreview(null);
+                      }}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg hover:bg-red-600 transition-colors"
+                      title="Remover logo"
+                    >
+                      <span className="material-symbols-outlined text-sm">close</span>
+                    </button>
+                    <p className="text-xs text-green-600 mt-1">✓ Imagem pronta</p>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              Status da Parceria
-            </label>
-            <select
-              value={partnershipStatus}
-              onChange={e => setPartnershipStatus(e.target.value)}
-              className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white"
-            >
-              <option value="Solicitada">Solicitada</option>
-              <option value="Aceita">Aceita</option>
-              <option value="Iniciada">Iniciada</option>
-              <option value="Finalizada">Finalizada</option>
-              <option value="Rejeitada">Rejeitada</option>
-            </select>
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Status da Parceria
+              </label>
+              <select
+                value={partnershipStatus}
+                onChange={e => setPartnershipStatus(e.target.value)}
+                className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white"
+              >
+                <option value="Solicitada">Solicitada</option>
+                <option value="Aceita">Aceita</option>
+                <option value="Iniciada">Iniciada</option>
+                <option value="Finalizada">Finalizada</option>
+                <option value="Rejeitada">Rejeitada</option>
+              </select>
+            </div>
 
-          <div className="pt-4 flex gap-3">
-            <button type="button" onClick={() => { if (!editingCompany) resetForm(); onClose(); }} className="flex-1 h-11 rounded-lg border border-gray-200 dark:border-gray-700 font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Cancelar</button>
-            <button type="submit" disabled={!!phoneError} className="flex-1 h-11 rounded-lg bg-primary font-bold text-white hover:bg-primary-600 shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed">Salvar Empresa</button>
-          </div>
-        </form>
+            <div className="pt-4 flex gap-3">
+              <button type="button" onClick={() => { if (!editingCompany) resetForm(); onClose(); }} className="flex-1 h-11 rounded-lg border border-gray-200 dark:border-gray-700 font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Cancelar</button>
+              <button type="submit" disabled={!!phoneError} className="flex-1 h-11 rounded-lg bg-primary font-bold text-white hover:bg-primary-600 shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed">Salvar Empresa</button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

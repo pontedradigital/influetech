@@ -222,3 +222,38 @@ export const getPaymentStats = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Erro ao calcular estatísticas' });
     }
 };
+
+export const getTransactions = async (req: Request, res: Response) => {
+    try {
+        // Fetch recent transactions (limit 10 for dashboard)
+        // If FinancialTransaction model exists, use it. Otherwise, simulate from Users/Sales?
+        // Checking Schema: values line 57: transactions FinancialTransaction[]
+        // So it exists.
+
+        const transactions = await db.financialTransaction.findMany({
+            take: 10,
+            orderBy: { createdAt: 'desc' },
+            include: {
+                user: {
+                    select: { name: true, email: true }
+                }
+            }
+        });
+
+        const formatted = transactions.map(tx => ({
+            id: tx.id,
+            user: tx.user?.name || tx.user?.email || 'Usuário Desconhecido',
+            amount: Number(tx.amount),
+            status: tx.status,
+            date: tx.createdAt,
+            description: tx.description || 'Transação'
+        }));
+
+        res.json(formatted);
+
+    } catch (error: any) {
+        console.error('Transactions Error:', error);
+        // Fallback if table is empty or issues
+        res.json([]);
+    }
+};

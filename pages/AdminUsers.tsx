@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 
 // Admin Page Component
 export default function AdminUsers() {
@@ -69,9 +69,9 @@ export default function AdminUsers() {
                 body: JSON.stringify(payload)
             });
             const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Erro ao convidar');
+            if (!res.ok) throw new Error(data.error || 'Erro ao criar usuário');
 
-            alert('Convite enviado com sucesso! O usuário receberá um e-mail para definir a senha.');
+            alert('Usuário criado com sucesso! E-mail de definição de senha enviado.');
             setIsInviteModalOpen(false);
             fetchUsers();
             fetchStats();
@@ -117,7 +117,7 @@ export default function AdminUsers() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Tem certeza? Isso deletará a conta e todos os dados.')) return;
+        if (!confirm('Tem certeza? Isso deletará a conta e todos os dados permanentemente.')) return;
 
         try {
             const token = localStorage.getItem('token');
@@ -140,167 +140,173 @@ export default function AdminUsers() {
     );
 
     return (
-        <div className="min-h-screen bg-neutral-950 text-white font-sans selection:bg-purple-500/30">
+        <div className="animate-fade-in space-y-8">
+            <Helmet>
+                <title>Gestão de Usuários | Admin Master</title>
+            </Helmet>
 
-            {/* Header / Nav similar to Landing Page */}
-            <header className="sticky top-0 z-50 backdrop-blur-md bg-neutral-950/80 border-b border-white/5">
-                <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-cyan-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
-                            <span className="material-symbols-outlined text-white text-sm">admin_panel_settings</span>
-                        </div>
-                        <span className="font-bold text-lg tracking-tight">Área Administrativa</span>
-                    </div>
-                </div>
-            </header>
-
-            <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
-
-                {/* 1. Payment Dashboard (Cards) */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Card 1: MRR */}
-                    <div className="relative group p-6 rounded-2xl bg-[#0f172a] border border-white/10 overflow-hidden hover:border-purple-500/30 transition-all">
-                        <div className="absolute top-0 right-0 p-4 opacity-50"><span className="material-symbols-outlined text-4xl text-purple-500/20">payments</span></div>
-                        <p className="text-slate-400 text-sm font-medium uppercase tracking-wider mb-2">Faturamento Mensal (Est.)</p>
-                        <h3 className="text-3xl font-black text-white">R$ {stats.mrr?.toFixed(2).replace('.', ',')}</h3>
-                    </div>
-
-                    {/* Card 2: Overdue */}
-                    <div className="relative group p-6 rounded-2xl bg-[#0f172a] border border-white/10 overflow-hidden hover:border-red-500/30 transition-all">
-                        <div className="absolute top-0 right-0 p-4 opacity-50"><span className="material-symbols-outlined text-4xl text-red-500/20">warning</span></div>
-                        <p className="text-slate-400 text-sm font-medium uppercase tracking-wider mb-2">Pagamentos Atrasados</p>
-                        <h3 className="text-3xl font-black text-red-400">{stats.overdue}</h3>
-                    </div>
-
-                    {/* Card 3: Due This Week */}
-                    <div className="relative group p-6 rounded-2xl bg-[#0f172a] border border-white/10 overflow-hidden hover:border-cyan-500/30 transition-all">
-                        <div className="absolute top-0 right-0 p-4 opacity-50"><span className="material-symbols-outlined text-4xl text-cyan-500/20">calendar_clock</span></div>
-                        <p className="text-slate-400 text-sm font-medium uppercase tracking-wider mb-2">Vencendo essa Semana</p>
-                        <h3 className="text-3xl font-black text-cyan-400">{stats.dueThisWeek}</h3>
-                    </div>
+            {/* Header Section with Glass Effect */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-3xl font-bold text-white tracking-tight">Gestão de Usuários</h2>
+                    <p className="text-slate-400 mt-1">Administre acessos e assinaturas da plataforma.</p>
                 </div>
 
-                {/* 2. Actions & Filter */}
-                <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div className="relative w-full md:w-96">
-                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">search</span>
-                        <input
-                            type="text"
-                            placeholder="Buscar usuário por nome ou email..."
-                            value={searchTerm}
-                            onChange={e => setSearchTerm(e.target.value)}
-                            className="w-full h-12 pl-10 pr-4 bg-neutral-900 border border-white/10 rounded-xl text-white placeholder:text-slate-600 focus:outline-none focus:border-purple-500 transition-colors"
-                        />
-                    </div>
+                <div className="flex gap-3">
                     <button
                         onClick={() => setIsInviteModalOpen(true)}
-                        className="px-6 py-3 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-xl font-bold text-white shadow-lg shadow-purple-500/20 hover:scale-105 transition-transform flex items-center gap-2"
+                        className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-purple-900/20 transition-all transform hover:scale-105 flex items-center gap-2"
                     >
-                        <span className="material-symbols-outlined">add</span>
-                        Convidar Usuário
+                        <span className="material-symbols-outlined">person_add</span>
+                        Gerar Novo Usuário
                     </button>
                 </div>
+            </div>
 
-                {/* 3. Users Table list */}
-                <div className="bg-neutral-900 border border-white/10 rounded-2xl overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="border-b border-white/5 bg-white/5 text-slate-400 text-xs uppercase tracking-wider">
-                                    <th className="p-4 font-medium">Usuário</th>
-                                    <th className="p-4 font-medium">Plano / Ciclo</th>
-                                    <th className="p-4 font-medium">Status Pagto</th>
-                                    <th className="p-4 font-medium">Vencimento</th>
-                                    <th className="p-4 font-medium text-right">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-white/5 text-sm">
-                                {isLoading ? (
-                                    <tr><td colSpan={5} className="p-8 text-center text-slate-500">Carregando usuários...</td></tr>
-                                ) : filteredUsers.length === 0 ? (
-                                    <tr><td colSpan={5} className="p-8 text-center text-slate-500">Nenhum usuário encontrado.</td></tr>
-                                ) : (
-                                    filteredUsers.map(user => (
-                                        <tr key={user.id} className="hover:bg-white/5 transition-colors group">
-                                            <td className="p-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold relative ${user.active ? 'bg-gradient-to-br from-gray-700 to-gray-600' : 'bg-red-900/20 text-red-500'}`}>
-                                                        {user.name?.charAt(0)}
-                                                        <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#0f172a] ${user.active ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                                                    </div>
-                                                    <div>
-                                                        <div className="font-bold text-white">{user.name}</div>
-                                                        <div className="text-slate-500 text-xs">{user.email}</div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="p-4">
-                                                <div className="flex flex-col">
-                                                    <span className={`font-bold ${user.plan === 'CREATOR_PLUS' ? 'text-purple-400' : 'text-slate-300'}`}>
-                                                        {user.plan === 'CREATOR_PLUS' ? 'Creator+' : 'Start'}
-                                                    </span>
-                                                    <span className="text-xs text-slate-500 lowercase">{user.planCycle}</span>
-                                                </div>
-                                            </td>
-                                            <td className="p-4">
-                                                <Badge status={user.paymentStatus} />
-                                            </td>
-                                            <td className="p-4 text-slate-400">
-                                                {user.nextPaymentDate ? new Date(user.nextPaymentDate).toLocaleDateString() : '-'}
-                                            </td>
-                                            <td className="p-4 text-right">
-                                                <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button onClick={() => { setSelectedUser(user); setIsEditModalOpen(true); }} className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-colors" title="Editar">
-                                                        <span className="material-symbols-outlined text-lg">edit</span>
-                                                    </button>
-                                                    <button onClick={() => handleDelete(user.id)} className="p-2 hover:bg-red-500/10 rounded-lg text-slate-400 hover:text-red-500 transition-colors" title="Deletar">
-                                                        <span className="material-symbols-outlined text-lg">delete</span>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
+            {/* Stats Cards (Glossy) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Card 1: MRR */}
+                <div className="relative group p-6 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md overflow-hidden hover:bg-white/20 transition-all duration-300 shadow-lg">
+                    <div className="absolute top-0 right-0 p-4 opacity-10"><span className="material-symbols-outlined text-6xl">payments</span></div>
+                    <div className="relative z-10">
+                        <p className="text-slate-300 text-xs font-bold uppercase tracking-widest mb-2">Faturamento Mensal (Est.)</p>
+                        <h3 className="text-3xl font-bold text-white tracking-tight">R$ {stats.mrr?.toFixed(2).replace('.', ',')}</h3>
+                        <div className="h-1 w-12 bg-emerald-500 rounded-full mt-4 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
                     </div>
                 </div>
-            </main>
 
-            {/* Invite Modal */}
+                {/* Card 2: Overdue */}
+                <div className="relative group p-6 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md overflow-hidden hover:bg-white/20 transition-all duration-300 shadow-lg">
+                    <div className="absolute top-0 right-0 p-4 opacity-10"><span className="material-symbols-outlined text-6xl">warning</span></div>
+                    <div className="relative z-10">
+                        <p className="text-slate-300 text-xs font-bold uppercase tracking-widest mb-2">Pagamentos Atrasados</p>
+                        <h3 className="text-3xl font-bold text-red-400 tracking-tight">{stats.overdue}</h3>
+                        <div className="h-1 w-12 bg-red-500 rounded-full mt-4 shadow-[0_0_10px_rgba(239,68,68,0.5)]"></div>
+                    </div>
+                </div>
+
+                {/* Card 3: Due This Week */}
+                <div className="relative group p-6 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md overflow-hidden hover:bg-white/20 transition-all duration-300 shadow-lg">
+                    <div className="absolute top-0 right-0 p-4 opacity-10"><span className="material-symbols-outlined text-6xl">calendar_month</span></div>
+                    <div className="relative z-10">
+                        <p className="text-slate-300 text-xs font-bold uppercase tracking-widest mb-2">Vencendo essa Semana</p>
+                        <h3 className="text-3xl font-bold text-cyan-400 tracking-tight">{stats.dueThisWeek}</h3>
+                        <div className="h-1 w-12 bg-cyan-500 rounded-full mt-4 shadow-[0_0_10px_rgba(6,182,212,0.5)]"></div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Filter Bar */}
+            <div className="relative">
+                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                <input
+                    type="text"
+                    placeholder="Buscar usuário por nome, email ou plano..."
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    className="w-full h-14 pl-12 pr-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder:text-slate-400 focus:outline-none focus:border-purple-500 focus:bg-white/20 transition-all backdrop-blur-md shadow-lg"
+                />
+            </div>
+
+            {/* Users Table (Glass Container) */}
+            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl overflow-hidden shadow-2xl">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="border-b border-white/5 bg-black/20 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                                <th className="p-5">Usuário</th>
+                                <th className="p-5">Plano / Ciclo</th>
+                                <th className="p-5">Status Pagto</th>
+                                <th className="p-5">Vencimento</th>
+                                <th className="p-5 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5 text-sm">
+                            {isLoading ? (
+                                <tr><td colSpan={5} className="p-12 text-center text-slate-500 animate-pulse">Carregando dados...</td></tr>
+                            ) : filteredUsers.length === 0 ? (
+                                <tr><td colSpan={5} className="p-12 text-center text-slate-500">Nenhum usuário encontrado.</td></tr>
+                            ) : (
+                                filteredUsers.map(user => (
+                                    <tr key={user.id} className="hover:bg-white/5 transition-colors group">
+                                        <td className="p-5">
+                                            <div className="flex items-center gap-4">
+                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-lg relative ${user.active ? 'bg-gradient-to-br from-purple-600 to-indigo-600' : 'bg-red-500/20 text-red-500 border border-red-500/30'}`}>
+                                                    {user.name?.charAt(0)}
+                                                    <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-[#1e1e2e] ${user.active ? 'bg-emerald-500' : 'bg-red-500'} shadow`}></div>
+                                                </div>
+                                                <div>
+                                                    <div className="font-bold text-white text-base">{user.name}</div>
+                                                    <div className="text-slate-400 text-xs">{user.email}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="p-5">
+                                            <div className="flex flex-col">
+                                                <span className={`font-bold ${user.plan === 'CREATOR_PLUS' ? 'text-purple-300' : 'text-slate-300'}`}>
+                                                    {user.plan === 'CREATOR_PLUS' ? 'Creator+' : 'Start'}
+                                                </span>
+                                                <span className="text-xs text-slate-500 lowercase bg-white/5 px-2 py-0.5 rounded-full w-fit mt-1 border border-white/5">{user.planCycle}</span>
+                                            </div>
+                                        </td>
+                                        <td className="p-5">
+                                            <Badge status={user.paymentStatus} />
+                                        </td>
+                                        <td className="p-5 text-slate-400 font-medium">
+                                            {user.nextPaymentDate ? new Date(user.nextPaymentDate).toLocaleDateString() : '-'}
+                                        </td>
+                                        <td className="p-5 text-right">
+                                            <div className="flex justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                <button onClick={() => { setSelectedUser(user); setIsEditModalOpen(true); }} className="p-2 hover:bg-white/10 rounded-lg text-slate-300 hover:text-white transition-colors border border-transparent hover:border-white/10" title="Editar">
+                                                    <span className="material-symbols-outlined text-xl">edit_note</span>
+                                                </button>
+                                                <button onClick={() => handleDelete(user.id)} className="p-2 hover:bg-red-500/10 rounded-lg text-slate-300 hover:text-red-400 transition-colors border border-transparent hover:border-red-500/20" title="Deletar">
+                                                    <span className="material-symbols-outlined text-xl">delete</span>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* Invite Modal (New User) */}
             {isInviteModalOpen && (
-                <Modal title="Convidar Novo Usuário" onClose={() => setIsInviteModalOpen(false)}>
+                <Modal title="Criar Novo Usuário" onClose={() => setIsInviteModalOpen(false)}>
                     <form onSubmit={handleInvite} className="space-y-4">
                         <div>
                             <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Nome Completo</label>
-                            <input name="name" required className="w-full bg-neutral-800 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-purple-500 outline-none" placeholder="Ex: Maria Silva" />
+                            <input name="name" required className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none transition-colors" placeholder="Ex: Maria Silva" />
                         </div>
                         <div>
                             <label className="block text-xs font-bold text-slate-400 uppercase mb-1">E-mail</label>
-                            <input name="email" type="email" required className="w-full bg-neutral-800 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-purple-500 outline-none" placeholder="maria@exemplo.com" />
-                            <p className="text-xs text-slate-500 mt-1">O link para definir senha será enviado para este e-mail.</p>
+                            <input name="email" type="email" required className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none transition-colors" placeholder="maria@exemplo.com" />
+                            <p className="text-[10px] text-slate-500 mt-1 ml-1">Um e-mail de boas-vindas será enviado com instruções.</p>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Plano</label>
-                                <select name="plan" className="w-full bg-neutral-800 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-purple-500 outline-none appearance-none">
-                                    <option value="START">Start</option>
-                                    <option value="CREATOR_PLUS">Creator+</option>
+                                <select name="plan" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none appearance-none cursor-pointer">
+                                    <option value="START" className="bg-neutral-900">Start</option>
+                                    <option value="CREATOR_PLUS" className="bg-neutral-900">Creator+</option>
                                 </select>
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Ciclo</label>
-                                <select name="planCycle" className="w-full bg-neutral-800 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-purple-500 outline-none appearance-none">
-                                    <option value="MONTHLY">Mensal</option>
-                                    <option value="ANNUAL">Anual</option>
-                                    <option value="LIFETIME">Vitalício (Gratuito)</option>
-                                    <option value="FREE">Gratuito (Teste)</option>
+                                <select name="planCycle" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none appearance-none cursor-pointer">
+                                    <option value="MONTHLY" className="bg-neutral-900">Mensal</option>
+                                    <option value="ANNUAL" className="bg-neutral-900">Anual</option>
+                                    <option value="LIFETIME" className="bg-neutral-900">Vitalício (Gratuito)</option>
+                                    <option value="FREE" className="bg-neutral-900">Gratuito (Teste)</option>
                                 </select>
                             </div>
                         </div>
-                        <div className="pt-4 flex justify-end gap-3">
-                            <button type="button" onClick={() => setIsInviteModalOpen(false)} className="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5">Cancelar</button>
-                            <button type="submit" className="px-6 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-bold shadow-lg shadow-purple-500/20">Enviar Convite</button>
+                        <div className="pt-6 flex justify-end gap-3 border-t border-white/5 mt-2">
+                            <button type="button" onClick={() => setIsInviteModalOpen(false)} className="px-5 py-2.5 rounded-xl text-slate-400 hover:text-white font-medium transition-colors">Cancelar</button>
+                            <button type="submit" className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl font-bold shadow-lg shadow-purple-900/20">Criar Usuário</button>
                         </div>
                     </form>
                 </Modal>
@@ -312,46 +318,49 @@ export default function AdminUsers() {
                     <form onSubmit={handleUpdate} className="space-y-4">
                         <div>
                             <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Nome</label>
-                            <input name="name" defaultValue={selectedUser.name} className="w-full bg-neutral-800 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-purple-500 outline-none" />
+                            <input name="name" defaultValue={selectedUser.name} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none transition-colors" />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Plano</label>
-                                <select name="plan" defaultValue={selectedUser.plan} className="w-full bg-neutral-800 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-purple-500 outline-none appearance-none">
-                                    <option value="START">Start</option>
-                                    <option value="CREATOR_PLUS">Creator+</option>
+                                <select name="plan" defaultValue={selectedUser.plan} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none appearance-none cursor-pointer">
+                                    <option value="START" className="bg-neutral-900">Start</option>
+                                    <option value="CREATOR_PLUS" className="bg-neutral-900">Creator+</option>
                                 </select>
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Ciclo</label>
-                                <select name="planCycle" defaultValue={selectedUser.planCycle} className="w-full bg-neutral-800 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-purple-500 outline-none appearance-none">
-                                    <option value="MONTHLY">Mensal</option>
-                                    <option value="ANNUAL">Anual</option>
-                                    <option value="LIFETIME">Vitalício</option>
-                                    <option value="FREE">Gratuito</option>
+                                <select name="planCycle" defaultValue={selectedUser.planCycle} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none appearance-none cursor-pointer">
+                                    <option value="MONTHLY" className="bg-neutral-900">Mensal</option>
+                                    <option value="ANNUAL" className="bg-neutral-900">Anual</option>
+                                    <option value="LIFETIME" className="bg-neutral-900">Vitalício</option>
+                                    <option value="FREE" className="bg-neutral-900">Gratuito</option>
                                 </select>
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Status Pagamento</label>
-                                <select name="paymentStatus" defaultValue={selectedUser.paymentStatus} className="w-full bg-neutral-800 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-purple-500 outline-none appearance-none">
-                                    <option value="ACTIVE">Em dia</option>
-                                    <option value="OVERDUE">Atrasado</option>
-                                    <option value="CANCELLED">Cancelado</option>
-                                    <option value="FREE">Isento</option>
+                                <select name="paymentStatus" defaultValue={selectedUser.paymentStatus} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none appearance-none cursor-pointer">
+                                    <option value="ACTIVE" className="bg-neutral-900">Em dia</option>
+                                    <option value="OVERDUE" className="bg-neutral-900">Atrasado</option>
+                                    <option value="CANCELLED" className="bg-neutral-900">Cancelado</option>
+                                    <option value="FREE" className="bg-neutral-900">Isento</option>
                                 </select>
                             </div>
-                            <div className="flex items-center pt-6">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input name="active" type="checkbox" defaultChecked={!!selectedUser.active} className="w-5 h-5 rounded border-gray-600 text-purple-600 focus:ring-purple-500 bg-neutral-800" />
-                                    <span className="text-white font-medium">Conta Ativa</span>
+                            <div className="flex items-center pt-6 px-2">
+                                <label className="flex items-center gap-3 cursor-pointer group">
+                                    <div className="relative">
+                                        <input name="active" type="checkbox" defaultChecked={!!selectedUser.active} className="peer sr-only" />
+                                        <div className="w-11 h-6 bg-gray-700/50 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                                    </div>
+                                    <span className="text-white font-medium text-sm group-hover:text-purple-300 transition-colors">Conta Ativa</span>
                                 </label>
                             </div>
                         </div>
-                        <div className="pt-4 flex justify-end gap-3">
-                            <button type="button" onClick={() => setIsEditModalOpen(false)} className="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5">Cancelar</button>
-                            <button type="submit" className="px-6 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg font-bold shadow-lg shadow-cyan-500/20">Salvar Alterações</button>
+                        <div className="pt-6 flex justify-end gap-3 border-t border-white/5 mt-2">
+                            <button type="button" onClick={() => setIsEditModalOpen(false)} className="px-5 py-2.5 rounded-xl text-slate-400 hover:text-white font-medium transition-colors">Cancelar</button>
+                            <button type="submit" className="px-6 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-bold shadow-lg shadow-cyan-500/20">Salvar Alterações</button>
                         </div>
                     </form>
                 </Modal>
@@ -366,21 +375,24 @@ const Badge = ({ status }: { status: string }) => {
     let label = status;
 
     switch (status) {
-        case 'ACTIVE': color = 'bg-green-500/10 text-green-400 border border-green-500/20'; label = 'Em dia'; break;
-        case 'OVERDUE': color = 'bg-red-500/10 text-red-400 border border-red-500/20'; label = 'Atrasado'; break;
-        case 'FREE': color = 'bg-blue-500/10 text-blue-400 border border-blue-500/20'; label = 'Isento'; break;
-        case 'CANCELLED': color = 'bg-gray-800 text-gray-500'; label = 'Cancelado'; break;
+        case 'ACTIVE': color = 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]'; label = 'Em dia'; break;
+        case 'OVERDUE': color = 'bg-red-500/10 text-red-400 border border-red-500/20 shadow-[0_0_10px_rgba(239,68,68,0.1)]'; label = 'Atrasado'; break;
+        case 'FREE': color = 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'; label = 'Isento'; break;
+        case 'CANCELLED': color = 'bg-gray-800/50 text-gray-500 border border-gray-700/50'; label = 'Cancelado'; break;
     }
 
-    return <span className={`px-2 py-1 rounded-md text-xs font-bold ${color}`}>{label}</span>;
+    return <span className={`px-3 py-1.5 rounded-lg text-xs font-bold tracking-wide uppercase ${color}`}>{label}</span>;
 }
 
 const Modal = ({ title, onClose, children }: { title: string, onClose: () => void, children: React.ReactNode }) => (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in">
-        <div className="bg-[#1e293b] w-full max-w-lg rounded-2xl border border-white/10 shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4">
-            <div className="p-6 border-b border-white/5 flex justify-between items-center bg-[#0f172a]">
-                <h3 className="text-xl font-bold text-white font-display">{title}</h3>
-                <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full text-slate-400 hover:text-white transition-colors">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#050510]/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div className="relative w-full max-w-lg bg-[#1a1b2e] rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Gradient Top */}
+            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-purple-500 via-indigo-500 to-cyan-500"></div>
+
+            <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
+                <h3 className="text-xl font-bold text-white tracking-tight">{title}</h3>
+                <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full text-slate-400 hover:text-white transition-colors">
                     <span className="material-symbols-outlined">close</span>
                 </button>
             </div>

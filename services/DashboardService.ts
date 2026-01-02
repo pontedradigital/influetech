@@ -1,82 +1,183 @@
-const API_URL = 'http://localhost:3001/api/dashboard';
+import { supabase } from '../src/lib/supabase';
 
 export const DashboardService = {
     async getStats() {
         try {
-            // Assuming headers handling or auth is done via global interceptor or not needed for dev
-            // If auth is needed, usually we get token from localStorage
-            const token = localStorage.getItem('token');
-            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+            // Get user ID from localStorage
+            const userId = localStorage.getItem('userId');
 
-            const response = await fetch(`${API_URL}/stats`, { headers });
-            if (!response.ok) throw new Error('Failed to fetch stats');
-            return await response.json();
-        } catch (error) {
-            console.error(error);
-            // MOCK DATA FOR FALLBACK
+            if (!userId) {
+                throw new Error('User not authenticated');
+            }
+
+            // Parallel queries for better performance
+            const [
+                productsResult,
+                salesResult,
+                shipmentsResult,
+                bazarResult,
+                tasksResult,
+                goalResult
+            ] = await Promise.all([
+                // Products in inventory
+                supabase
+                    .from('Product')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('userId', userId)
+                    .eq('status', 'RECEIVED'),
+
+                // Revenue this month
+                supabase
+                    .from('Sale')
+                    .select('salePrice')
+                    .eq('userId', userId)
+                    .gte('saleDate', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
+
+                // Pending shipments
+                supabase
+                    .from('Shipment')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('userId', userId)
+                    .eq('status', 'pending'),
+
+                // Next bazar event
+                supabase
+                    .from('BazarEvent')
+                    .select('*')
+                    .eq('userId', userId)
+                    .gte('eventDate', new Date().toISOString())
+                    .order('eventDate', { ascending: true })
+                    .limit(1)
+                    .single(),
+
+                // Recent tasks
+                supabase
+                    .from('Task')
+                    .select('*')
+                    .eq('userId', userId)
+                    .order('dueDate', { ascending: true })
+                    .limit(5),
+
+                // Financial goal
+                supabase
+                    .from('FinancialGoal')
+                    .select('*')
+                    .eq('userId', userId)
+                    .eq('isActive', 1)
+                    .order('createdAt', { descending: true })
+                    .limit(1)
+                    .single()
+            ]);
+
+            // Calculate total revenue
+            const totalRevenue = salesResult.data?.reduce((sum, sale) => sum + parseFloat(sale.salePrice || '0'), 0) || 0;
+
+            // Get recent sales with product info
+            const recentSalesResult = await supabase
+                .from('Sale')
+                .select(`
+                    *,
+                    product:Product(name)
+                `)
+                .eq('userId', userId)
+                .order('saleDate', { descending: true })
+                .limit(5);
+
+            // Get revenue history (last 6 months)
+            const sixMonthsAgo = new Date();
+            sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+            const revenueHistoryResult = await supabase
+                .from('Sale')
+                .select('salePrice, saleDate')
+                .eq('userId', userId)
+                .gte('saleDate', sixMonthsAgo.toISOString());
+
+            // Group by month
+            const monthlyRevenue = (revenueHistoryResult.data || []).reduce((acc, sale) => {
+                const month = new Date(sale.saleDate).toLocaleString('pt-BR', { month: 'short' });
+                acc[month] = (acc[month] || 0) + parseFloat(sale.salePrice || '0');
+                return acc;
+            }, {} as Record<string, number>);
+
+            const revenueHistory = Object.entries(monthlyRevenue).map(([month, value]) => ({
+                month,
+                value
+            }));
+
+            // Get category distribution
+            const categoryResult = await supabase
+                .from('Product')
+                .select('category')
+                .eq('userId', userId);
+
+            const categoryDistribution = (categoryResult.data || []).reduce((acc, product) => {
+                const cat = product.category || 'Outros';
+                const existing = acc.find(c => c.name === cat);
+                if (existing) {
+                    existing.value += 1;
+                } else {
+                    acc.push({ name: cat, value: 1 });
+                }
+                return acc;
+            }, [] as Array<{ name: string; value: number }>);
+
             return {
-                inventory: { value: 124, label: 'Produtos em Estoque' },
-                revenue: { value: 15430.50, label: 'Faturamento do Mês' },
-                shipments: { value: 3, label: 'Envios Pendentes' },
-                bazar: { value: new Date(Date.now() + 864000000).toISOString(), title: 'Bazar de Verão' },
+                inventory: {
+                    value: productsResult.count || 0,
+                    label: 'Produtos em Estoque'
+                },
+                revenue: {
+                    value: totalRevenue,
+                    label: 'Faturamento do Mês'
+                },
+                shipments: {
+                    value: shipmentsResult.count || 0,
+                    label: 'Envios Pendentes'
+                },
+                bazar: bazarResult.data ? {
+                    value: bazarResult.data.eventDate,
+                    title: bazarResult.data.title || 'Próximo Bazar'
+                } : {
+                    value: new Date(Date.now() + 864000000).toISOString(),
+                    title: 'Sem eventos programados'
+                },
                 widgets: {
-                    tasks: [
-                        { id: 1, title: 'Enviar produtos para ganhadores', priority: 'HIGH', dueDate: new Date() },
-                        { id: 2, title: 'Gravar stories de unboxing', priority: 'MEDIUM', dueDate: new Date(Date.now() + 86400000) }
-                    ],
-                    goal: { name: 'Compra de Câmera Nova', currentAmount: 3500, targetAmount: 8000 },
-                    recentSales: [
-                        { id: 101, customerName: 'João Silva', salePrice: 150.00, saleDate: new Date().toISOString(), product: { name: 'Kit Lentes' } },
-                        { id: 102, customerName: 'Maria Oliveira', salePrice: 89.90, saleDate: new Date(Date.now() - 86400000).toISOString(), product: { name: 'Tripé Flexível' } }
-                    ]
+                    tasks: tasksResult.data || [],
+                    goal: goalResult.data || { name: 'Sem metas ativas', currentAmount: 0, targetAmount: 0 },
+                    recentSales: recentSalesResult.data || []
                 },
                 charts: {
-                    revenueHistory: [
-                        { month: 'Jan', value: 4000 },
-                        { month: 'Fev', value: 3000 },
-                        { month: 'Mar', value: 5500 },
-                        { month: 'Abr', value: 9000 },
-                        { month: 'Mai', value: 7500 },
-                        { month: 'Jun', value: 15430 }
-                    ],
-                    categoryDistribution: [
-                        { name: 'Eletrônicos', value: 400 },
-                        { name: 'Acessórios', value: 300 },
-                        { name: 'Moda', value: 300 },
-                        { name: 'Outros', value: 200 }
-                    ]
+                    revenueHistory,
+                    categoryDistribution
                 }
             };
+        } catch (error) {
+            console.error('Error fetching dashboard stats:', error);
+            throw error;
         }
     },
 
     async getInsights() {
         try {
-            const token = localStorage.getItem('token');
-            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+            const userId = localStorage.getItem('userId');
 
-            const response = await fetch(`${API_URL}/insights`, { headers });
-            if (!response.ok) throw new Error('Failed to fetch insights');
-            return await response.json();
+            if (!userId) {
+                throw new Error('User not authenticated');
+            }
+
+            const result = await supabase
+                .from('Insight')
+                .select('*')
+                .eq('userId', userId)
+                .order('createdAt', { descending: true })
+                .limit(10);
+
+            return result.data || [];
         } catch (error) {
-            console.error(error);
-            // MOCK DATA FOR FALLBACK
-            return [
-                {
-                    id: '1',
-                    type: 'SUGGESTION',
-                    level: 'HIGH',
-                    title: 'Oportunidade de Crescimento',
-                    message: 'Seus vídeos de review tiveram 40% mais engajamento esta semana. Considere fazer mais conteúdo nesse formato.'
-                },
-                {
-                    id: '2',
-                    type: 'INFO',
-                    level: 'MEDIUM',
-                    title: 'Bazar chegando',
-                    message: 'Faltam 10 dias para o Bazar de Verão. Verifique seu estoque.'
-                }
-            ];
+            console.error('Error fetching insights:', error);
+            return [];
         }
     }
 };
+

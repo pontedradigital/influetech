@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import MediaKitGenerationModal from '../components/MediaKitGenerationModal';
 import { useInfluencer } from '../context/InfluencerContext';
+import { MediaKitService } from '../services/MediaKitService';
 
 export default function MediaKit() {
     const { data, totalFollowers } = useInfluencer();
@@ -29,13 +30,8 @@ export default function MediaKit() {
 
     const fetchBrands = async () => {
         try {
-            const res = await fetch('http://localhost:3001/api/media-kit-brands', {
-                headers: { 'user-id': '327aa8c1-7c26-41c2-95d7-b375c25eb896' } // TODO: Use real user context
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setSavedBrands(data);
-            }
+            const data = await MediaKitService.getBrands();
+            setSavedBrands(data);
         } catch (error) {
             console.error('Error fetching brands:', error);
         }
@@ -55,25 +51,16 @@ export default function MediaKit() {
     const addBrand = async () => {
         if (!newBrandName) return;
         try {
-            const res = await fetch('http://localhost:3001/api/media-kit-brands', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'user-id': '327aa8c1-7c26-41c2-95d7-b375c25eb896'
-                },
-                body: JSON.stringify({
-                    name: newBrandName,
-                    logo: newBrandLogo,
-                    backgroundColor: newBrandColor
-                })
+            await MediaKitService.addBrand({
+                name: newBrandName,
+                logo: newBrandLogo,
+                backgroundColor: newBrandColor
             });
 
-            if (res.ok) {
-                setNewBrandName('');
-                setNewBrandLogo(null);
-                setNewBrandColor('#ffffff');
-                fetchBrands();
-            }
+            setNewBrandName('');
+            setNewBrandLogo(null);
+            setNewBrandColor('#ffffff');
+            fetchBrands();
         } catch (error) {
             console.error('Error adding brand:', error);
         }
@@ -82,14 +69,8 @@ export default function MediaKit() {
     const deleteBrand = async (id: string) => {
         if (!confirm('Tem certeza que deseja remover esta marca?')) return;
         try {
-            const res = await fetch(`http://localhost:3001/api/media-kit-brands/${id}`, {
-                method: 'DELETE',
-                headers: { 'user-id': '327aa8c1-7c26-41c2-95d7-b375c25eb896' }
-            });
-
-            if (res.ok) {
-                fetchBrands();
-            }
+            await MediaKitService.deleteBrand(id);
+            fetchBrands();
         } catch (error) {
             console.error('Error deleting brand:', error);
         }

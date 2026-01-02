@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PostCard from './PostCard';
 import CreatePost from './CreatePost';
-
-// Mock User ID for now, similar to Networking page
-const CURRENT_USER_ID = '327aa8c1-7c26-41c2-95d7-b375c25eb896';
+import { CommunityService } from '../../services/CommunityService';
 
 const CommunityFeed = () => {
     const [posts, setPosts] = useState<any[]>([]);
@@ -13,10 +11,7 @@ const CommunityFeed = () => {
 
     const fetchPosts = async () => {
         try {
-            const res = await fetch(`http://localhost:3001/api/community/posts?userId=${CURRENT_USER_ID}`);
-            if (!res.ok) throw new Error(`Erro ${res.status}: Backend pode estar desatualizado.`);
-
-            const data = await res.json();
+            const data = await CommunityService.getPosts();
             setPosts(data);
             setError(null);
         } catch (error) {
@@ -28,19 +23,7 @@ const CommunityFeed = () => {
 
     const handleCreatePost = async (content: string) => {
         try {
-            const res = await fetch('http://localhost:3001/api/community/posts', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: CURRENT_USER_ID, content })
-            });
-
-            if (!res.ok) {
-                if (res.status === 404) {
-                    throw new Error('Endpoint não encontrado. REINICIE O BACKEND no terminal para corrigir.');
-                }
-                throw new Error('Falha ao criar post');
-            }
-
+            await CommunityService.createPost(content);
             fetchPosts(); // Reload feed
             setError(null);
         } catch (error: any) {
@@ -67,11 +50,7 @@ const CommunityFeed = () => {
         }));
 
         try {
-            await fetch(`http://localhost:3001/api/community/posts/${postId}/react`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: CURRENT_USER_ID, type })
-            });
+            await CommunityService.reactToPost(postId, type);
         } catch (error) {
             console.error('Failed to react', error);
             fetchPosts(); // Revert on error
@@ -80,14 +59,7 @@ const CommunityFeed = () => {
 
     const handleDeletePost = async (postId: string) => {
         try {
-            const res = await fetch(`http://localhost:3001/api/community/posts/${postId}`, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: CURRENT_USER_ID }) // Pass userId for validation
-            });
-
-            if (!res.ok) throw new Error('Falha ao excluir post');
-
+            await CommunityService.deletePost(postId);
             // Optimistic removal
             setPosts(currentPosts => currentPosts.filter(p => p.id !== postId));
         } catch (error) {
@@ -106,6 +78,8 @@ const CommunityFeed = () => {
 
     if (isLoading) return <div className="text-center py-20 text-gray-500">Carregando feed...</div>;
 
+    const currentUserId = localStorage.getItem('userId') || '';
+
     return (
         <div className="max-w-3xl mx-auto">
             <CreatePost onPost={handleCreatePost} error={error} />
@@ -115,7 +89,7 @@ const CommunityFeed = () => {
                     <PostCard
                         key={post.id}
                         post={post}
-                        currentUserId={CURRENT_USER_ID}
+                        currentUserId={currentUserId}
                         onReact={handleReact}
                         onComment={handleComment}
                         onDelete={handleDeletePost}

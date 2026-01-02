@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Product } from '../types';
+import { BazarService } from '../services/BazarService';
+import { ProductService } from '../services/ProductService';
 
 interface BazarSuggestion {
   date: string;
@@ -39,20 +41,17 @@ export default function Bazar() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [suggestionsRes, productsRes, eventsRes] = await Promise.all([
-        fetch('/api/bazares/suggestions'),
-        fetch('/api/products'),
-        fetch('/api/bazares')
+      const [suggestionsData, allProducts, eventsData] = await Promise.all([
+        BazarService.getSuggestions(),
+        ProductService.list(),
+        BazarService.getEvents()
       ]);
 
-      setSuggestions(await suggestionsRes.json());
-      const allProducts = await productsRes.json();
+      setSuggestions(suggestionsData);
       // Filtra apenas produtos não vendidos
-      setProducts(allProducts.filter((p: Product) => {
-        const invalidStatuses = ['SOLD', 'VENDIDO', 'SHIPPED', 'ENVIADO', 'SENT'];
-        return !invalidStatuses.includes(p.status?.toUpperCase());
-      }));
-      setBazarEvents(await eventsRes.json());
+      const invalidStatuses = ['SOLD', 'VENDIDO', 'SHIPPED', 'ENVIADO', 'SENT'];
+      setProducts(allProducts.filter((p: Product) => !invalidStatuses.includes(p.status?.toUpperCase())));
+      setBazarEvents(eventsData);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -63,7 +62,7 @@ export default function Bazar() {
   // Agrupa sugestões por mês
   const groupedSuggestions = suggestions.reduce((acc, suggestion) => {
     const date = new Date(suggestion.date);
-    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const monthKey = `${date.getFullYear()} -${String(date.getMonth() + 1).padStart(2, '0')} `;
     if (!acc[monthKey]) acc[monthKey] = [];
     acc[monthKey].push(suggestion);
     return acc;
@@ -199,8 +198,8 @@ export default function Bazar() {
                                 stroke={suggestion.score >= 90 ? '#10b981' : suggestion.score >= 80 ? '#3b82f6' : suggestion.score >= 70 ? '#f59e0b' : '#ef4444'}
                                 strokeWidth="7"
                                 fill="none"
-                                strokeDasharray={`${2 * Math.PI * 36}`}
-                                strokeDashoffset={`${2 * Math.PI * 36 * (1 - suggestion.score / 100)}`}
+                                strokeDasharray={`${2 * Math.PI * 36} `}
+                                strokeDashoffset={`${2 * Math.PI * 36 * (1 - suggestion.score / 100)} `}
                                 strokeLinecap="round"
                                 className="transition-all duration-1000 ease-out"
                                 style={{ filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))' }}
@@ -208,11 +207,11 @@ export default function Bazar() {
                             </svg>
                             {/* Score number in center */}
                             <div className="absolute inset-0 flex flex-col items-center justify-center">
-                              <span className={`text-3xl font-black ${suggestion.score >= 90 ? 'text-green-600' :
-                                suggestion.score >= 80 ? 'text-blue-600' :
-                                  suggestion.score >= 70 ? 'text-yellow-600' :
-                                    'text-red-600'
-                                }`}>
+                              <span className={`text - 3xl font - black ${suggestion.score >= 90 ? 'text-green-600' :
+                                  suggestion.score >= 80 ? 'text-blue-600' :
+                                    suggestion.score >= 70 ? 'text-yellow-600' :
+                                      'text-red-600'
+                                } `}>
                                 {suggestion.score}
                               </span>
                               <span className="text-[10px] text-gray-500 font-medium">/ 100</span>
@@ -222,11 +221,11 @@ export default function Bazar() {
 
                         {/* Score Label */}
                         <div className="mb-4">
-                          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ${suggestion.score >= 90 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
-                            suggestion.score >= 80 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
-                              suggestion.score >= 70 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' :
-                                'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-                            }`}>
+                          <div className={`inline - flex items - center gap - 2 px - 3 py - 1.5 rounded - full text - xs font - bold ${suggestion.score >= 90 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
+                              suggestion.score >= 80 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
+                                suggestion.score >= 70 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' :
+                                  'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                            } `}>
                             <span className="material-symbols-outlined text-base">
                               {suggestion.score >= 90 ? 'star' : suggestion.score >= 80 ? 'thumb_up' : 'info'}
                             </span>
@@ -327,20 +326,20 @@ export default function Bazar() {
               <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Score desta data:</p>
                 <div className="flex items-center justify-center gap-3">
-                  <span className={`text-5xl font-black ${scoreModalData.score >= 90 ? 'text-green-600' :
-                    scoreModalData.score >= 80 ? 'text-blue-600' :
-                      scoreModalData.score >= 70 ? 'text-yellow-600' :
-                        'text-red-600'
-                    }`}>
+                  <span className={`text - 5xl font - black ${scoreModalData.score >= 90 ? 'text-green-600' :
+                      scoreModalData.score >= 80 ? 'text-blue-600' :
+                        scoreModalData.score >= 70 ? 'text-yellow-600' :
+                          'text-red-600'
+                    } `}>
                     {scoreModalData.score}
                   </span>
                   <div className="text-left">
                     <p className="text-xs text-gray-500">/ 100</p>
-                    <p className={`text-sm font-bold ${scoreModalData.score >= 90 ? 'text-green-600' :
-                      scoreModalData.score >= 80 ? 'text-blue-600' :
-                        scoreModalData.score >= 70 ? 'text-yellow-600' :
-                          'text-red-600'
-                      }`}>
+                    <p className={`text - sm font - bold ${scoreModalData.score >= 90 ? 'text-green-600' :
+                        scoreModalData.score >= 80 ? 'text-blue-600' :
+                          scoreModalData.score >= 70 ? 'text-yellow-600' :
+                            'text-red-600'
+                      } `}>
                       {scoreModalData.score >= 90 ? '🌟 Excelente' :
                         scoreModalData.score >= 80 ? '👍 Muito Bom' :
                           scoreModalData.score >= 70 ? '✅ Bom' :
@@ -468,17 +467,12 @@ function BazarModal({ suggestion, products, onClose, onSuccess }: {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await fetch('/api/bazares', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title,
-          description,
-          date: suggestion.date,
-          location,
-          productIds: JSON.stringify(selectedProducts),
-          userId: getUserId()
-        })
+      await BazarService.create({
+        title,
+        description,
+        date: suggestion.date,
+        location,
+        productIds: JSON.stringify(selectedProducts)
       });
       onSuccess();
     } catch (error) {
@@ -572,10 +566,10 @@ function BazarModal({ suggestion, products, onClose, onSuccess }: {
               {filteredProducts.map(product => (
                 <label
                   key={product.id}
-                  className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${selectedProducts.includes(product.id)
-                    ? 'bg-primary/10 border-2 border-primary'
-                    : 'bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 hover:border-primary/50'
-                    }`}
+                  className={`flex items - center gap - 3 p - 3 rounded - lg cursor - pointer transition - all ${selectedProducts.includes(product.id)
+                      ? 'bg-primary/10 border-2 border-primary'
+                      : 'bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 hover:border-primary/50'
+                    } `}
                 >
                   <input
                     type="checkbox"

@@ -84,10 +84,10 @@ const Dashboard = () => {
       {/* Quick Actions */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Nova Venda', icon: 'shopping_cart', to: '/vendas?action=new', color: 'bg-blue-600' },
-          { label: 'Novo Post', icon: 'post_add', to: '/agenda?action=new', color: 'bg-pink-600' },
-          { label: 'Nova Tarefa', icon: 'check_circle', to: '/agenda?tab=tasks', color: 'bg-green-600' },
-          { label: 'Novo Envio', icon: 'local_shipping', to: '/envios?action=new', color: 'bg-yellow-600' },
+          { label: 'Nova Venda', icon: 'shopping_cart', to: '/app/vendas?action=new', color: 'bg-blue-600' },
+          { label: 'Novo Post', icon: 'post_add', to: '/app/agenda?action=new', color: 'bg-pink-600' },
+          { label: 'Nova Tarefa', icon: 'check_circle', to: '/app/agenda?tab=tasks', color: 'bg-green-600' },
+          { label: 'Novo Envio', icon: 'local_shipping', to: '/app/envios?action=new', color: 'bg-yellow-600' },
         ].map((action, idx) => (
           <Link key={idx} to={action.to} className={`${action.color} text-white p-4 rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-3 font-bold text-lg`}>
             <span className="material-symbols-outlined text-2xl">{action.icon}</span>
@@ -315,7 +315,7 @@ const Dashboard = () => {
             <div className="bg-white dark:bg-[#1A202C] rounded-xl border border-gray-200 dark:border-gray-800 p-6 flex flex-col items-center justify-center text-center">
               <span className="material-symbols-outlined text-4xl text-gray-300 mb-2">savings</span>
               <p className="text-gray-500 mb-2">Nenhuma meta ativa</p>
-              <Link to="/financeiro" className="text-primary font-bold text-sm">Definir Meta</Link>
+              <Link to="/app/financeiro" className="text-primary font-bold text-sm">Definir Meta</Link>
             </div>
           )}
 
@@ -323,7 +323,7 @@ const Dashboard = () => {
           <div className="bg-white dark:bg-[#111621] rounded-xl border border-gray-200 dark:border-gray-800 p-6 flex flex-col h-full">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-gray-900 dark:text-white">Tarefas Prioritárias</h3>
-              <Link to="/agenda" className="text-sm text-primary hover:underline">Ver Agenda</Link>
+              <Link to="/app/agenda" className="text-sm text-primary hover:underline">Ver Agenda</Link>
             </div>
             {displayStats.widgets?.tasks?.length > 0 ? (
               <div className="flex flex-col gap-3 flex-1">

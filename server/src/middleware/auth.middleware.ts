@@ -79,8 +79,17 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
             return res.status(401).json({ error: 'Token inválido ou expirado' });
         }
 
-        // Add user to request
-        (req as any).user = user;
+        // Fetch User Role from DB
+        const dbUser = await db.user.findUnique({
+            where: { id: user.id },
+            select: { role: true }
+        });
+
+        // Add user with role to request
+        (req as any).user = {
+            ...user,
+            role: dbUser?.role || 'USER'
+        };
 
         next();
     } catch (err) {

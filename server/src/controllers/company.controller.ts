@@ -53,11 +53,7 @@ export const updateCompany = async (req: Request, res: Response) => {
         if (!existing) return res.status(404).json({ error: 'Empresa não encontrada' });
         if (existing.userId !== userId) return res.status(403).json({ error: 'Acesso negado' });
 
-        // Prisma generic update handles partial updates if values are undefined.
-        // If values are null, it sets to null (if field allows).
-        // The previous SQL logic used COALESCE(?, status) which means if new value is null/undefined, keep old.
-        // We construct an update object ignoring undefined values to match COALESCE behavior for optional fields coming from frontend.
-
+        // Prisma generic update leads to clean code
         const updateData: any = {};
         if (name !== undefined) updateData.name = name;
         if (contactName !== undefined) updateData.contactName = contactName;

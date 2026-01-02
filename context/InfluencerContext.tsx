@@ -59,28 +59,24 @@ interface InfluencerContextType {
 // Default Data (Mock)
 const defaultData: InfluencerData = {
     profile: {
-        name: 'Ana Oliveira',
-        email: 'ana.oliveira@email.com',
-        phone: '(11) 99999-9999',
-        location: 'São Paulo, Brasil',
+        name: '',
+        email: '',
+        phone: '',
+        location: '',
         cep: '',
-        niche: 'Tech & Setup',
-        bio: 'Apaixonada por tecnologia e setups minimalistas. Crio conteúdo focado em reviews honestos e dicas de produtividade.',
-        contentTypes: ['Reviews', 'Unboxing', 'Setup Tours'],
-        audienceAge: '18-34',
-        audienceGenderMale: 70,
-        audienceGenderFemale: 30,
-        engagementRate: 5.2,
+        niche: '',
+        bio: '',
+        contentTypes: [],
+        audienceAge: '',
+        audienceGenderMale: 0,
+        audienceGenderFemale: 0,
+        engagementRate: 0,
     },
-    socials: [
-        { id: '1', platform: 'Instagram', handle: 'ana.tech', followers: 45000, url: 'https://instagram.com/ana.tech', postingFrequency: 'Diário' },
-        { id: '2', platform: 'TikTok', handle: '@anatech', followers: 120000, url: 'https://tiktok.com/@anatech', postingFrequency: 'Diário' },
-        { id: '3', platform: 'YouTube', handle: 'Ana Tech Reviews', followers: 85000, url: 'https://youtube.com/@anatech', postingFrequency: '2x por semana' },
-    ],
+    socials: [],
     partnerships: {
-        categories: ['Periféricos', 'Hardware', 'Software', 'Desk Setup'],
-        preferredTypes: ['Produto para Review', 'Parceria Paga'],
-        productValueSuggestion: 500,
+        categories: [],
+        preferredTypes: [],
+        productValueSuggestion: 0,
         currency: 'BRL',
     },
     importSettings: {
@@ -96,16 +92,35 @@ const InfluencerContext = createContext<InfluencerContextType | undefined>(undef
 export const InfluencerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [data, setData] = useState<InfluencerData>(() => {
         const saved = localStorage.getItem('influencer_data');
+        const userString = localStorage.getItem('user');
+        const user = userString ? JSON.parse(userString) : null;
+
+        let initialData = defaultData;
+
         if (saved) {
             const parsed = JSON.parse(saved);
-            // Merge saved data with default data to ensure new fields (like importSettings) exist
-            return {
+            initialData = {
                 ...defaultData,
                 ...parsed,
-                importSettings: parsed.importSettings || defaultData.importSettings
+                importSettings: parsed.importSettings || defaultData.importSettings,
+                profile: {
+                    ...defaultData.profile,
+                    ...parsed.profile
+                }
             };
         }
-        return defaultData;
+
+        // Always check if name/email are missing and try to fill from auth user
+        if (user) {
+            if (!initialData.profile.name && user.name) {
+                initialData.profile.name = user.name;
+            }
+            if (!initialData.profile.email && user.email) {
+                initialData.profile.email = user.email;
+            }
+        }
+
+        return initialData;
     });
 
     useEffect(() => {

@@ -58,6 +58,12 @@ export const inviteUser = async (req: Request, res: Response) => {
         return res.status(400).json({ error: 'Email e Nome são obrigatórios' });
     }
 
+    // Check for Supabase credentials
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+        console.error('❌ SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing in .env');
+        return res.status(500).json({ error: 'Configuração do servidor incompleta (Supabase)' });
+    }
+
     try {
         // 1. Check if exists in DB
         const existing = await db.user.findUnique({ where: { email } });
@@ -66,6 +72,7 @@ export const inviteUser = async (req: Request, res: Response) => {
         }
 
         // 2. Invite via Supabase Admin API
+        console.log(`📧 Inviting user: ${email}`);
         const inviteUrl = `${SUPABASE_URL}/auth/v1/invite`;
         const response = await fetch(inviteUrl, {
             method: 'POST',
@@ -83,11 +90,16 @@ export const inviteUser = async (req: Request, res: Response) => {
         const authData: any = await response.json();
 
         if (!response.ok) {
-            console.error('Supabase Invite Error:', authData);
+            console.error('❌ Supabase Invite Error:', {
+                status: response.status,
+                statusText: response.statusText,
+                error: authData
+            });
             throw new Error(authData.msg || authData.message || 'Erro ao convidar usuário no Supabase');
         }
 
         const userId = authData.id;
+        console.log(`✅ User invited in Supabase with ID: ${userId}`);
 
         // 3. Calculate Payment Dates
         let nextPaymentDate = null;
@@ -119,11 +131,12 @@ export const inviteUser = async (req: Request, res: Response) => {
             }
         });
 
+        console.log(`✅ User created in database: ${newUser.email}`);
         res.json({ success: true, user: newUser });
 
     } catch (error: any) {
-        console.error('Invite Error:', error);
-        res.status(500).json({ error: error.message });
+        console.error('❌ Invite Error:', error);
+        res.status(500).json({ error: error.message || 'Erro ao criar usuário' });
     }
 };
 

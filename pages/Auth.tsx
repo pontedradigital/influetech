@@ -49,8 +49,9 @@ const Login = () => {
         throw new Error('Sessão não criada');
       }
 
-      // Store session
+      // Store session and userId
       localStorage.setItem('token', data.session.access_token);
+      localStorage.setItem('userId', data.user.id); // CRITICAL: needed for all Supabase queries
       localStorage.setItem('user', JSON.stringify({
         id: data.user.id,
         email: data.user.email,

@@ -2,6 +2,9 @@
 import React, { useState } from 'react';
 import { Product, Company } from '../types';
 import { useInfluencer } from '../context/InfluencerContext';
+import { CompanyService } from '../services/CompanyService';
+import { ProductService } from '../services/ProductService';
+import { SaleService } from '../services/SaleService';
 
 // Lista de países
 const COUNTRIES = [
@@ -144,8 +147,7 @@ const EditProductModal = ({ isOpen, onClose, onSave, product }: { isOpen: boolea
 
   React.useEffect(() => {
     if (isOpen) {
-      fetch('/api/companies')
-        .then(res => res.json())
+      CompanyService.getAll()
         .then(data => setCompanies(data.map((c: any) => ({ id: c.id, name: c.name }))))
         .catch(err => console.error('Erro ao carregar empresas:', err));
     }
@@ -175,34 +177,28 @@ const EditProductModal = ({ isOpen, onClose, onSave, product }: { isOpen: boolea
     e.preventDefault();
 
     try {
-      const response = await fetch(`/api/products/${product.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          category,
-          brand: companies.find(c => c.id === companyId)?.name || product.company,
-          marketValue: parseFloat(price) || 0,
-          condition: 'Novo',
-          status: status === 'Em análise' ? 'RECEIVED' : status,
-          weight: parseFloat(weight) || null,
-          height: parseFloat(height) || null,
-          width: parseFloat(width) || null,
-          length: parseFloat(length) || null,
-        })
-      });
+      await ProductService.update(product.id, {
+        name,
+        category,
+        brand: companies.find(c => c.id === companyId)?.name || product.company,
+        marketValue: parseFloat(price) || 0,
+        condition: 'Novo',
+        status: status === 'Em análise' ? 'RECEIVED' : status,
+        weight: parseFloat(weight) || null,
+        height: parseFloat(height) || null,
+        width: parseFloat(width) || null,
+        length: parseFloat(length) || null,
+      } as any);
 
-      if (response.ok) {
-        onSave({
-          ...product,
-          name,
-          category,
-          company: companies.find(c => c.id === companyId)?.name || product.company,
-          price: parseFloat(price) || 0,
-          status
-        });
-        onClose();
-      }
+      onSave({
+        ...product,
+        name,
+        category,
+        company: companies.find(c => c.id === companyId)?.name || product.company,
+        price: parseFloat(price) || 0,
+        status
+      });
+      onClose();
     } catch (error) {
       console.error('Erro ao atualizar produto:', error);
       alert('Erro ao atualizar produto');
@@ -618,8 +614,7 @@ const NewProductModal = ({ isOpen, onClose, onSave, editingProduct }: {
   React.useEffect(() => {
     if (isOpen) {
       setLoadingCompanies(true);
-      fetch('/api/companies')
-        .then(res => res.json())
+      CompanyService.getAll()
         .then(data => {
           setCompanies(data.map((c: any) => ({ id: c.id, name: c.name })));
           setLoadingCompanies(false);
@@ -646,46 +641,34 @@ const NewProductModal = ({ isOpen, onClose, onSave, editingProduct }: {
       const shipping = parseFloat(shippingCost) || 0;
       const totalPrice = basePrice + shipping;
 
-      const url = editingProduct
-        ? `/api/products/${editingProduct.id}`
-        : '/api/products';
+      const productData = {
+        name,
+        category,
+        brand: companies.find(c => c.id === companyId)?.name || '',
+        marketValue: totalPrice,
+        primaryColor: primaryColor || null,
+        secondaryColor: secondaryColor || null,
+        shippingCost: shipping || null,
+        condition: 'Novo',
+        status,
+        companyId: companyId,
+        weight: parseFloat(weight) || null,
+        height: parseFloat(height) || null,
+        width: parseFloat(width) || null,
+        length: parseFloat(length) || null
+      };
 
-      const method = editingProduct ? 'PUT' : 'POST';
-
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          category,
-          brand: companies.find(c => c.id === companyId)?.name || '',
-          marketValue: totalPrice,
-          primaryColor: primaryColor || null,
-          secondaryColor: secondaryColor || null,
-          shippingCost: shipping || null,
-          condition: 'Novo',
-          status,
-
-          userId: getUserId(),
-          companyId: companyId,
-          weight: parseFloat(weight) || null,
-          height: parseFloat(height) || null,
-          width: parseFloat(width) || null,
-          length: parseFloat(length) || null
-        })
-      });
-
-      if (response.ok) {
-        onSave();
-        onClose();
+      if (editingProduct) {
+        await ProductService.update(editingProduct.id, productData as any);
       } else {
-        const errorData = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
-        console.error('Erro na resposta:', response.status, errorData);
-        alert(`Erro ao ${editingProduct ? 'atualizar' : 'criar'} produto: ${errorData.error || 'Erro desconhecido'}`);
+        await ProductService.create(productData as any);
       }
+
+      onSave();
+      onClose();
     } catch (error) {
       console.error('Erro ao criar produto:', error);
-      alert('Erro ao criar produto');
+      alert(`Erro ao ${editingProduct ? 'atualizar' : 'criar'} produto`);
     }
   };
 

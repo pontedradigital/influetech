@@ -64,7 +64,7 @@ export const DashboardService = {
                     .select('*')
                     .eq('userId', userId)
                     .eq('isActive', 1)
-                    .order('createdAt', { descending: true })
+                    .order('createdAt', { ascending: false })
                     .limit(1)
                     .single()
             ]);
@@ -80,7 +80,7 @@ export const DashboardService = {
                     product:Product(name)
                 `)
                 .eq('userId', userId)
-                .order('saleDate', { descending: true })
+                .order('saleDate', { ascending: false })
                 .limit(5);
 
             // Get revenue history (last 6 months)
@@ -170,7 +170,7 @@ export const DashboardService = {
                 .from('Insight')
                 .select('*')
                 .eq('userId', userId)
-                .order('createdAt', { descending: true })
+                .order('createdAt', { ascending: false })
                 .limit(10);
 
             return result.data || [];

@@ -1,23 +1,20 @@
+import { supabase } from '../src/lib/supabase';
 import { Shipment } from '../types';
 
 export class ShipmentService {
-    private static API_URL = '/api/shipments';
-
     static async create(shipmentData: Omit<Shipment, 'id' | 'createdAt' | 'status'>): Promise<Shipment> {
         try {
-            const response = await fetch(this.API_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(shipmentData),
-            });
+            const userId = localStorage.getItem('userId');
+            if (!userId) throw new Error('User not authenticated');
 
-            if (!response.ok) {
-                throw new Error('Failed to create shipment');
-            }
+            const { data, error } = await supabase
+                .from('Shipment')
+                .insert([{ ...shipmentData, userId, status: 'pending' }])
+                .select()
+                .single();
 
-            return await response.json();
+            if (error) throw error;
+            return data;
         } catch (error) {
             console.error('Error creating shipment:', error);
             throw error;
@@ -26,14 +23,17 @@ export class ShipmentService {
 
     static async list(userId?: string): Promise<Shipment[]> {
         try {
-            const url = userId ? `${this.API_URL}?userId=${userId}` : this.API_URL;
-            const response = await fetch(url);
+            const currentUserId = userId || localStorage.getItem('userId');
+            if (!currentUserId) throw new Error('User not authenticated');
 
-            if (!response.ok) {
-                throw new Error('Failed to list shipments');
-            }
+            const { data, error } = await supabase
+                .from('Shipment')
+                .select('*')
+                .eq('userId', currentUserId)
+                .order('createdAt', { ascending: false });
 
-            return await response.json();
+            if (error) throw error;
+            return data || [];
         } catch (error) {
             console.error('Error listing shipments:', error);
             throw error;
@@ -42,36 +42,41 @@ export class ShipmentService {
 
     static async delete(id: string): Promise<void> {
         try {
-            const response = await fetch(`${this.API_URL}/${id}`, {
-                method: 'DELETE',
-            });
+            const userId = localStorage.getItem('userId');
+            if (!userId) throw new Error('User not authenticated');
 
-            if (!response.ok) {
-                throw new Error('Failed to delete shipment');
-            }
+            const { error } = await supabase
+                .from('Shipment')
+                .delete()
+                .eq('id', id)
+                .eq('userId', userId);
+
+            if (error) throw error;
         } catch (error) {
             console.error('Error deleting shipment:', error);
             throw error;
         }
     }
+
     static async update(id: string, data: Partial<Shipment>): Promise<Shipment> {
         try {
-            const response = await fetch(`${this.API_URL}/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            });
+            const userId = localStorage.getItem('userId');
+            if (!userId) throw new Error('User not authenticated');
 
-            if (!response.ok) {
-                throw new Error('Failed to update shipment');
-            }
+            const { data: updated, error } = await supabase
+                .from('Shipment')
+                .update(data)
+                .eq('id', id)
+                .eq('userId', userId)
+                .select()
+                .single();
 
-            return await response.json();
+            if (error) throw error;
+            return updated;
         } catch (error) {
             console.error('Error updating shipment:', error);
             throw error;
         }
     }
 }
+

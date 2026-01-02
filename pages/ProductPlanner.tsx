@@ -1,24 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
-
-interface TrendingProduct {
-    id: number;
-    product_name: string;
-    category: string;
-    platform: string;
-    price_min: number;
-    price_max: number;
-    currency: string;
-    search_volume: number;
-    growth_percentage: number;
-    sentiment_score: number;
-    hype_level: string;
-    image_url: string;
-    product_url: string;
-    keywords: string[];
-    description: string;
-    last_updated: string;
-}
+import { TrendingProductService, TrendingProduct } from '../services/TrendingProductService';
 
 interface Stats {
     overall: {
@@ -78,29 +60,24 @@ const ProductPlanner = () => {
         try {
             setLoading(true);
 
-            // Fetch products with filters
-            const params = new URLSearchParams({
+            // Use TrendingProductService instead of API
+            const params = {
                 platform: selectedPlatform,
                 sort_by: sortBy,
-                limit: '50'
-            });
-
-            if (selectedCategory) params.append('category', selectedCategory);
-            if (selectedHype) params.append('hype_level', selectedHype);
+                limit: 50,
+                ...(selectedCategory && { category: selectedCategory }),
+                ...(selectedHype && { hype_level: selectedHype })
+            };
 
             const [productsRes, statsRes, categoriesRes] = await Promise.all([
-                fetch(`/api/trending-products?${params}`),
-                fetch('/api/trending-products/stats/summary'),
-                fetch('/api/trending-products/categories/list')
+                TrendingProductService.getProducts(params),
+                TrendingProductService.getStats(),
+                TrendingProductService.getCategories()
             ]);
 
-            const productsData = await productsRes.json();
-            const statsData = await statsRes.json();
-            const categoriesData = await categoriesRes.json();
-
-            if (productsData.success) setProducts(productsData.data);
-            if (statsData.success) setStats(statsData.data);
-            if (categoriesData.success) setCategories(categoriesData.data);
+            if (productsRes.success) setProducts(productsRes.data);
+            if (statsRes.success) setStats(statsRes.data);
+            if (categoriesRes.success) setCategories(categoriesRes.data);
 
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -112,13 +89,8 @@ const ProductPlanner = () => {
     const handleRefresh = async () => {
         setIsRefreshing(true);
         try {
-            const res = await fetch('/api/trending-products/refresh', {
-                method: 'POST'
-            });
-            const data = await res.json();
-            if (data.success) {
-                await fetchData();
-            }
+            await TrendingProductService.refresh();
+            await fetchData();
         } catch (error) {
             console.error('Error refreshing data:', error);
         } finally {

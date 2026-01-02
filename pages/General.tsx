@@ -1456,6 +1456,9 @@ const NewCompanyModal = ({ isOpen, onClose, onSave, editingCompany }: {
     setContactMethod('');
     setContactValue('');
     setPhoneError('');
+    setLogoFile(null);
+    setLogoPreview(null);
+    setIsCompressing(false);
   };
 
   if (!isOpen) return null;
@@ -1469,6 +1472,46 @@ const NewCompanyModal = ({ isOpen, onClose, onSave, editingCompany }: {
     }
   };
 
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validar tamanho (10MB)
+    const validation = validateImage(file, 10 * 1024 * 1024);
+    if (!validation.valid) {
+      alert(validation.error);
+      e.target.value = '';
+      return;
+    }
+
+    setIsCompressing(true);
+    try {
+      // Comprimir imagem
+      const compressedFile = await compressImage(file, {
+        maxWidth: 800,
+        maxHeight: 800,
+        quality: 0.85,
+        outputFormat: 'webp'
+      });
+
+      console.log(`Imagem otimizada: ${(file.size / 1024).toFixed(0)}KB -> ${(compressedFile.size / 1024).toFixed(0)}KB`);
+
+      setLogoFile(compressedFile);
+
+      // Preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(compressedFile);
+    } catch (error) {
+      console.error('Erro ao processar imagem:', error);
+      alert('Erro ao processar imagem. Tente outra.');
+    } finally {
+      setIsCompressing(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -1478,40 +1521,30 @@ const NewCompanyModal = ({ isOpen, onClose, onSave, editingCompany }: {
     }
 
     try {
-      const url = editingCompany
-        ? `/api/companies/${editingCompany.id}`
-        : '/api/companies';
+      const companyData = {
+        name,
+        contactName: contact,
+        email,
+        phone,
+        country,
+        website,
+        contactMethod,
+        contactValue,
+        partnershipStatus
+      };
 
-      const method = editingCompany ? 'PUT' : 'POST';
-
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          contactName: contact,
-          email,
-          phone,
-          country,
-          website,
-          contactMethod,
-          contactValue,
-          partnershipStatus,
-          userId: getUserId()
-        })
-      });
-
-      if (response.ok) {
-        onSave();
-        onClose();
+      if (editingCompany) {
+        await CompanyService.update(editingCompany.id, companyData, logoFile || undefined);
       } else {
-        const errorData = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
-        console.error('Erro na resposta:', response.status, errorData);
-        alert(`Erro ao ${editingCompany ? 'atualizar' : 'criar'} empresa: ${errorData.error || 'Erro desconhecido'}`);
+        await CompanyService.create(companyData, logoFile || undefined);
       }
+
+      onSave();
+      onClose();
+      resetForm();
     } catch (error) {
-      console.error('Erro ao criar empresa:', error);
-      alert(`Erro ao criar empresa: ${error instanceof Error ? error.message : 'Erro de conexão com o servidor'}`);
+      console.error('Erro ao salvar empresa:', error);
+      alert(`Erro ao salvar empresa: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     }
   };
 
@@ -1644,6 +1677,57 @@ const NewCompanyModal = ({ isOpen, onClose, onSave, editingCompany }: {
               className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white"
               placeholder="https://www.exemplo.com"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              Logo da Empresa <span className="text-gray-400 text-xs">(opcional)</span>
+            </label>
+            <div className="space-y-3">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleLogoChange}
+                disabled={isCompressing}
+                className="block w-full text-sm text-gray-500
+                  file:mr-4 file:py-2 file:px-4
+                  file:rounded-full file:border-0
+                  file:text-sm file:font-semibold
+                  file:bg-primary/10 file:text-primary
+                  hover:file:bg-primary/20
+                  dark:file:bg-primary/20 dark:file:text-primary
+                "
+              />
+
+              {isCompressing && (
+                <div className="flex items-center gap-2 text-sm text-blue-500">
+                  <span className="animate-spin material-symbols-outlined text-sm">progress_activity</span>
+                  Otimizando imagem...
+                </div>
+              )}
+
+              {logoPreview && (
+                <div className="relative inline-block group">
+                  <img
+                    src={logoPreview}
+                    alt="Logo preview"
+                    className="h-20 w-20 object-contain rounded-lg border border-gray-200 dark:border-gray-700 bg-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLogoFile(null);
+                      setLogoPreview(null);
+                    }}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg hover:bg-red-600 transition-colors"
+                    title="Remover logo"
+                  >
+                    <span className="material-symbols-outlined text-sm">close</span>
+                  </button>
+                  <p className="text-xs text-green-600 mt-1">✓ Imagem pronta</p>
+                </div>
+              )}
+            </div>
           </div>
 
           <div>

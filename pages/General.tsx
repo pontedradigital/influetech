@@ -1544,7 +1544,13 @@ const NewCompanyModal = ({ isOpen, onClose, onSave, editingCompany }: {
       resetForm();
     } catch (error) {
       console.error('Erro ao salvar empresa:', error);
-      alert(`Erro ao salvar empresa: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      const errorMessage = error instanceof Error
+        ? error.message
+        : (typeof error === 'object' && error !== null
+          ? JSON.stringify(error)
+          : 'Erro desconhecido');
+
+      alert(`Erro ao salvar empresa: ${errorMessage}`);
     }
   };
 

@@ -44,6 +44,8 @@ export const CompanyService = {
         const userId = localStorage.getItem('userId');
         if (!userId) throw new Error('User not authenticated');
 
+        console.log('[CompanyService] Creating company payload:', company);
+
         // 1. Criar empresa
         const { data, error } = await supabase
             .from('Company')
@@ -51,18 +53,35 @@ export const CompanyService = {
             .select()
             .single();
 
-        if (error) throw error;
+        if (error) {
+            console.error('[CompanyService] Error creating company record:', error);
+            throw error;
+        }
+
+        console.log('[CompanyService] Company created:', data.id);
 
         // 2. Upload de logo (se fornecido)
         let logoUrl = null;
         if (logoFile) {
-            logoUrl = await this.uploadLogo(logoFile, userId, data.id);
+            try {
+                console.log('[CompanyService] Uploading logo...');
+                logoUrl = await this.uploadLogo(logoFile, userId, data.id);
 
-            // Atualizar empresa com URL do logo
-            await supabase
-                .from('Company')
-                .update({ logoUrl })
-                .eq('id', data.id);
+                // Atualizar empresa com URL do logo
+                console.log('[CompanyService] Updating company with logoUrl...');
+                const { error: updateError } = await supabase
+                    .from('Company')
+                    .update({ logoUrl })
+                    .eq('id', data.id);
+
+                if (updateError) {
+                    console.error('[CompanyService] Error updating logoUrl column:', updateError);
+                    console.warn('Check if "logoUrl" column exists in "Company" table.');
+                }
+            } catch (logoError) {
+                console.error('[CompanyService] Logo upload failed:', logoError);
+                // Non-blocking error for logo
+            }
         }
 
         // 3. Adicionar no MediaKit automaticamente

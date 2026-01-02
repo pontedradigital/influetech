@@ -48,7 +48,7 @@ export const DashboardService = {
                     .gte('date', new Date().toISOString())
                     .order('date', { ascending: true })
                     .limit(1)
-                    .single(),
+                    .maybeSingle(),
 
                 // Recent tasks
                 supabase
@@ -66,7 +66,7 @@ export const DashboardService = {
                     .eq('status', 'ACTIVE')
                     .order('createdAt', { ascending: false })
                     .limit(1)
-                    .single()
+                    .maybeSingle()
             ]);
 
             // Calculate total revenue

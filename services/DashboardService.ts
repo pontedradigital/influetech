@@ -45,8 +45,8 @@ export const DashboardService = {
                     .from('BazarEvent')
                     .select('*')
                     .eq('userId', userId)
-                    .gte('eventDate', new Date().toISOString())
-                    .order('eventDate', { ascending: true })
+                    .gte('date', new Date().toISOString())
+                    .order('date', { ascending: true })
                     .limit(1)
                     .single(),
 
@@ -63,7 +63,7 @@ export const DashboardService = {
                     .from('FinancialGoal')
                     .select('*')
                     .eq('userId', userId)
-                    .eq('isActive', 1)
+                    .eq('status', 'ACTIVE')
                     .order('createdAt', { ascending: false })
                     .limit(1)
                     .single()
@@ -136,7 +136,7 @@ export const DashboardService = {
                     label: 'Envios Pendentes'
                 },
                 bazar: bazarResult.data ? {
-                    value: bazarResult.data.eventDate,
+                    value: bazarResult.data.date,
                     title: bazarResult.data.title || 'Próximo Bazar'
                 } : {
                     value: new Date(Date.now() + 864000000).toISOString(),

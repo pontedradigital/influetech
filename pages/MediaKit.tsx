@@ -229,12 +229,14 @@ export default function MediaKit() {
                                             )}
                                         </div>
                                         <span className="text-xs font-bold text-gray-600 dark:text-gray-400 truncate w-full text-center">{brand.name}</span>
-                                        <button
-                                            onClick={() => deleteBrand(brand.id)}
-                                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
-                                        >
-                                            <span className="material-symbols-outlined text-sm">close</span>
-                                        </button>
+                                        {!(brand as any).isCompany && (
+                                            <button
+                                                onClick={() => deleteBrand(brand.id)}
+                                                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                                            >
+                                                <span className="material-symbols-outlined text-sm">close</span>
+                                            </button>
+                                        )}
                                     </div>
                                 ))}
                             </div>

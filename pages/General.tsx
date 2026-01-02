@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
 import { Product, Company } from '../types';
 import { useInfluencer } from '../context/InfluencerContext';
 import { CompanyService } from '../services/CompanyService';
@@ -1768,6 +1769,118 @@ const NewCompanyModal = ({ isOpen, onClose, onSave, editingCompany }: {
 };
 
 
+// Status constants for Companies
+const COMPANY_STATUS_OPTIONS = [
+  { value: 'Solicitada', label: 'Solicitada', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' },
+  { value: 'Aceita', label: 'Aceita', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' },
+  { value: 'Iniciada', label: 'Iniciada', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' },
+  { value: 'Finalizada', label: 'Finalizada', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' },
+  { value: 'Rejeitada', label: 'Rejeitada', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' },
+];
+
+const CompanyStatusBadge = ({ status, onUpdate }: { status: string; onUpdate: (newStatus: string) => void }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
+  const wrapperRef = React.useRef<HTMLDivElement>(null);
+  const buttonRef = React.useRef<HTMLButtonElement>(null);
+
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+
+    function handleScroll() {
+      if (isOpen) setIsOpen(false);
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("scroll", handleScroll, true);
+    window.addEventListener("resize", handleScroll);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", handleScroll, true);
+      window.removeEventListener("resize", handleScroll);
+    };
+  }, [isOpen]);
+
+  const toggleOpen = () => {
+    if (!isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const dropdownHeight = 200; // Approx max height
+
+      let top = rect.bottom + 8;
+      // If not enough space below, position above
+      if (spaceBelow < dropdownHeight) {
+        top = rect.top - dropdownHeight - 8;
+      }
+
+      setDropdownPos({
+        top: top,
+        left: rect.left
+      });
+    }
+    setIsOpen(!isOpen);
+  };
+
+  const currentOption = COMPANY_STATUS_OPTIONS.find(o => o.value === status) || COMPANY_STATUS_OPTIONS[0];
+
+  // Resolve color classes safely
+  const badgeClasses = currentOption.color;
+  // Extract just the background color class for the dot
+  const dotColorClass = badgeClasses.split(' ')[0];
+
+  return (
+    <div className="relative" ref={wrapperRef} onClick={e => e.stopPropagation()}>
+      <button
+        ref={buttonRef}
+        onClick={toggleOpen}
+        className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 hover:opacity-80 transition-all shadow-sm ${badgeClasses}`}
+      >
+        {status || 'Solicitada'}
+        <span className="material-symbols-outlined text-[14px]">expand_more</span>
+      </button>
+
+      {isOpen && ReactDOM.createPortal(
+        <div
+          className="fixed w-48 bg-white dark:bg-[#1e1e2e] rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 z-[9999] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+          style={{
+            top: dropdownPos.top,
+            left: dropdownPos.left
+          }}
+          onClick={e => e.stopPropagation()}
+        >
+          <div className="p-2 space-y-1">
+            {COMPANY_STATUS_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => {
+                  onUpdate(option.value);
+                  setIsOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center gap-3 ${status === option.value
+                  ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-white'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+              >
+                <span className={`w-2 h-2 rounded-full ${option.color.split(' ')[0]}`}></span>
+                {option.label}
+                {status === option.value && (
+                  <span className="material-symbols-outlined text-sm ml-auto">check</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>,
+        document.body
+      )}
+    </div>
+  );
+};
+
 export function Companies() {
   const [companies, setCompanies] = useState<any[]>([]);
   const [filteredCompanies, setFilteredCompanies] = useState<any[]>([]);
@@ -1833,6 +1946,26 @@ export function Companies() {
     fetchCompanies();
     setIsModalOpen(false);
     setEditingCompany(null);
+  };
+
+  const handleStatusUpdate = async (companyId: string, newStatus: string) => {
+    try {
+      // Optimistic update
+      const updatedCompanies = companies.map(c =>
+        c.id === companyId ? { ...c, partnershipStatus: newStatus } : c
+      );
+      setCompanies(updatedCompanies);
+      setFilteredCompanies(prev => prev.map(c =>
+        c.id === companyId ? { ...c, partnershipStatus: newStatus } : c
+      ));
+
+      await CompanyService.update(companyId, { partnershipStatus: newStatus });
+    } catch (error) {
+      console.error('Failed to update status', error);
+      // Revert on failure
+      fetchCompanies();
+      alert('Erro ao atualizar status');
+    }
   };
 
   return (
@@ -1929,14 +2062,10 @@ export function Companies() {
                     <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{company.contactName || '-'}</td>
                     <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{company.country || '-'}</td>
                     <td className="px-6 py-4">
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${company.partnershipStatus === 'Aceita' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
-                        company.partnershipStatus === 'Iniciada' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
-                          company.partnershipStatus === 'Finalizada' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' :
-                            company.partnershipStatus === 'Rejeitada' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' :
-                              'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
-                        } `}>
-                        {company.partnershipStatus || 'Solicitada'}
-                      </span>
+                      <CompanyStatusBadge
+                        status={company.partnershipStatus}
+                        onUpdate={(newStatus) => handleStatusUpdate(company.id, newStatus)}
+                      />
                     </td>
                     <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-2">

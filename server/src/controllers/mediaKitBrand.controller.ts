@@ -5,12 +5,42 @@ export const getAll = async (req: Request, res: Response) => {
     try {
         const userId = (req as any).user.id; // From auth
 
-        const brands = await db.mediaKitBrand.findMany({
+        // 1. Fetch Manual Brands
+        const manualBrands = await db.mediaKitBrand.findMany({
             where: { userId },
             orderBy: { createdAt: 'desc' }
         });
 
-        res.json(brands);
+        // 2. Fetch "Approved" Companies
+        // User requested "ACEITA". We check for variants to be safe given the schema default "Solicitada".
+        const companyBrands = await db.company.findMany({
+            where: {
+                userId,
+                partnershipStatus: { in: ['Aceita', 'ACEITA', 'aceita'] }
+            },
+            select: {
+                id: true,
+                name: true,
+                logoUrl: true
+            }
+        });
+
+        // 3. Map Companies to MediaKitBrand shape
+        const mappedCompanies = companyBrands.map(c => ({
+            id: c.id,
+            userId,
+            name: c.name,
+            logo: c.logoUrl,
+            backgroundColor: '#ffffff',
+            createdAt: new Date(), // Placeholder
+            updatedAt: new Date(),
+            isCompany: true // Optional marker
+        }));
+
+        // 4. Merge results
+        const combined = [...manualBrands, ...mappedCompanies];
+
+        res.json(combined);
     } catch (error) {
         console.error('Error fetching brands:', error);
         res.status(500).json({ error: 'Failed to fetch brands' });

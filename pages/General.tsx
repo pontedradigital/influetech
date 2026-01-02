@@ -1,8 +1,8 @@
-
 import React, { useState } from 'react';
 import { Product, Company } from '../types';
 import { useInfluencer } from '../context/InfluencerContext';
 import { CompanyService } from '../services/CompanyService';
+import { compressImage, validateImage } from '../src/utils/imageCompression';
 import { ProductService } from '../services/ProductService';
 import { SaleService } from '../services/SaleService';
 
@@ -1413,6 +1413,10 @@ const NewCompanyModal = ({ isOpen, onClose, onSave, editingCompany }: {
   const [contactMethod, setContactMethod] = useState('');
   const [contactValue, setContactValue] = useState('');
   const [phoneError, setPhoneError] = useState('');
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [isCompressing, setIsCompressing] = useState(false);
+
 
   // Load editing data
   React.useEffect(() => {

@@ -3,11 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { User, Opportunity } from '../types';
 import { useInfluencer } from '../context/InfluencerContext';
 import CommunityFeed from '../components/Community/CommunityFeed';
+import PremiumFeatureWrapper from '../components/PremiumFeatureWrapper';
 
 // Mock ID since we don't have full auth context yet in frontend
 const CURRENT_USER_ID = '327aa8c1-7c26-41c2-95d7-b375c25eb896';
 
-const Networking = () => {
+const NetworkingContent = () => {
     const [activeTab, setActiveTab] = useState<'community' | 'opportunities' | 'feed'>('community');
     const [publicUsers, setPublicUsers] = useState<User[]>([]);
     const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
@@ -532,4 +533,10 @@ const NewOpportunityModal = ({ isOpen, onClose, onSave }: any) => {
     );
 };
 
-export default Networking;
+export default function Networking() {
+    return (
+        <PremiumFeatureWrapper featureName="Networking">
+            <NetworkingContent />
+        </PremiumFeatureWrapper>
+    );
+}

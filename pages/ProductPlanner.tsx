@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 import { TrendingProductService, TrendingProduct } from '../services/TrendingProductService';
+import PremiumFeatureWrapper from '../components/PremiumFeatureWrapper';
 
 interface Stats {
     overall: {
@@ -40,7 +41,7 @@ interface Category {
     product_count: number;
 }
 
-const ProductPlanner = () => {
+const ProductPlannerContent = () => {
     const [products, setProducts] = useState<TrendingProduct[]>([]);
     const [stats, setStats] = useState<Stats | null>(null);
     const [categories, setCategories] = useState<Category[]>([]);
@@ -616,4 +617,10 @@ const ProductPlanner = () => {
     );
 };
 
-export default ProductPlanner;
+export default function ProductPlanner() {
+    return (
+        <PremiumFeatureWrapper featureName="Planejador de Produtos">
+            <ProductPlannerContent />
+        </PremiumFeatureWrapper>
+    );
+}

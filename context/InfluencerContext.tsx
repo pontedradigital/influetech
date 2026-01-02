@@ -90,8 +90,25 @@ const defaultData: InfluencerData = {
 const InfluencerContext = createContext<InfluencerContextType | undefined>(undefined);
 
 export const InfluencerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    // Get userId for data isolation
+    const getUserId = () => {
+        const userString = localStorage.getItem('user');
+        if (userString) {
+            try {
+                const user = JSON.parse(userString);
+                return user.id;
+            } catch (error) {
+                console.error('Error parsing user:', error);
+            }
+        }
+        return null;
+    };
+
+    const userId = getUserId();
+    const STORAGE_KEY = userId ? `influencer_data_${userId}` : 'influencer_data_temp';
+
     const [data, setData] = useState<InfluencerData>(() => {
-        const saved = localStorage.getItem('influencer_data');
+        const saved = localStorage.getItem(STORAGE_KEY);
         const userString = localStorage.getItem('user');
         const user = userString ? JSON.parse(userString) : null;
 
@@ -124,8 +141,10 @@ export const InfluencerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
 
     useEffect(() => {
-        localStorage.setItem('influencer_data', JSON.stringify(data));
-    }, [data]);
+        if (userId) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+    }, [data, STORAGE_KEY, userId]);
 
     const updateProfile = (updates: Partial<InfluencerProfile>) => {
         setData(prev => ({ ...prev, profile: { ...prev.profile, ...updates } }));

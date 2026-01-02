@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import PremiumFeatureWrapper from '../components/PremiumFeatureWrapper';
 import { Product } from '../types';
 import { BazarService } from '../services/BazarService';
 import { ProductService } from '../services/ProductService';
@@ -24,7 +25,7 @@ interface BazarEvent {
   status: string;
 }
 
-export default function Bazar() {
+function BazarContent() {
   const [suggestions, setSuggestions] = useState<BazarSuggestion[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [bazarEvents, setBazarEvents] = useState<BazarEvent[]>([]);
@@ -680,5 +681,13 @@ function BazarModal({ suggestion, products, onClose, onSuccess }: {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function Bazar() {
+  return (
+    <PremiumFeatureWrapper featureName="Planejador de Bazares">
+      <BazarContent />
+    </PremiumFeatureWrapper>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
+import PremiumFeatureWrapper from '../components/PremiumFeatureWrapper';
 
 interface Brand {
     id: string;
@@ -232,7 +233,7 @@ const TierInfoModule = () => {
     )
 }
 
-const BrandRadar = () => {
+const BrandRadarContent = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedTier, setSelectedTier] = useState<string>('');
     const [brands, setBrands] = useState<Brand[]>([]); // Start empty
@@ -527,4 +528,10 @@ const BrandRadar = () => {
     );
 };
 
-export default BrandRadar;
+export default function BrandRadar() {
+    return (
+        <PremiumFeatureWrapper featureName="Radar de Marcas">
+            <BrandRadarContent />
+        </PremiumFeatureWrapper>
+    );
+}

@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import MediaKitGenerationModal from '../components/MediaKitGenerationModal';
 import { useInfluencer } from '../context/InfluencerContext';
 import { MediaKitService } from '../services/MediaKitService';
+import PremiumFeatureWrapper from '../components/PremiumFeatureWrapper';
 
-export default function MediaKit() {
+function MediaKitContent() {
     const { data, totalFollowers } = useInfluencer();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [animationKey, setAnimationKey] = useState(0);
@@ -672,3 +673,10 @@ export default function MediaKit() {
     );
 }
 
+export default function MediaKit() {
+    return (
+        <PremiumFeatureWrapper featureName="Media Kit">
+            <MediaKitContent />
+        </PremiumFeatureWrapper>
+    );
+}

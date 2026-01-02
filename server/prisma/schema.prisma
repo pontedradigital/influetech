@@ -17,7 +17,7 @@ model User {
   email     String   @unique
   password  String
   name      String
-  plan      String   @default("FREE") // FREE, BASIC, PRO
+  plan      String   @default("START") // START, CREATOR_PLUS
   active    Int      @default(1) // 0=false, 1=true
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

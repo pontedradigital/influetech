@@ -49,6 +49,27 @@ const Login = () => {
         throw new Error('Sessão não criada');
       }
 
+      // Create/Update user in public.User table
+      const { error: userError } = await supabase
+        .from('User')
+        .upsert({
+          id: data.user.id,
+          email: data.user.email,
+          password: 'auth_managed', // Placeholder - real auth is via Supabase Auth
+          name: data.user.user_metadata?.name || data.user.email?.split('@')[0] || 'Usuário',
+          plan: 'START',
+          active: 1,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }, {
+          onConflict: 'id'
+        });
+
+      if (userError) {
+        console.warn('Warning: Could not sync user to public.User table:', userError);
+        // Don't throw - auth succeeded, just warn about sync
+      }
+
       // Store session and userId
       localStorage.setItem('token', data.session.access_token);
       localStorage.setItem('userId', data.user.id); // CRITICAL: needed for all Supabase queries

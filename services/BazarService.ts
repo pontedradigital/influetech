@@ -92,4 +92,3 @@ export const BazarService = {
         return this.getAll();
     }
 };
-```

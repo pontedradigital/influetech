@@ -1,0 +1,16 @@
+
+model BugReport {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String
+  description  String
+  images       String[] // Array of image URLs
+  status       String   @default("Acompanhando") // Acompanhando, Desenvolvendo, Declinado, Adicionado Melhoria
+  adminMessage String?  // Message from admin (for Declinado or Melhoria)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}

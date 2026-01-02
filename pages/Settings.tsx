@@ -5,6 +5,7 @@ import SuccessModal from '../components/SuccessModal';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import CancelSubscriptionModal from '../components/CancelSubscriptionModal';
 import { useInfluencer, SocialNetwork } from '../context/InfluencerContext';
+import BugReportSection from '../components/BugReportSection';
 
 const Nav = () => {
   const loc = useLocation();
@@ -12,7 +13,8 @@ const Nav = () => {
     { name: 'Perfil', path: '/app/meu-perfil' },
     { name: 'Notificações', path: '/app/meu-perfil/notificacoes' },
     { name: 'Segurança', path: '/app/meu-perfil/seguranca' },
-    { name: 'Calculadora de Importação', path: '/app/meu-perfil/importacao' }
+    { name: 'Calculadora de Importação', path: '/app/meu-perfil/importacao' },
+    { name: 'Reportar BUG', path: '/app/meu-perfil/bug-report' }
   ];
 
   return (
@@ -863,6 +865,7 @@ export default function Settings() {
         <Route path="/notificacoes" element={<Notifications />} />
         <Route path="/seguranca" element={<Security />} />
         <Route path="/importacao" element={<ImportCalculatorSettings />} />
+        <Route path="/bug-report" element={<BugReportSection />} />
       </Routes>
     </div>
   );

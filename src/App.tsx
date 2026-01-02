@@ -8,6 +8,7 @@ import { InfluencerProvider } from '../context/InfluencerContext';
 // Components
 import ScrollToTop from '../components/ScrollToTop';
 import CookieConsent from '../components/CookieConsent';
+import BetaWarningModal from '../components/BetaWarningModal';
 
 // Pages
 import Dashboard from '../pages/Dashboard';
@@ -31,6 +32,10 @@ import AdminUsers from '../pages/AdminUsers';
 import AdminFinance from '../pages/AdminFinance';
 import AdminPlans from '../pages/AdminPlans';
 import AdminBrands from '../pages/AdminBrands';
+import AdminBugReports from '../pages/AdminBugReports';
+import SetPassword from '../pages/SetPassword';
+import ResetPassword from '../pages/ResetPassword';
+import VerifyEmail from '../pages/VerifyEmail';
 
 const SidebarItem: React.FC<{ to: string; icon: string; label: string; active: boolean; onClick?: () => void }> = ({ to, icon, label, active, onClick }) => (
     <Link
@@ -263,6 +268,7 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         { to: '/area-administrativa/financeiro', icon: 'payments', label: 'Gestão Financeira' },
         { to: '/area-administrativa/planos', icon: 'price_check', label: 'Planos e Valores' },
         { to: '/area-administrativa/marcas', icon: 'radar', label: 'Gestão de Marcas' },
+        { to: '/area-administrativa/bug-reports', icon: 'bug_report', label: 'Bug Reports' },
         { to: '/app', icon: 'arrow_back', label: 'Voltar para Plataforma' },
     ];
 
@@ -463,6 +469,9 @@ const AppContent = () => {
 
                 {/* Auth Pages */}
                 <Route path="/auth/*" element={<Auth />} />
+                <Route path="/set-password" element={<SetPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/verify-email" element={<VerifyEmail />} />
 
                 {/* Protected Platform Routes at /app */}
                 <Route path="/app/*" element={
@@ -501,6 +510,7 @@ const AppContent = () => {
                                 <Route path="financeiro" element={<AdminFinance />} />
                                 <Route path="planos" element={<AdminPlans />} />
                                 <Route path="marcas" element={<AdminBrands />} />
+                                <Route path="bug-reports" element={<AdminBugReports />} />
                             </Routes>
                         </AdminLayout>
                     </PrivateRoute>
@@ -513,15 +523,18 @@ const AppContent = () => {
     );
 };
 
-const App: React.FC = () => {
+function App() {
     return (
-        <InfluencerProvider>
-            <HelmetProvider>
+        <HelmetProvider>
+            <InfluencerProvider>
                 <Router>
+                    <ScrollToTop />
+                    <BetaWarningModal />
                     <AppContent />
+                    <CookieConsent />
                 </Router>
-            </HelmetProvider>
-        </InfluencerProvider>
+            </InfluencerProvider>
+        </HelmetProvider>
     );
 };
 

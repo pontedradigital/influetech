@@ -78,6 +78,9 @@ model User {
   postComments  PostComment[]
   postReactions PostReaction[]
   notifications Notification[]
+  
+  // Bug Reports
+  bugReports    BugReport[]
 }
 
 model CommunityPost {
@@ -547,4 +550,21 @@ model RadarBrand {
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+
+model BugReport {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String
+  description  String
+  images       String[]
+  status       String   @default("Acompanhando")
+  adminMessage String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
 }

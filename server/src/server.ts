@@ -22,6 +22,7 @@ import affiliatePlatformRoutes from './routes/affiliatePlatform.routes';
 import affiliateEarningRoutes from './routes/affiliateEarning.routes';
 import communityRoutes from './routes/community.routes';
 import mediaKitBrandRoutes from './routes/mediaKitBrand.routes';
+import bugReportRoutes from './routes/bugReport.routes';
 
 dotenv.config();
 
@@ -57,6 +58,7 @@ app.use('/api/community', communityRoutes);
 app.use('/api/media-kit-brands', mediaKitBrandRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/radar-brands', radarBrandRoutes);
+app.use('/api/bug-reports', bugReportRoutes);
 
 import db from './db';
 

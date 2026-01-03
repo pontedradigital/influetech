@@ -36,7 +36,7 @@ const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose }) => {
             title: "Gestão Financeira",
             content: "Registre seus ganhos (Publis, AdSense, Afiliados) e despesas. Tenha controle total sobre o fluxo de caixa da sua carreira.",
             icon: "account_balance",
-            image: "https://images.unsplash.com/photo-1554224155-9844c633185e?q=80&w=2672&auto=format&fit=crop"
+            image: "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?q=80&w=2671&auto=format&fit=crop" // Updated image
         },
         {
             title: "Produtos & Vendas",
@@ -73,7 +73,9 @@ const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose }) => {
     };
 
     const handleComplete = () => {
+        // Ensure this is set before closing
         localStorage.setItem('hasSeenTutorial', 'true');
+        // Small delay to ensure storage write? Usually not needed but safe.
         onClose();
     };
 

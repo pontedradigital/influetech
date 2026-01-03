@@ -951,26 +951,24 @@ const Functions = () => {
         <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Funções Especiais</h3>
 
         <div className="space-y-4">
-          {/* Botão Adicionar ao Celular (Mobile Only) */}
-          {isMobile && (
-            <div className="p-4 rounded-xl bg-gradient-to-r from-purple-500/10 to-cyan-500/10 border border-purple-500/20 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-purple-400 text-2xl">install_mobile</span>
-                </div>
-                <div>
-                  <h4 className="font-bold text-gray-900 dark:text-white">Adicionar ao Celular</h4>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Instale o App na sua tela inicial.</p>
-                </div>
+          {/* Botão Instalar App (PWA) */}
+          <div className="p-4 rounded-xl bg-gradient-to-r from-purple-500/10 to-cyan-500/10 border border-purple-500/20 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center">
+                <span className="material-symbols-outlined text-purple-400 text-2xl">install_mobile</span>
               </div>
-              <button
-                onClick={() => setIsPWAModalOpen(true)}
-                className="px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary-600 transition-colors shadow-lg shadow-primary/20"
-              >
-                Instalar
-              </button>
+              <div>
+                <h4 className="font-bold text-gray-900 dark:text-white">Instalar App</h4>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Instale o App no seu dispositivo.</p>
+              </div>
             </div>
-          )}
+            <button
+              onClick={() => setIsPWAModalOpen(true)}
+              className="px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary-600 transition-colors shadow-lg shadow-primary/20"
+            >
+              Instalar
+            </button>
+          </div>
 
           {/* Botão Tutorial */}
           <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-700 flex items-center justify-between">

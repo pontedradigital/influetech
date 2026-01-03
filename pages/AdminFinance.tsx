@@ -140,10 +140,16 @@ const AdminFinance = () => {
 
                 const mrr = userData.reduce((acc, user) => {
                     // Strict exclusion of non-paying users
+                    // Check if payment status is effectively non-paying
                     if (user.paymentStatus === 'FREE' || user.paymentStatus === 'CANCELLED' || user.paymentStatus === 'OVERDUE') return acc;
-                    if (user.plan === 'LIFETIME' || user.plan === 'FREE') return acc;
 
-                    // Only count active paying users
+                    // Check if plan cycle is free or lifetime (one-time payment, not MRR)
+                    if (user.planCycle === 'LIFETIME' || user.planCycle === 'FREE') return acc;
+
+                    // Also exclude if plan itself is marked as free (defensive)
+                    if (user.plan === 'FREE') return acc;
+
+                    // Only count active paying users with recurring cycles
                     if (user.paymentStatus === 'ACTIVE') {
                         if (user.plan === 'CREATOR_PLUS') return acc + (user.planCycle === 'MONTHLY' ? 99.90 : 83.25);
                         if (user.plan === 'START') return acc + (user.planCycle === 'MONTHLY' ? 49.90 : 41.58);

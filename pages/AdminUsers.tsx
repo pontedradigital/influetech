@@ -71,7 +71,7 @@ export default function AdminUsers() {
 
     const handleInvite = async (e: React.FormEvent) => {
         e.preventDefault();
-        setIsLoading(true); // Reuse main loading or local loading state? Let's use local if poss but main is fine for blocking
+        setIsLoading(true);
 
         const form = e.target as HTMLFormElement;
         const formData = new FormData(form);
@@ -80,8 +80,32 @@ export default function AdminUsers() {
         const name = formData.get('name') as string;
         const plan = formData.get('plan') as string;
         const planCycle = formData.get('planCycle') as string;
-        const nextPaymentDate = formData.get('nextPaymentDate') as string;
         const role = formData.get('role') as string || 'USER';
+
+        // Construct nextPaymentDate logic
+        let nextPaymentDate = null;
+
+        if (planCycle === 'MONTHLY') {
+            const day = parseInt(formData.get('billingDay') as string);
+            if (day) {
+                const now = new Date();
+                let targetDate = new Date(now.getFullYear(), now.getMonth(), day);
+                // If the day has passed this month, move to next month
+                if (targetDate < now) {
+                    targetDate = new Date(now.getFullYear(), now.getMonth() + 1, day);
+                }
+                nextPaymentDate = targetDate.toISOString();
+            }
+        } else if (planCycle === 'ANNUAL') {
+            const dateStr = formData.get('billingDateFull') as string; // YYYY-MM-DD from input type="date"
+            if (dateStr) {
+                // We use the date selected directly. 
+                // User instruction: "se o ciclo for anual abre a lógica DD/MM"
+                // Using input type="date" gives us DD/MM/YYYY which serves the purpose of setting a specific next billing date.
+                nextPaymentDate = new Date(dateStr).toISOString();
+            }
+        }
+        // Free/Lifetime: nextPaymentDate remains null
 
         try {
             const res = await fetch('/api/invite', {
@@ -495,3 +519,85 @@ const Modal = ({ title, onClose, children }: { title: string, onClose: () => voi
         </div>
     </div>
 );
+
+// New Component for Invite Modal to handle complex state
+const InviteUserModal = ({ isOpen, onClose, onSubmit, isLoading }: any) => {
+    const [planCycle, setPlanCycle] = useState('MONTHLY');
+
+    return (
+        <Modal title="Criar Novo Usuário" onClose={onClose}>
+            <form onSubmit={onSubmit} className="space-y-4">
+                <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Nome Completo</label>
+                    <input name="name" required className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none transition-colors" placeholder="Ex: Maria Silva" />
+                </div>
+                <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1">E-mail</label>
+                    <input name="email" type="email" required className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none transition-colors" placeholder="maria@exemplo.com" />
+                    <p className="text-[10px] text-slate-500 mt-1 ml-1">Um e-mail de boas-vindas será enviado com instruções.</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Plano</label>
+                        <select name="plan" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none appearance-none cursor-pointer">
+                            <option value="START" className="bg-neutral-900">Start</option>
+                            <option value="CREATOR_PLUS" className="bg-neutral-900">Creator+</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Ciclo</label>
+                        <select
+                            name="planCycle"
+                            value={planCycle}
+                            onChange={(e) => setPlanCycle(e.target.value)}
+                            className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none appearance-none cursor-pointer"
+                        >
+                            <option value="MONTHLY" className="bg-neutral-900">Mensal</option>
+                            <option value="ANNUAL" className="bg-neutral-900">Anual</option>
+                            <option value="LIFETIME" className="bg-neutral-900">Vitalício (Gratuito)</option>
+                            <option value="FREE" className="bg-neutral-900">Gratuito (Teste)</option>
+                        </select>
+                    </div>
+                </div>
+
+                {/* Dynamic Billing Date Input */}
+                {planCycle === 'MONTHLY' && (
+                    <div>
+                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Dia de Cobrança (DD)</label>
+                        <select
+                            name="billingDay"
+                            className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none appearance-none cursor-pointer custom-scrollbar max-h-40"
+                        >
+                            {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                                <option key={day} value={day} className="bg-neutral-900">{day}</option>
+                            ))}
+                        </select>
+                        <p className="text-[10px] text-slate-500 mt-1 ml-1">Selecione o dia do vencimento mensal.</p>
+                    </div>
+                )}
+
+                {planCycle === 'ANNUAL' && (
+                    <div>
+                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Data de Cobrança (DD/MM)</label>
+                        <input
+                            name="billingDateFull"
+                            type="date"
+                            className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none transition-colors [color-scheme:dark]"
+                        />
+                        <p className="text-[10px] text-slate-500 mt-1 ml-1">Selecione a data exata do próximo vencimento.</p>
+                    </div>
+                )}
+
+                {/* Free/Lifetime - No Date Input needed */}
+
+                <div className="pt-6 flex justify-end gap-3 border-t border-white/5 mt-2">
+                    <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl text-slate-400 hover:text-white font-medium transition-colors">Cancelar</button>
+                    <button type="submit" disabled={isLoading} className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl font-bold shadow-lg shadow-purple-900/20 disabled:opacity-50 flex items-center gap-2">
+                        {isLoading ? <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span> : null}
+                        Enviar Convite por E-mail
+                    </button>
+                </div>
+            </form>
+        </Modal>
+    );
+};

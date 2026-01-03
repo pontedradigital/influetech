@@ -39,6 +39,7 @@ import AdminBugReports from '../pages/AdminBugReports';
 import SetPassword from '../pages/SetPassword';
 import ResetPassword from '../pages/ResetPassword';
 import VerifyEmail from '../pages/VerifyEmail';
+import TutorialModal from '../components/TutorialModal';
 
 const SidebarItem: React.FC<{ to: string; icon: string; label: string; active: boolean; onClick?: () => void }> = ({ to, icon, label, active, onClick }) => (
     <Link
@@ -62,6 +63,15 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         const savedTheme = localStorage.getItem('theme');
         return savedTheme === 'dark';
     });
+
+    // Tutorial State
+    const [showTutorial, setShowTutorial] = useState(false);
+    useEffect(() => {
+        const hasSeenTutorial = localStorage.getItem('hasSeenTutorial');
+        if (!hasSeenTutorial) {
+            setShowTutorial(true);
+        }
+    }, []);
 
     // Toggle Dark Mode & Persist
     useEffect(() => {
@@ -191,6 +201,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     {children}
                 </div>
             </main>
+            <TutorialModal isOpen={showTutorial} onClose={() => setShowTutorial(false)} />
         </div>
 
     );
@@ -210,6 +221,14 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [notifications, setNotifications] = useState<any[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+    const [showTutorial, setShowTutorial] = useState(false);
+
+    useEffect(() => {
+        const hasSeenTutorial = localStorage.getItem('hasSeenTutorial');
+        if (!hasSeenTutorial) {
+            setShowTutorial(true);
+        }
+    }, []);
 
     const fetchNotifications = async () => {
         try {
@@ -453,6 +472,7 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     {children}
                 </div>
             </main>
+            <TutorialModal isOpen={showTutorial} onClose={() => setShowTutorial(false)} />
         </div>
     );
 };

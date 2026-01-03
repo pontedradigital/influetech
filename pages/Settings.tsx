@@ -7,6 +7,8 @@ import CancelSubscriptionModal from '../components/CancelSubscriptionModal';
 import { useInfluencer, SocialNetwork } from '../context/InfluencerContext';
 import BugReportSection from '../components/BugReportSection';
 import { supabase } from '../src/lib/supabase';
+import TutorialModal from '../components/TutorialModal';
+import PWAInstallModal from '../components/PWAInstallModal';
 
 const Nav = () => {
   const loc = useLocation();
@@ -14,6 +16,7 @@ const Nav = () => {
     { name: 'Perfil', path: '/app/meu-perfil' },
     { name: 'Notificações', path: '/app/meu-perfil/notificacoes' },
     { name: 'Segurança', path: '/app/meu-perfil/seguranca' },
+    { name: 'Funções', path: '/app/meu-perfil/funcoes' },
     { name: 'Calculadora de Importação', path: '/app/meu-perfil/importacao' },
     { name: 'Reportar BUG', path: '/app/meu-perfil/bug-report' }
   ];
@@ -908,6 +911,102 @@ const ImportCalculatorSettings = () => {
   );
 };
 
+const Functions = () => {
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isPWAModalOpen, setIsPWAModalOpen] = useState(false);
+  const [isTutorialOpen, setIsTutorialOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    // Mobile Detection
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+      if (/android/i.test(userAgent) || /iPad|iPhone|iPod/.test(userAgent)) {
+        setIsMobile(true);
+      } else {
+        setIsMobile(window.innerWidth <= 768);
+      }
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    // PWA Install Prompt Capture
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      console.log('beforeinstallprompt fired');
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  return (
+    <div className="max-w-3xl space-y-8">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Funções Especiais</h3>
+
+        <div className="space-y-4">
+          {/* Botão Adicionar ao Celular (Mobile Only) */}
+          {isMobile && (
+            <div className="p-4 rounded-xl bg-gradient-to-r from-purple-500/10 to-cyan-500/10 border border-purple-500/20 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-purple-400 text-2xl">install_mobile</span>
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-900 dark:text-white">Adicionar ao Celular</h4>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Instale o App na sua tela inicial.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsPWAModalOpen(true)}
+                className="px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary-600 transition-colors shadow-lg shadow-primary/20"
+              >
+                Instalar
+              </button>
+            </div>
+          )}
+
+          {/* Botão Tutorial */}
+          <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-lg bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
+                <span className="material-symbols-outlined text-gray-600 dark:text-gray-300 text-2xl">school</span>
+              </div>
+              <div>
+                <h4 className="font-bold text-gray-900 dark:text-white">Aprenda a utilizar a plataforma</h4>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Reveja o tutorial passo a passo.</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsTutorialOpen(true)}
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-bold rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              Abrir Tutorial
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <PWAInstallModal
+        isOpen={isPWAModalOpen}
+        onClose={() => setIsPWAModalOpen(false)}
+        deferredPrompt={deferredPrompt}
+      />
+
+      <TutorialModal
+        isOpen={isTutorialOpen}
+        onClose={() => setIsTutorialOpen(false)}
+      />
+    </div>
+  );
+};
+
 export default function Settings() {
   return (
     <div>
@@ -920,6 +1019,7 @@ export default function Settings() {
         <Route path="/" element={<Profile />} />
         <Route path="/notificacoes" element={<Notifications />} />
         <Route path="/seguranca" element={<Security />} />
+        <Route path="/funcoes" element={<Functions />} />
         <Route path="/importacao" element={<ImportCalculatorSettings />} />
         <Route path="/bug-report" element={<BugReportSection />} />
       </Routes>

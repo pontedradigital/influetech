@@ -12,6 +12,7 @@ export default function AdminUsers() {
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<any>(null);
+    const [inviteLink, setInviteLink] = useState('');
 
     // Filter
     const [searchTerm, setSearchTerm] = useState('');
@@ -68,7 +69,7 @@ export default function AdminUsers() {
 
     // Note: fetchStats is now internal to fetchUsers via calculateStats
 
-    const handleInvite = async (e: React.FormEvent) => {
+    const handleInvite = (e: React.FormEvent) => {
         e.preventDefault();
         const form = e.target as HTMLFormElement;
         const formData = new FormData(form);
@@ -77,31 +78,27 @@ export default function AdminUsers() {
         const name = formData.get('name') as string;
         const plan = formData.get('plan') as string;
         const planCycle = formData.get('planCycle') as string;
+        const role = formData.get('role') as string || 'USER';
 
-        try {
-            // Client-side only limitation: Cannot create Auth User easily without Service Role.
-            // We will insert into the Public Table and user must register/link later, or we assume this is a CRM entry.
-            const { error } = await supabase
-                .from('User')
-                .insert([{
-                    email,
-                    name,
-                    plan,
-                    planCycle,
-                    role: 'USER',
-                    active: 1,
-                    // id will be auto-generated uuid, but usually needs to match Auth. 
-                    // This is a known limitation of serverless admin without Edge Functions.
-                }]);
+        // Generate Registration Link
+        const baseUrl = window.location.origin;
+        const params = new URLSearchParams({
+            email,
+            name,
+            plan,
+            planCycle,
+            role
+        });
 
-            if (error) throw error;
+        const link = `${baseUrl}/auth/invite?${params.toString()}`;
+        setInviteLink(link);
+    };
 
-            alert('Usuário pré-cadastrado no banco de dados! (Nota: O Login requer registro no Auth)');
-            setIsInviteModalOpen(false);
-            fetchUsers();
-        } catch (error: any) {
-            alert('Erro ao criar: ' + error.message);
-        }
+    const copyToClipboard = () => {
+        navigator.clipboard.writeText(inviteLink);
+        alert('Link copiado! Envie para o usuário.');
+        setIsInviteModalOpen(false);
+        setInviteLink('');
     };
 
     const handleUpdate = async (e: React.FormEvent) => {
@@ -323,9 +320,26 @@ export default function AdminUsers() {
                                 </select>
                             </div>
                         </div>
-                        <div className="pt-6 flex justify-end gap-3 border-t border-white/5 mt-2">
-                            <button type="button" onClick={() => setIsInviteModalOpen(false)} className="px-5 py-2.5 rounded-xl text-slate-400 hover:text-white font-medium transition-colors">Cancelar</button>
-                            <button type="submit" className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl font-bold shadow-lg shadow-purple-900/20">Criar Usuário</button>
+                        <div className="pt-6 flex flex-col gap-3 border-t border-white/5 mt-2">
+                            {!inviteLink ? (
+                                <div className="flex justify-end gap-3">
+                                    <button type="button" onClick={() => setIsInviteModalOpen(false)} className="px-5 py-2.5 rounded-xl text-slate-400 hover:text-white font-medium transition-colors">Cancelar</button>
+                                    <button type="submit" className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl font-bold shadow-lg shadow-purple-900/20">Gerar Link de Convite</button>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    <div className="bg-black/30 p-3 rounded-lg border border-purple-500/30">
+                                        <p className="text-xs text-slate-400 mb-1">Copie e envie este link para o usuário:</p>
+                                        <code className="block text-purple-300 text-xs break-all leading-relaxed p-2 bg-black/40 rounded border border-white/5 select-all">
+                                            {inviteLink}
+                                        </code>
+                                    </div>
+                                    <button type="button" onClick={copyToClipboard} className="w-full px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-2">
+                                        <span className="material-symbols-outlined">content_copy</span>
+                                        Copiar Link e Fechar
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </form>
                 </Modal>

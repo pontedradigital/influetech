@@ -415,12 +415,174 @@ const SetPassword = () => {
   );
 };
 
+const Register = () => {
+  const [password, setPassword] = React.useState('');
+  const [name, setName] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const navigate = useNavigate();
+
+  // Get params from URL
+  const query = new URLSearchParams(window.location.search);
+  const email = query.get('email') || '';
+  const plan = query.get('plan') || 'START';
+  const role = query.get('role') || 'USER'; // Allow admin invites too if needed?
+  const planCycle = query.get('planCycle') || 'MONTHLY';
+  const urlName = query.get('name') || '';
+
+  const [hasCheckedSession, setHasCheckedSession] = React.useState(false);
+
+  React.useEffect(() => {
+    if (urlName) setName(urlName);
+    // Logout any existing user to avoid confusion
+    localStorage.removeItem('token');
+  }, [urlName]);
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const { supabase } = await import('../src/lib/supabase');
+
+      // 1. Sign Up
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { name }
+        }
+      });
+
+      if (signUpError) throw signUpError;
+      if (!data.user) throw new Error('Erro ao criar usuário');
+
+      // 2. Create Public Profile with correct Plan/Role
+      // We upsert to be safe, but since it's new auth user, it should be new key
+      const { error: profileError } = await supabase
+        .from('User')
+        .upsert({
+          id: data.user.id, // Link Auth ID
+          email: data.user.email,
+          name: name,
+          plan: plan,
+          planCycle: planCycle,
+          role: role,
+          active: 1,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+
+      if (profileError) {
+        console.error('Profile creation failed', profileError);
+        // Retry or warn?
+        // If profile fails, Login flow *might* create a default one, causing loss of Plan data.
+        // But Login only creates if not exists.
+        alert('Conta criada, mas houve um erro ao configurar o plano. Contate o suporte.');
+      }
+
+      // 3. Auto Login or Redirect
+      // SignUp might return session immediately if email confirmation is disabled.
+      if (data.session) {
+        localStorage.setItem('token', data.session.access_token);
+        localStorage.setItem('userId', data.user.id);
+        localStorage.setItem('user', JSON.stringify({
+          id: data.user.id, email, name, role, plan
+        }));
+        window.location.href = '/app';
+      } else {
+        alert('Conta criada! Verifique seu e-mail para confirmar.');
+        navigate('/auth/login');
+      }
+
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!email) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-neutral-950 text-white">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-2">Convite Inválido</h1>
+          <p className="text-slate-400">Link incompleto. Peça um novo convite ao administrador.</p>
+          <Link to="/auth/login" className="block mt-6 text-purple-400">Voltar para Login</Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen w-full flex items-center justify-center p-4 bg-neutral-950 overflow-hidden relative">
+      <div className="w-full max-w-lg bg-[#0f172a] rounded-2xl border border-white/5 shadow-2xl p-8 relative z-20">
+        <h2 className="text-2xl font-bold text-white mb-2 text-center">Aceitar Convite</h2>
+        <p className="text-slate-400 text-sm text-center mb-8">Defina sua senha para acessar a <strong>Influetech</strong>.</p>
+
+        {error && <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-3 rounded-lg mb-4 text-sm">{error}</div>}
+
+        <form onSubmit={handleRegister} className="space-y-4">
+          <div>
+            <label className="block text-slate-400 text-xs font-bold uppercase mb-1">Seu E-mail</label>
+            <input
+              type="email"
+              value={email}
+              disabled
+              className="w-full bg-neutral-800 border border-white/10 rounded-lg px-4 py-3 text-slate-400 cursor-not-allowed"
+            />
+          </div>
+          <div>
+            <label className="block text-slate-400 text-xs font-bold uppercase mb-1">Seu Nome</label>
+            <input
+              type="text"
+              required
+              value={name}
+              onChange={e => setName(e.target.value)}
+              className="w-full bg-neutral-900 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-purple-500 outline-none"
+              placeholder="Seu Nome Completo"
+            />
+          </div>
+          <div>
+            <label className="block text-slate-400 text-xs font-bold uppercase mb-1">Criar Senha</label>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              className="w-full bg-neutral-900 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-purple-500 outline-none"
+              placeholder="••••••••"
+              minLength={6}
+            />
+          </div>
+
+          <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-3 mt-2">
+            <p className="text-xs text-purple-200">
+              <strong>Plano Selecionado:</strong> {plan === 'CREATOR_PLUS' ? 'Creator+' : plan} ({planCycle})
+            </p>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-4 bg-gradient-to-r from-purple-600 to-cyan-600 text-white font-bold rounded-xl mt-6 hover:shadow-lg hover:shadow-purple-500/20 transition-all disabled:opacity-50"
+          >
+            {loading ? 'Criando Conta...' : 'Finalizar Cadastro'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 export default function Auth() {
   return (
     <Routes>
       <Route path="login" element={<Login />} />
       <Route path="recuperar" element={<Recover />} />
       <Route path="definir-senha" element={<SetPassword />} />
+      <Route path="invite" element={<Register />} />
     </Routes>
   );
 }

@@ -48,7 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Send Official Supabase Invite
         const { data, error } = await supabase.auth.admin.inviteUserByEmail(email, {
             data: { name }, // Metadata
-            redirectTo: `${req.headers.origin || 'https://influetech.vercel.app'}/auth/definir-senha`
+            redirectTo: `${req.headers.origin || 'https://www.influetechapp.com.br'}/set-password`
         });
 
         if (error) throw error;

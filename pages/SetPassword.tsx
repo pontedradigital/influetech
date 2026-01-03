@@ -66,7 +66,7 @@ const SetPassword: React.FC = () => {
 
             // Redirect to login after 2 seconds
             setTimeout(() => {
-                navigate('/auth');
+                navigate('/auth/login');
             }, 2000);
 
         } catch (err: any) {

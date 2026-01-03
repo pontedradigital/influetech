@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Routes, Route, Link, useNavigate } from 'react-router-dom';
+import { supabase } from '../src/lib/supabase';
 
 const AuthLayout: React.FC<{ children: React.ReactNode, title: string, subtitle: string }> = ({ children, title, subtitle }) => (
   <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-[#111621]">
@@ -262,14 +263,23 @@ const Recover = () => {
   const [email, setEmail] = React.useState('');
   const [loading, setLoading] = React.useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) throw error;
+
+      alert('Link de recuperação enviado! Verifique seu e-mail.');
+    } catch (error: any) {
+      alert('Erro ao enviar link: ' + error.message);
+    } finally {
       setLoading(false);
-      alert('Link de recuperação enviado (simulação). Verifique seu console/email.');
-    }, 1500);
+    }
   };
 
   return (

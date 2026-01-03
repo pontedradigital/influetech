@@ -6,6 +6,7 @@ import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import CancelSubscriptionModal from '../components/CancelSubscriptionModal';
 import { useInfluencer, SocialNetwork } from '../context/InfluencerContext';
 import BugReportSection from '../components/BugReportSection';
+import { supabase } from '../src/lib/supabase';
 
 const Nav = () => {
   const loc = useLocation();
@@ -668,16 +669,71 @@ const Notifications = () => (
 
 const Security = () => {
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleUpdatePassword = async () => {
+    if (newPassword !== confirmPassword) {
+      alert('A nova senha e a confirmação não coincidem.');
+      return;
+    }
+    if (newPassword.length < 6) {
+      alert('A nova senha deve ter pelo menos 6 caracteres.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+      if (error) throw error;
+
+      alert('Senha atualizada com sucesso!');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error: any) {
+      alert('Erro ao atualizar senha: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="max-w-3xl space-y-8">
       <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
         <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Alterar Senha</h3>
         <div className="space-y-4">
-          <input type="password" placeholder="Senha Atual" className="w-full h-12 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-4" />
-          <input type="password" placeholder="Nova Senha" className="w-full h-12 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-4" />
-          <input type="password" placeholder="Confirmar Nova Senha" className="w-full h-12 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-4" />
-          <button className="px-6 py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-primary-600">Atualizar Senha</button>
+          <input
+            type="password"
+            placeholder="Senha Atual (Opcional, para sua referência)"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            className="w-full h-12 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/50"
+          />
+          <input
+            type="password"
+            placeholder="Nova Senha"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            className="w-full h-12 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/50"
+          />
+          <input
+            type="password"
+            placeholder="Confirmar Nova Senha"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="w-full h-12 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent px-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/50"
+          />
+          <button
+            onClick={handleUpdatePassword}
+            disabled={loading}
+            className="px-6 py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-primary-600 disabled:opacity-50 transition-all shadow-lg shadow-primary/20"
+          >
+            {loading ? 'Atualizando...' : 'Atualizar Senha'}
+          </button>
         </div>
       </div>
 

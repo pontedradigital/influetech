@@ -82,6 +82,11 @@ export const SaleService = {
                     width: product.width || 15,
                     length: product.length || 20,
 
+                    // Campos obrigatórios de Frete (Placeholder)
+                    carrier: 'Pendente',
+                    price: 0,
+                    deliveryTime: 0,
+
                     // Vinculo
                     saleId: newId
                 }]);

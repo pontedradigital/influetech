@@ -1,10 +1,15 @@
 import { supabase } from '../src/lib/supabase';
 import { MediaKitService } from './MediaKitService';
-import { api } from './api';
 
 export const CompanyService = {
     async getAll() {
-        return api.get('/companies');
+        const { data, error } = await supabase
+            .from('Company')
+            .select('*')
+            .order('name');
+
+        if (error) throw error;
+        return data;
     },
 
     /**
@@ -34,8 +39,14 @@ export const CompanyService = {
     async create(company: any, logoFile?: File) {
         console.log('[CompanyService] Creating company payload:', company);
 
-        // 1. Criar empresa via API
-        const data = await api.post('/companies', company);
+        // 1. Criar empresa via Supabase
+        const { data, error } = await supabase
+            .from('Company')
+            .insert([company])
+            .select() // create returns array
+            .single();
+
+        if (error) throw error;
 
         console.log('[CompanyService] Company created:', data.id);
 
@@ -44,16 +55,22 @@ export const CompanyService = {
         // 2. Upload de logo (se fornecido)
         if (logoFile) {
             try {
-                // Need userId to construct path, assume API returns it or we get it from local
-                const userId = localStorage.getItem('userId');
+                // Need userId to construct path
+                const { data: userData } = await supabase.auth.getUser();
+                const userId = userData.user?.id;
+
                 if (!userId) throw new Error('User not authenticated locally');
 
                 console.log('[CompanyService] Uploading logo...');
                 logoUrl = await this.uploadLogo(logoFile, userId, data.id);
 
-                // Atualizar empresa com URL do logo via API
+                // Atualizar empresa com URL do logo
                 console.log('[CompanyService] Updating company with logoUrl...');
-                await api.put(`/companies/${data.id}`, { logoUrl });
+                await supabase
+                    .from('Company')
+                    .update({ logoUrl })
+                    .eq('id', data.id);
+
                 data.logoUrl = logoUrl;
 
             } catch (logoError) {
@@ -65,6 +82,7 @@ export const CompanyService = {
         // 3. Adicionar no MediaKit automaticamente
         if (logoUrl) {
             try {
+                // Keep this non-blocking
                 await MediaKitService.addBrand({
                     name: data.name,
                     logo: logoUrl,
@@ -72,7 +90,6 @@ export const CompanyService = {
                 });
             } catch (err) {
                 console.error('Erro ao adicionar marca no MediaKit:', err);
-                // Não falha se MediaKit der erro
             }
         }
 
@@ -84,14 +101,23 @@ export const CompanyService = {
 
         // Upload de novo logo
         if (logoFile) {
-            const userId = localStorage.getItem('userId');
+            const { data: userData } = await supabase.auth.getUser();
+            const userId = userData.user?.id;
+
             if (!userId) throw new Error('User not authenticated locally');
 
             logoUrl = await this.uploadLogo(logoFile, userId, id);
             updates = { ...updates, logoUrl };
         }
 
-        const data = await api.put(`/companies/${id}`, updates);
+        const { data, error } = await supabase
+            .from('Company')
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
 
         // Adicionar no MediaKit se logo foi adicionado agora
         if (logoFile && logoUrl) {
@@ -115,6 +141,12 @@ export const CompanyService = {
     },
 
     async delete(id: string) {
-        return api.delete(`/companies/${id}`);
+        const { error } = await supabase
+            .from('Company')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        return true;
     }
 };

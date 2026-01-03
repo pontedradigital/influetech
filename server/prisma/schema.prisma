@@ -86,7 +86,7 @@ model User {
 model CommunityPost {
   id            String   @id @default(uuid())
   userId        String
-  user          User     @relation(fields: [userId], references: [id])
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   content       String
   likesCount    Int      @default(0)
   hypesCount    Int      @default(0)
@@ -103,7 +103,7 @@ model PostComment {
   postId    String
   post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
   userId    String
-  user      User          @relation(fields: [userId], references: [id])
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   content   String
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
@@ -114,7 +114,7 @@ model PostReaction {
   postId    String
   post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
   userId    String
-  user      User          @relation(fields: [userId], references: [id])
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   type      String        // LIKE, HYPE
   createdAt DateTime      @default(now())
 
@@ -132,7 +132,7 @@ model Opportunity {
   updatedAt   DateTime @updatedAt
   
   userId      String
-  user        User     @relation(fields: [userId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ProfileLike {
@@ -142,8 +142,8 @@ model ProfileLike {
   fromUserId  String
   toUserId    String
   
-  fromUser    User     @relation("LikesGiven", fields: [fromUserId], references: [id])
-  toUser      User     @relation("LikesReceived", fields: [toUserId], references: [id])
+  fromUser    User     @relation("LikesGiven", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser      User     @relation("LikesReceived", fields: [toUserId], references: [id], onDelete: Cascade)
 
   @@unique([fromUserId, toUserId])
 }
@@ -159,7 +159,7 @@ model FinancialTransaction {
   category    String   // Vendas, Afiliações, Frete, Compras em Geral, Serviços, Impostos, Outras
   status      String   @default("COMPLETED") // COMPLETED, PENDING, CANCELLED
   userId      String
-  user        User     @relation(fields: [userId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   // Relations for Cascading Logic
   relatedId   String?  // ID of the Goal or RecurringExpense
@@ -184,7 +184,7 @@ model Company {
   rating            Int      @default(0)
   logoUrl           String?
   userId            String
-  user              User     @relation(fields: [userId], references: [id])
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -204,7 +204,7 @@ model Product {
   status        String   @default("RECEIVED") // RECEIVED, ANALYZING, PUBLISHED, SOLD, SHIPPED
   condition     String?  // NEW, USED, OPEN_BOX
   userId        String
-  user          User     @relation(fields: [userId], references: [id])
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   companyId     String?
   company       Company? @relation(fields: [companyId], references: [id])
   createdAt     DateTime @default(now())
@@ -246,7 +246,7 @@ model Sale {
   status          String   @default("PENDING") // PENDING, SHIPPED, DELIVERED, CANCELLED
   
   userId          String
-  user            User     @relation(fields: [userId], references: [id])
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -300,13 +300,13 @@ model Shipment {
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
   
-  user            User      @relation(fields: [userId], references: [id])
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ScheduledPost {
   id              String   @id @default(uuid())
   userId          String
-  user            User     @relation(fields: [userId], references: [id])
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   productId       String?
   product         Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
   
@@ -352,7 +352,7 @@ model AffiliateEarning {
 model Task {
   id          String   @id @default(uuid())
   userId      String
-  user        User     @relation(fields: [userId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   title       String
   description String?
@@ -369,7 +369,7 @@ model Task {
 model Alert {
   id          String   @id @default(uuid())
   userId      String
-  user        User     @relation(fields: [userId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   type        String   // PRODUCT_ARRIVING, POST_UPCOMING, TASK_DUE, PRODUCT_NO_POST
   title       String
@@ -383,7 +383,7 @@ model Alert {
 model BazarEvent {
   id          String   @id @default(uuid())
   userId      String
-  user        User     @relation(fields: [userId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   title       String
   description String?
@@ -399,7 +399,7 @@ model BazarEvent {
 model FinancialGoal {
   id            String   @id @default(uuid())
   userId        String
-  user          User     @relation(fields: [userId], references: [id])
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   name          String
   targetAmount  Decimal
@@ -416,7 +416,7 @@ model FinancialGoal {
 model RecurringExpense {
   id            String   @id @default(uuid())
   userId        String
-  user          User     @relation(fields: [userId], references: [id])
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   name          String
   amount        Decimal
@@ -434,7 +434,7 @@ model RecurringExpense {
 model Insight {
   id        String   @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   type      String   // ALERT, SUGGESTION, INFO
   title     String
   message   String
@@ -446,7 +446,7 @@ model Insight {
 model MediaKitBrand {
   id        String   @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   name      String
   logo      String?  // Base64 string
@@ -504,7 +504,7 @@ model ProductCategory {
 model Notification {
   id        String   @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title     String
   message   String
   type      String   @default("INFO") // INFO, SUCCESS, WARNING, ERROR

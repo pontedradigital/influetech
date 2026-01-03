@@ -16,6 +16,14 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
+        if (user.active === 0) {
+            res.status(403).json({
+                error: 'ACCOUNT_DISABLED',
+                message: 'Sua conta foi desativada.'
+            });
+            return;
+        }
+
         const valid = await bcrypt.compare(password, user.password);
         if (!valid) {
             res.status(400).json({ error: 'Senha inválida' });

@@ -177,6 +177,30 @@ export default function AdminUsers() {
         }
     };
 
+    const handleToggleStatus = async (user: any) => {
+        const newStatus = user.active ? 0 : 1;
+        const actionName = user.active ? 'desativar' : 'reativar';
+
+        if (!confirm(`Tem certeza que deseja ${actionName} o acesso deste usuário?`)) return;
+
+        try {
+            const { error } = await supabase
+                .from('User')
+                .update({ active: newStatus })
+                .eq('id', user.id);
+
+            if (error) throw error;
+
+            // Optional: Also update 'active' in React state immediately for better UX
+            setUsers(users.map(u => u.id === user.id ? { ...u, active: newStatus } : u));
+
+            alert(`Usuário ${newStatus ? 'reativado' : 'desativado'} com sucesso!`);
+        } catch (error: any) {
+            alert('Erro ao atualizar status: ' + error.message);
+            console.error(error);
+        }
+    };
+
     // Filter Logic
     const filteredUsers = users.filter(u =>
         u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -312,6 +336,9 @@ export default function AdminUsers() {
                                             <div className="flex justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
                                                 <button onClick={() => { setSelectedUser(user); setIsEditModalOpen(true); }} className="p-2 hover:bg-white/10 rounded-lg text-slate-300 hover:text-white transition-colors border border-transparent hover:border-white/10" title="Editar">
                                                     <span className="material-symbols-outlined text-xl">edit_note</span>
+                                                </button>
+                                                <button onClick={() => handleToggleStatus(user)} className={`p-2 hover:bg-white/10 rounded-lg transition-colors border border-transparent hover:border-white/10 ${user.active ? 'text-amber-400 hover:text-amber-300' : 'text-emerald-400 hover:text-emerald-300'}`} title={user.active ? "Desativar Acesso" : "Reativar Acesso"}>
+                                                    <span className="material-symbols-outlined text-xl">{user.active ? 'block' : 'check_circle'}</span>
                                                 </button>
                                                 <button onClick={() => handleDelete(user.id)} className="p-2 hover:bg-red-500/10 rounded-lg text-slate-300 hover:text-red-400 transition-colors border border-transparent hover:border-red-500/20" title="Deletar">
                                                     <span className="material-symbols-outlined text-xl">delete</span>

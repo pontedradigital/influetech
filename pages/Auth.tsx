@@ -18,6 +18,7 @@ const Login = () => {
   const [password, setPassword] = React.useState('');
   const [error, setError] = React.useState('');
   const [loading, setLoading] = React.useState(false);
+  const [isDisabledModalOpen, setIsDisabledModalOpen] = React.useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -52,9 +53,17 @@ const Login = () => {
       // Create/Update user in public.User table (only basic info, preserve role/plan)
       const { data: existingUser } = await supabase
         .from('User')
-        .select('role, plan')
+        .select('role, plan, active')
         .eq('id', data.user.id)
         .single();
+
+      // STRICT CHECK: Active Status
+      if (existingUser && existingUser.active === 0) {
+        await supabase.auth.signOut();
+        setIsDisabledModalOpen(true);
+        setLoading(false);
+        return;
+      }
 
       const { error: userError } = await supabase
         .from('User')
@@ -211,7 +220,41 @@ const Login = () => {
 
         </div>
       </div>
-    </div>
+
+
+      {/* Disabled Account Modal */}
+      {
+        isDisabledModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#050510]/90 backdrop-blur-md p-4 animate-in fade-in duration-300">
+            <div className="relative w-full max-w-lg bg-[#1a1b2e] rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+              {/* Gradient Top */}
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-500 via-orange-500 to-amber-500"></div>
+
+              <div className="p-8 text-center">
+                <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/20 shadow-[0_0_20px_rgba(239,68,68,0.2)]">
+                  <span className="material-symbols-outlined text-3xl text-red-500">block</span>
+                </div>
+
+                <h3 className="text-2xl font-bold text-white mb-2 tracking-tight">Acesso Suspenso</h3>
+                <p className="text-red-400 font-medium text-sm uppercase tracking-widest mb-6">Conta Desativada</p>
+
+                <p className="text-slate-300 leading-relaxed mb-6 bg-white/5 p-4 rounded-xl border border-white/5">
+                  No momento sua conta está desativada.<br /><br />
+                  Entre em contato via e-mail com o suporte no <span className="text-white font-bold select-all">contato@influetechapp.com.br</span> com o assunto <strong className="text-white">[Conta Desativada]</strong> e aguarde nosso retorno.
+                </p>
+
+                <button
+                  onClick={() => setIsDisabledModalOpen(false)}
+                  className="px-8 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold transition-all w-full border border-white/10"
+                >
+                  Entendido
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+    </div >
   );
 };
 

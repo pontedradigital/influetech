@@ -262,19 +262,36 @@ const Login = () => {
 const Recover = () => {
   const [email, setEmail] = React.useState('');
   const [loading, setLoading] = React.useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = React.useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      const { supabase } = await import('../src/lib/supabase');
+
+      // 1. Verify if email exists
+      const { data: user, error: userError } = await supabase
+        .from('User')
+        .select('id')
+        .eq('email', email)
+        .single();
+
+      if (userError || !user) {
+        alert('Este e-mail não está cadastrado em nossa base. Verifique se digitou corretamente.');
+        setLoading(false);
+        return;
+      }
+
+      // 2. Send Reset Link
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
 
       if (error) throw error;
 
-      alert('Link de recuperação enviado! Verifique seu e-mail.');
+      setIsSuccessModalOpen(true);
     } catch (error: any) {
       alert('Erro ao enviar link: ' + error.message);
     } finally {
@@ -378,6 +395,43 @@ const Recover = () => {
 
         </div>
       </div>
+
+      {/* SUCCESS MODAL */}
+      {
+        isSuccessModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#050510]/90 backdrop-blur-md p-4 animate-in fade-in duration-300">
+            <div className="relative w-full max-w-lg bg-[#1a1b2e] rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+              {/* Gradient Top */}
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500"></div>
+
+              <div className="p-8 text-center">
+                <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-green-500/20 shadow-[0_0_20px_rgba(34,197,94,0.2)]">
+                  <span className="material-symbols-outlined text-3xl text-green-500">mark_email_read</span>
+                </div>
+
+                <h3 className="text-2xl font-bold text-white mb-2 tracking-tight">E-mail Enviado!</h3>
+                <p className="text-green-400 font-medium text-sm uppercase tracking-widest mb-6">Verifique sua caixa de entrada</p>
+
+                <div className="text-slate-300 leading-relaxed mb-6 bg-white/5 p-4 rounded-xl border border-white/5 text-left text-sm space-y-2">
+                  <p>Enviamos um link de recuperação para <strong>{email}</strong>.</p>
+                  <p className="flex items-start gap-2 text-amber-200/80">
+                    <span className="material-symbols-outlined text-lg">warning</span>
+                    <span><strong>Importante:</strong> Se não encontrar na caixa de entrada, verifique sua pasta de <strong>SPAM</strong> ou <strong>Lixo Eletrônico</strong>.</span>
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => setIsSuccessModalOpen(false)}
+                  className="px-8 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold transition-all w-full border border-white/10"
+                >
+                  Entendido
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
     </div>
   );
 };

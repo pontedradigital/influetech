@@ -69,8 +69,10 @@ export default function AdminUsers() {
 
     // Note: fetchStats is now internal to fetchUsers via calculateStats
 
-    const handleInvite = (e: React.FormEvent) => {
+    const handleInvite = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsLoading(true); // Reuse main loading or local loading state? Let's use local if poss but main is fine for blocking
+
         const form = e.target as HTMLFormElement;
         const formData = new FormData(form);
 
@@ -80,26 +82,47 @@ export default function AdminUsers() {
         const planCycle = formData.get('planCycle') as string;
         const role = formData.get('role') as string || 'USER';
 
-        // Generate Registration Link
-        const baseUrl = window.location.origin;
-        const params = new URLSearchParams({
-            email,
-            name,
-            plan,
-            planCycle,
-            role
-        });
+        try {
+            const res = await fetch('/api/invite', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, name, role, plan, planCycle })
+            });
 
-        const link = `${baseUrl}/auth/invite?${params.toString()}`;
-        setInviteLink(link);
+            const data = await res.json();
+
+            if (!res.ok) throw new Error(data.error || 'Falha ao enviar convite');
+
+            alert('Convite enviado com sucesso para ' + email);
+            setIsInviteModalOpen(false);
+            fetchUsers(); // Refresh list
+        } catch (error: any) {
+            alert('Erro: ' + error.message);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const copyToClipboard = () => {
-        navigator.clipboard.writeText(inviteLink);
-        alert('Link copiado! Envie para o usuário.');
-        setIsInviteModalOpen(false);
-        setInviteLink('');
+    const handleSync = async () => {
+        const confirmSync = confirm('Isso irá buscar todos os usuários do sistema de login e criar perfis para eles se estiverem faltando. Continuar?');
+        if (!confirmSync) return;
+
+        setIsLoading(true);
+        try {
+            const res = await fetch('/api/sync-users', { method: 'POST' }); // or GET
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+
+            alert(`Sincronização concluída! ${data.newlySynced} novos usuários adicionados.`);
+            fetchUsers();
+        } catch (error: any) {
+            console.error(error);
+            alert('Erro na sincronização: ' + error.message);
+        } finally {
+            setIsLoading(false);
+        }
     };
+
 
     const handleUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -169,6 +192,15 @@ export default function AdminUsers() {
                 </div>
 
                 <div className="flex gap-3">
+                    <button
+                        onClick={handleSync}
+                        disabled={isLoading}
+                        className="px-6 py-3 bg-indigo-900/50 text-indigo-300 hover:bg-indigo-900 hover:text-white rounded-xl font-medium transition-all flex items-center gap-2 border border-indigo-500/20"
+                        title="Sincronizar usuários do Auth com o Banco de Dados"
+                    >
+                        <span className="material-symbols-outlined">sync</span>
+                        <span className="hidden sm:inline">Sincronizar Banco</span>
+                    </button>
                     <button
                         onClick={() => setIsInviteModalOpen(true)}
                         className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-purple-900/20 transition-all transform hover:scale-105 flex items-center gap-2"
@@ -320,26 +352,12 @@ export default function AdminUsers() {
                                 </select>
                             </div>
                         </div>
-                        <div className="pt-6 flex flex-col gap-3 border-t border-white/5 mt-2">
-                            {!inviteLink ? (
-                                <div className="flex justify-end gap-3">
-                                    <button type="button" onClick={() => setIsInviteModalOpen(false)} className="px-5 py-2.5 rounded-xl text-slate-400 hover:text-white font-medium transition-colors">Cancelar</button>
-                                    <button type="submit" className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl font-bold shadow-lg shadow-purple-900/20">Gerar Link de Convite</button>
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    <div className="bg-black/30 p-3 rounded-lg border border-purple-500/30">
-                                        <p className="text-xs text-slate-400 mb-1">Copie e envie este link para o usuário:</p>
-                                        <code className="block text-purple-300 text-xs break-all leading-relaxed p-2 bg-black/40 rounded border border-white/5 select-all">
-                                            {inviteLink}
-                                        </code>
-                                    </div>
-                                    <button type="button" onClick={copyToClipboard} className="w-full px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-2">
-                                        <span className="material-symbols-outlined">content_copy</span>
-                                        Copiar Link e Fechar
-                                    </button>
-                                </div>
-                            )}
+                        <div className="pt-6 flex justify-end gap-3 border-t border-white/5 mt-2">
+                            <button type="button" onClick={() => setIsInviteModalOpen(false)} className="px-5 py-2.5 rounded-xl text-slate-400 hover:text-white font-medium transition-colors">Cancelar</button>
+                            <button type="submit" disabled={isLoading} className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl font-bold shadow-lg shadow-purple-900/20 disabled:opacity-50 flex items-center gap-2">
+                                {isLoading ? <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span> : null}
+                                Enviar Convite por E-mail
+                            </button>
                         </div>
                     </form>
                 </Modal>

@@ -2274,45 +2274,37 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
     }
 
     try {
-      const response = await fetch('http://localhost:3001/api/sales', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productId: selectedProductId,
-          customerName,
-          contactChannel,
-          contactValue,
-          cep: cep || null,
-          street: street || null,
-          number: number || null,
-          complement: complement || null,
-          neighborhood: neighborhood || null,
-          city: city || null,
-          state: state || null,
-          salePrice: parseFloat(salePrice),
-          userId: getUserId()
-        })
+      await SaleService.create({
+        productId: selectedProductId,
+        customerName,
+        contactChannel,
+        contactValue,
+        cep: cep || null,
+        street: street || null,
+        number: number || null,
+        complement: complement || null,
+        neighborhood: neighborhood || null,
+        city: city || null,
+        state: state || null,
+        salePrice: parseFloat(salePrice)
+        // userId handled in service
       });
 
-      if (response.ok) {
-        onSave();
-        // Reset form
-        setSelectedProductId('');
-        setCustomerName('');
-        setContactChannel(CONTACT_CHANNELS[0]);
-        setContactValue('');
-        setCep('');
-        setStreet('');
-        setNumber('');
-        setComplement('');
-        setNeighborhood('');
-        setCity('');
-        setState('');
-        setSalePrice('');
-        onClose();
-      } else {
-        alert('Erro ao criar venda');
-      }
+      onSave();
+      // Reset form
+      setSelectedProductId('');
+      setCustomerName('');
+      setContactChannel(CONTACT_CHANNELS[0]);
+      setContactValue('');
+      setCep('');
+      setStreet('');
+      setNumber('');
+      setComplement('');
+      setNeighborhood('');
+      setCity('');
+      setState('');
+      setSalePrice('');
+      onClose();
     } catch (error) {
       console.error('Erro ao criar venda:', error);
       alert('Erro ao criar venda');

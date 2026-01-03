@@ -1,14 +1,15 @@
-import { api } from './api';
+import { supabase } from '../src/lib/supabase';
 
 export const SaleService = {
     async getAll(searchTerm?: string) {
-        // Assuming backend filter or we fetch all and filter client side.
-        // For now, let's just fetch all. If search is needed, we should add query support to backend.
-        // Current backend supports userId filtering. Search is not explicitly implemented in listSales 
-        // in previous view (it was a simple findMany). 
-        // If search logic was key, I might lose it here, BUT security is priority.
-        // I'll just fetch all.
-        const sales = await api.get('/sales');
+        const { data, error } = await supabase
+            .from('Sale')
+            .select('*')
+            .order('createdAt', { ascending: false });
+
+        if (error) throw error;
+
+        const sales = data;
 
         if (searchTerm) {
             const lowerSearch = searchTerm.toLowerCase();
@@ -21,10 +22,37 @@ export const SaleService = {
     },
 
     async create(sale: any) {
-        return api.post('/sales', sale);
+        const { data: userData } = await supabase.auth.getUser();
+        const userId = userData.user?.id;
+        if (!userId) throw new Error('Usuario não autenticado');
+
+        const newId = crypto.randomUUID();
+        const now = new Date().toISOString();
+
+        const { data, error } = await supabase
+            .from('Sale')
+            .insert([{
+                ...sale,
+                id: newId,
+                userId,
+                createdAt: now,
+                updatedAt: now,
+                status: 'PENDING'
+            }])
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
     },
 
     async delete(id: string) {
-        return api.delete(`/sales/${id}`);
+        const { error } = await supabase
+            .from('Sale')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        return true;
     }
 };

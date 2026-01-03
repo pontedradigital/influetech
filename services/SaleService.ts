@@ -29,7 +29,8 @@ export const SaleService = {
         const newId = crypto.randomUUID();
         const now = new Date().toISOString();
 
-        const { data, error } = await supabase
+        // 1. Criar a Venda
+        const { data: saleData, error: saleError } = await supabase
             .from('Sale')
             .insert([{
                 ...sale,
@@ -42,8 +43,55 @@ export const SaleService = {
             .select()
             .single();
 
-        if (error) throw error;
-        return data;
+        if (saleError) throw saleError;
+
+        // 2. Tentar criar o Envio (Shipment) automaticamente
+        try {
+            // Buscar dados do produto para obter peso/dimensões
+            const { data: product } = await supabase
+                .from('Product')
+                .select('*')
+                .eq('id', sale.productId)
+                .single();
+
+            if (product) {
+                const shipmentId = crypto.randomUUID();
+                await supabase.from('Shipment').insert([{
+                    id: shipmentId,
+                    userId,
+                    createdAt: now,
+                    updatedAt: now,
+                    status: 'pending',
+
+                    // Dados do Destinatário (Cliente da Venda)
+                    recipientName: sale.customerName,
+                    recipientAddress: `${sale.street || ''}, ${sale.number || ''} ${sale.complement || ''}`,
+                    recipientCity: sale.city,
+                    recipientState: sale.state,
+                    recipientCep: sale.cep,
+                    recipientCpfCnpj: sale.customerCpf || '', // Se houver campo CPF na venda
+
+                    // Dados do Conteúdo (Produto)
+                    contentDescription: product.name,
+                    contentQuantity: 1,
+                    declaredValue: sale.salePrice || product.marketValue || 0,
+
+                    // Dimensões/Peso (Do produto ou padrão)
+                    weight: product.weight || 0.3,
+                    height: product.height || 5,
+                    width: product.width || 15,
+                    length: product.length || 20,
+
+                    // Vinculo
+                    saleId: newId
+                }]);
+            }
+        } catch (shipmentError) {
+            console.error('Erro ao criar envio automático:', shipmentError);
+            // Não falhar a venda se o envio falhar, mas logar
+        }
+
+        return saleData;
     },
 
     async delete(id: string) {

@@ -156,19 +156,24 @@ export default function AdminUsers() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Tem certeza? Isso deletará a conta e todos os dados permanentemente.')) return;
+        if (!confirm('Tem certeza? Isso deletará a conta DE LOGIN e todos os dados permanentemente.')) return;
 
         try {
-            const { error } = await supabase
-                .from('User')
-                .delete()
-                .eq('id', id);
+            // Use serverless function to delete from Auth + DB
+            const res = await fetch('/api/delete-user', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: id })
+            });
 
-            if (error) throw error;
+            const data = await res.json();
 
+            if (!res.ok) throw new Error(data.error || 'Erro ao deletar usuário');
+
+            alert('Usuário deletado com sucesso!');
             fetchUsers();
         } catch (error: any) {
-            alert(error.message);
+            alert('Erro: ' + error.message);
         }
     };
 

@@ -46,6 +46,8 @@ const TransactionRow: React.FC<{ tx: any }> = ({ tx }) => {
     );
 };
 
+import { supabase } from '../src/lib/supabase';
+
 const AdminFinance = () => {
     const [isChargeModalOpen, setIsChargeModalOpen] = useState(false);
     const [stats, setStats] = useState<any>({ overdue: 0, dueThisWeek: 0, mrr: 0 });
@@ -68,12 +70,13 @@ const AdminFinance = () => {
         const delayDebounceFn = setTimeout(async () => {
             if (chargeUser.length > 1) {
                 try {
-                    const token = localStorage.getItem('token');
-                    const res = await fetch(`/api/admin?search=${chargeUser}`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    if (res.ok) {
-                        const data = await res.json();
+                    const { data } = await supabase
+                        .from('User')
+                        .select('id, name, email')
+                        .or(`name.ilike.%${chargeUser}%,email.ilike.%${chargeUser}%`)
+                        .limit(5);
+
+                    if (data) {
                         setUserSuggestions(data);
                         setShowSuggestions(true);
                     }
@@ -91,33 +94,67 @@ const AdminFinance = () => {
 
     useEffect(() => {
         fetchData();
-        fetchPlans(); // Fetch plans on mount
+        fetchPlans();
     }, []);
 
     const fetchPlans = async () => {
         try {
-            const res = await fetch('/api/plans');
-            if (res.ok) {
-                const data = await res.json();
-                setAvailablePlans(data);
-            }
+            const { data } = await supabase
+                .from('Plan')
+                .select('*')
+                .eq('active', true);
+            if (data) setAvailablePlans(data);
         } catch (error) {
-            console.error('Error fetching plans for dropdown:', error);
+            console.error('Error fetching plans:', error);
         }
     };
 
     const fetchData = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const headers = { 'Authorization': `Bearer ${token}` };
+            // Fetch Transactions (with User relation)
+            const { data: txs, error: txError } = await supabase
+                .from('FinancialTransaction')
+                .select('*, user:User(name)')
+                .order('date', { ascending: false })
+                .limit(50);
 
-            const [statsRes, txRes] = await Promise.all([
-                fetch('/api/admin/payments/stats', { headers }),
-                fetch('/api/admin/payments/transactions', { headers })
-            ]);
+            if (txs) {
+                // Map user object to user name string to match UI expectation
+                const formattedTxs = txs.map(tx => ({
+                    ...tx,
+                    user: (tx.user as any)?.name || 'Desconhecido'
+                }));
+                setTransactions(formattedTxs);
+            }
 
-            if (statsRes.ok) setStats(await statsRes.json());
-            if (txRes.ok) setTransactions(await txRes.json());
+            // Stats Logic (Simplified for Client-Side)
+            // Ideally should use a specific query or aggregated view
+            const { data: userData } = await supabase
+                .from('User')
+                .select('paymentStatus, nextPaymentDate, plan, planCycle');
+
+            if (userData) {
+                const now = new Date();
+                const oneWeekFromNow = new Date();
+                oneWeekFromNow.setDate(now.getDate() + 7);
+
+                const mrr = userData.reduce((acc, user) => {
+                    if (user.paymentStatus !== 'ACTIVE' && user.paymentStatus !== 'FREE') return acc;
+                    // Mock values similar to AdminUsers
+                    if (user.plan === 'CREATOR_PLUS') return acc + (user.planCycle === 'MONTHLY' ? 99.90 : 83.25);
+                    if (user.plan === 'START') return acc + (user.planCycle === 'MONTHLY' ? 49.90 : 41.58);
+                    return acc;
+                }, 0);
+
+                const overdue = userData.filter(u => u.paymentStatus === 'OVERDUE').length;
+                const dueThisWeek = userData.filter(u => {
+                    if (!u.nextPaymentDate) return false;
+                    const date = new Date(u.nextPaymentDate);
+                    return date >= now && date <= oneWeekFromNow;
+                }).length;
+
+                setStats({ mrr, overdue, dueThisWeek });
+            }
 
         } catch (error) {
             console.error('Failed to fetch finance data', error);
@@ -126,16 +163,48 @@ const AdminFinance = () => {
         }
     };
 
-    const handleCreateCharge = (e: React.FormEvent) => {
+    const handleCreateCharge = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Placeholder API call
-        console.log('Generating charge for:', chargeUser, chargeAmount);
-        alert(`Cobrança enviada para ${chargeUser} com sucesso!`);
-        setIsChargeModalOpen(false);
-        setChargeUser('');
-        setChargeAmount('');
-        setChargeDesc('');
-        // Refresh transactions if specific endpoint existed
+
+        try {
+            // 1. Find User ID
+            const { data: users } = await supabase
+                .from('User')
+                .select('id')
+                .eq('email', chargeUser)
+                .single();
+
+            if (!users) {
+                alert('Usuário não encontrado!');
+                return;
+            }
+
+            // 2. Create Transaction
+            const { error } = await supabase
+                .from('FinancialTransaction')
+                .insert([{
+                    userId: users.id,
+                    type: 'INCOME', // Receita
+                    category: 'Vendas', // Ou Assinaturas
+                    amount: parseFloat(chargeAmount),
+                    description: chargeDesc,
+                    date: new Date(),
+                    status: 'PENDING',
+                    currency: 'BRL'
+                }]);
+
+            if (error) throw error;
+
+            alert(`Cobrança registrada para ${chargeUser} com sucesso!`);
+            setIsChargeModalOpen(false);
+            setChargeUser('');
+            setChargeAmount('');
+            setChargeDesc('');
+            fetchData();
+        } catch (error: any) {
+            console.error('Charge error:', error);
+            alert('Erro ao criar cobrança: ' + error.message);
+        }
     };
 
     return (

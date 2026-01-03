@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { supabase } from '../src/lib/supabase';
 
 const AdminBrands: React.FC = () => {
     const [brands, setBrands] = useState<any[]>([]);
@@ -30,16 +31,17 @@ const AdminBrands: React.FC = () => {
         fetchBrands();
     }, []);
 
+
+
     const fetchBrands = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch('/api/radar-brands', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                setBrands(data);
-            }
+            const { data, error } = await supabase
+                .from('RadarBrand')
+                .select('*')
+                .order('name', { ascending: true });
+
+            if (data) setBrands(data);
+            if (error) console.error(error);
         } catch (error) {
             console.error('Error fetching brands', error);
         } finally {
@@ -48,97 +50,55 @@ const AdminBrands: React.FC = () => {
     };
 
     const handleAnalyze = async () => {
-        if (!formData.website) return alert('Digite a URL do site primeiro (ex: nike.com)');
-
-        setAnalyzing(true);
-        try {
-            const token = localStorage.getItem('token');
-            const response = await fetch('/api/radar-brands/analyze', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ url: formData.website })
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                setFormData(prev => ({
-                    ...prev,
-                    name: result.name || prev.name,
-                    description: result.description || prev.description,
-                    tier: result.tier || prev.tier,
-                    instagram: result.instagram || prev.instagram,
-                    youtube: result.youtube || prev.youtube,
-                    budget: result.budget || prev.budget,
-                    affinity: result.affinity || prev.affinity,
-                    matchScore: result.matchScore || prev.matchScore,
-                    website: result.website || prev.website
-                }));
-            } else {
-                alert('Não foi possível analisar o site automaticamente.');
-            }
-        } catch (error) {
-            console.error(error);
-            alert('Erro ao analisar.');
-        } finally {
-            setAnalyzing(false);
-        }
+        alert('Funcionalidade de Análise IA indisponível na versão atual. Por favor, preencha manualmente.');
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const token = localStorage.getItem('token');
-            const url = editingBrand ? `/api/radar-brands/${editingBrand.id}` : '/api/radar-brands';
-            const method = editingBrand ? 'PUT' : 'POST';
-
-            // Convert string CSV to arrays for JSON fields if needed, 
-            // but controller handles JSON stringify. Frontend sends object with strings or arrays?
-
-            // Controller expects:
-            // categories: string (if new) -> Prisma needs string logic
-            // Actually, my controller: categories: JSON.stringify(data.categories || [])
-            // So if I send an array, JSON.stringify works. If I send string, stringify works but inside string.
-            // Let's parse the CSV strings to arrays before sending.
-
             const payload = {
                 ...formData,
                 categories: formData.categories.split(',').map(s => s.trim()).filter(Boolean),
                 salesChannels: formData.salesChannels.split(',').map(s => s.trim()).filter(Boolean)
             };
 
-            const response = await fetch(url, {
-                method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(payload)
-            });
+            if (editingBrand) {
+                // Update
+                const { error } = await supabase
+                    .from('RadarBrand')
+                    .update(payload)
+                    .eq('id', editingBrand.id);
 
-            if (response.ok) {
-                setIsModalOpen(false);
-                setEditingBrand(null);
-                fetchBrands();
-                resetForm();
+                if (error) throw error;
             } else {
-                alert('Erro ao salvar');
+                // Insert
+                const { error } = await supabase
+                    .from('RadarBrand')
+                    .insert([payload]);
+
+                if (error) throw error;
             }
+
+            setIsModalOpen(false);
+            setEditingBrand(null);
+            fetchBrands();
+            resetForm();
+
         } catch (error) {
             console.error(error);
+            alert('Erro ao salvar marca');
         }
     };
 
     const handleDelete = async (id: string) => {
         if (!confirm('Tem certeza?')) return;
         try {
-            const token = localStorage.getItem('token');
-            await fetch(`/api/radar-brands/${id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const { error } = await supabase
+                .from('RadarBrand')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
             fetchBrands();
         } catch (error) {
             console.error(error);
@@ -224,9 +184,9 @@ const AdminBrands: React.FC = () => {
                                     <td className="px-6 py-4 font-medium text-white">{brand.name}</td>
                                     <td className="px-6 py-4">
                                         <span className={`px-2 py-1 rounded text-xs font-bold ${brand.tier === 'Tier S' ? 'bg-purple-500/20 text-purple-300' :
-                                                brand.tier === 'Tier A' ? 'bg-cyan-500/20 text-cyan-300' :
-                                                    brand.tier === 'Tier B' ? 'bg-green-500/20 text-green-300' :
-                                                        'bg-slate-500/20 text-slate-300'
+                                            brand.tier === 'Tier A' ? 'bg-cyan-500/20 text-cyan-300' :
+                                                brand.tier === 'Tier B' ? 'bg-green-500/20 text-green-300' :
+                                                    'bg-slate-500/20 text-slate-300'
                                             }`}>
                                             {brand.tier}
                                         </span>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from '../src/lib/supabase';
 
 interface BugReport {
     id: string;
@@ -32,14 +33,15 @@ const AdminBugReports: React.FC = () => {
     const fetchReports = async () => {
         setLoading(true);
         try {
-            const response = await fetch('http://localhost:3001/api/bug-reports/admin/all', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                setReports(data);
+            const { data, error } = await supabase
+                .from('BugReport')
+                .select('*, user:User(name, email)')
+                .order('createdAt', { ascending: false });
+
+            if (error) throw error;
+
+            if (data) {
+                setReports(data as any);
             }
         } catch (error) {
             console.error('Error fetching reports:', error);
@@ -50,22 +52,18 @@ const AdminBugReports: React.FC = () => {
 
     const updateStatus = async (reportId: string, status: string, message?: string) => {
         try {
-            const response = await fetch(`http://localhost:3001/api/bug-reports/admin/${reportId}`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ status, adminMessage: message || null })
-            });
+            const { error } = await supabase
+                .from('BugReport')
+                .update({ status, adminMessage: message })
+                .eq('id', reportId);
 
-            if (response.ok) {
-                fetchReports();
-                setSelectedReport(null);
-                setAdminMessage('');
-                setSelectedStatus('');
-                alert('Status atualizado com sucesso!');
-            }
+            if (error) throw error;
+
+            fetchReports();
+            setSelectedReport(null);
+            setAdminMessage('');
+            setSelectedStatus('');
+            alert('Status atualizado com sucesso!');
         } catch (error) {
             console.error('Error updating status:', error);
             alert('Erro ao atualizar status');
@@ -78,20 +76,16 @@ const AdminBugReports: React.FC = () => {
         }
 
         try {
-            const response = await fetch(`http://localhost:3001/api/bug-reports/admin/${reportId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
+            const { error } = await supabase
+                .from('BugReport')
+                .delete()
+                .eq('id', reportId);
 
-            if (response.ok) {
-                fetchReports();
-                setSelectedReport(null);
-                alert('Report deletado com sucesso!');
-            } else {
-                alert('Erro ao deletar report');
-            }
+            if (error) throw error;
+
+            fetchReports();
+            setSelectedReport(null);
+            alert('Report deletado com sucesso!');
         } catch (error) {
             console.error('Error deleting report:', error);
             alert('Erro ao deletar report');
@@ -271,14 +265,15 @@ const AdminBugReports: React.FC = () => {
                             </div>
 
                             {/* Images */}
-                            {selectedReport.images.length > 0 && (
+                            {selectedReport.images && selectedReport.images.length > 0 && (
                                 <div>
                                     <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Imagens Anexadas</h3>
                                     <div className="grid grid-cols-3 gap-4">
                                         {selectedReport.images.map((img, idx) => (
                                             <img
                                                 key={idx}
-                                                src={`http://localhost:3001${img}`}
+                                                // Handle full URL from Supabase Storage or fallback (removing localhost)
+                                                src={img.startsWith('http') ? img : img.replace('http://localhost:3001', '')}
                                                 alt={`Screenshot ${idx + 1}`}
                                                 className="w-full h-48 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
                                             />

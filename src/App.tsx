@@ -5,6 +5,9 @@ import { HelmetProvider } from 'react-helmet-async';
 // Contexts
 import { InfluencerProvider } from '../context/InfluencerContext';
 
+// Services
+import { supabase } from './lib/supabase';
+
 // Components
 import ScrollToTop from '../components/ScrollToTop';
 import CookieConsent from '../components/CookieConsent';
@@ -210,12 +213,16 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
     const fetchNotifications = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch('/api/admin/notifications', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (response.ok) {
-                const data = await response.json();
+            if (!user?.id) return;
+
+            const { data, error } = await supabase
+                .from('Notification')
+                .select('*')
+                .eq('userId', user.id)
+                .order('createdAt', { ascending: false })
+                .limit(20);
+
+            if (data) {
                 setNotifications(data);
                 setUnreadCount(data.filter((n: any) => !n.read).length);
             }
@@ -226,13 +233,20 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
     const markAsRead = async (id?: string) => {
         try {
-            const token = localStorage.getItem('token');
-            const url = id ? '/api/admin/notifications/read' : '/api/admin/notifications/read-all';
-            await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ id })
-            });
+            if (!user?.id) return;
+
+            if (id) {
+                await supabase
+                    .from('Notification')
+                    .update({ read: true })
+                    .eq('id', id);
+            } else {
+                await supabase
+                    .from('Notification')
+                    .update({ read: true })
+                    .eq('userId', user.id)
+                    .eq('read', false);
+            }
             fetchNotifications();
         } catch (error) {
             console.error('Failed to mark read', error);
@@ -240,12 +254,11 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     };
 
     useEffect(() => {
-        // Initial fetch
         fetchNotifications();
-        // Poll every 30s
         const interval = setInterval(fetchNotifications, 30000);
         return () => clearInterval(interval);
-    }, []);
+    }, [user?.id]); // Depend on user.id
+
     // Check for saved theme preference
     const [isDarkMode, setIsDarkMode] = useState(() => {
         const savedTheme = localStorage.getItem('theme');

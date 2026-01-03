@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { supabase } from '../src/lib/supabase';
 
 export default function AdminPlans() {
     const [plans, setPlans] = useState<any[]>([]);
@@ -12,22 +13,17 @@ export default function AdminPlans() {
         fetchPlans();
     }, []);
 
+
+
     const fetchPlans = async () => {
         try {
-            // Note: getAllPlans is technically public, but admin might want secure view if there were hidden fields.
-            // Using the public endpoint is fine for list. 
-            // OR use a specific admin endpoint if I created one? I used the same controller. 
-            // The controller returns all active plans. 
-            // Wait, ADMIN needs to see INACTIVE plans too? 
-            // My controller `getAllPlans` filters `where: { active: true }`.
-            // I should probably update `getAllPlans` to allow admins to see everything or add `getAdminPlans`.
-            // For now, I'll stick to what I have, but if I need to see inactive ones, I need to update the controller.
-            // Let's assume for now we only manage active plans or I'll fix the controller later.
-            // Actually, for "Planos e Valores", viewing active ones is P0.
+            const { data, error } = await supabase
+                .from('Plan')
+                .select('*')
+                .order('priceMonthly', { ascending: true });
 
-            const res = await fetch('/api/plans');
-            const data = await res.json();
-            if (Array.isArray(data)) setPlans(data);
+            if (error) throw error;
+            if (data) setPlans(data);
         } catch (error) {
             console.error('Failed to fetch plans', error);
         } finally {
@@ -47,28 +43,23 @@ export default function AdminPlans() {
             description: formData.get('description'),
             priceMonthly: parseFloat(formData.get('priceMonthly') as string),
             priceAnnual: parseFloat(formData.get('priceAnnual') as string),
-            features: features,
-            recommended: formData.get('recommended') === 'on'
+            features: features, // Postgres Array (text[])
+            recommended: formData.get('recommended') === 'on',
+            active: true // Default active
         };
 
         try {
-            const token = localStorage.getItem('token');
-            const res = await fetch('/api/plans', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(payload)
-            });
+            const { error } = await supabase
+                .from('Plan')
+                .insert([payload]);
 
-            if (!res.ok) throw new Error('Erro ao criar plano');
+            if (error) throw error;
 
             alert('Plano criado com sucesso!');
             setIsCreateModalOpen(false);
             fetchPlans();
         } catch (error: any) {
-            alert(error.message);
+            alert('Erro ao criar: ' + error.message);
         }
     };
 
@@ -80,7 +71,7 @@ export default function AdminPlans() {
         const formData = new FormData(form);
         const features = (formData.get('features') as string).split('\n').filter(Boolean);
 
-        const payload = {
+        const updates = {
             name: formData.get('name'),
             description: formData.get('description'),
             priceMonthly: parseFloat(formData.get('priceMonthly') as string),
@@ -91,16 +82,12 @@ export default function AdminPlans() {
         };
 
         try {
-            const token = localStorage.getItem('token');
-            const res = await fetch(`/api/plans/${selectedPlan.id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(payload)
-            });
-            if (!res.ok) throw new Error('Erro ao atualizar plano');
+            const { error } = await supabase
+                .from('Plan')
+                .update(updates)
+                .eq('id', selectedPlan.id);
+
+            if (error) throw error;
 
             alert('Plano atualizado!');
             setIsEditModalOpen(false);
@@ -114,12 +101,12 @@ export default function AdminPlans() {
         if (!confirm('Tem certeza? Isso deletará o plano permanentemente.')) return;
 
         try {
-            const token = localStorage.getItem('token');
-            const res = await fetch(`/api/plans/${id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!res.ok) throw new Error('Erro ao deletar plano');
+            const { error } = await supabase
+                .from('Plan')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
             fetchPlans();
         } catch (error: any) {
             alert(error.message);

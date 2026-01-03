@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 
 // Admin Page Component
+import { supabase } from '../src/lib/supabase';
+
+// Admin Page Component
 export default function AdminUsers() {
     const [users, setUsers] = useState<any[]>([]);
     const [stats, setStats] = useState<any>({ overdue: 0, dueThisWeek: 0, mrr: 0 });
@@ -15,68 +18,89 @@ export default function AdminUsers() {
 
     useEffect(() => {
         fetchUsers();
-        fetchStats();
     }, []);
 
+    const calculateStats = (userData: any[]) => {
+        const now = new Date();
+        const oneWeekFromNow = new Date();
+        oneWeekFromNow.setDate(now.getDate() + 7);
+
+        const mrr = userData.reduce((acc, user) => {
+            if (user.paymentStatus !== 'ACTIVE' && user.paymentStatus !== 'FREE') return acc;
+            if (user.plan === 'CREATOR_PLUS') return acc + (user.planCycle === 'MONTHLY' ? 99.90 : 83.25); // Estimativa
+            if (user.plan === 'START') return acc + (user.planCycle === 'MONTHLY' ? 49.90 : 41.58);
+            return acc;
+        }, 0);
+
+        const overdue = userData.filter(u => u.paymentStatus === 'OVERDUE').length;
+
+        const dueThisWeek = userData.filter(u => {
+            if (!u.nextPaymentDate) return false;
+            const date = new Date(u.nextPaymentDate);
+            return date >= now && date <= oneWeekFromNow;
+        }).length;
+
+        setStats({ mrr, overdue, dueThisWeek });
+    };
+
     const fetchUsers = async () => {
+        setIsLoading(true);
         try {
-            const token = localStorage.getItem('token');
-            const res = await fetch('/api/admin', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await res.json();
-            if (Array.isArray(data)) setUsers(data);
+            const { data, error } = await supabase
+                .from('User')
+                .select('*')
+                .order('createdAt', { ascending: false });
+
+            if (error) throw error;
+
+            if (data) {
+                setUsers(data);
+                calculateStats(data);
+            }
         } catch (error) {
             console.error('Failed to fetch users', error);
+            // Fallback for demo if table doesn't exist or is empty
+            setUsers([]);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const fetchStats = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            const res = await fetch('/api/admin/payments/stats', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await res.json();
-            setStats(data);
-        } catch (error) {
-            console.error('Failed to fetch stats', error);
-        }
-    };
+    // Note: fetchStats is now internal to fetchUsers via calculateStats
 
     const handleInvite = async (e: React.FormEvent) => {
         e.preventDefault();
         const form = e.target as HTMLFormElement;
         const formData = new FormData(form);
 
-        const payload = {
-            email: formData.get('email'),
-            name: formData.get('name'),
-            plan: formData.get('plan'),
-            planCycle: formData.get('planCycle'),
-        };
+        const email = formData.get('email') as string;
+        const name = formData.get('name') as string;
+        const plan = formData.get('plan') as string;
+        const planCycle = formData.get('planCycle') as string;
 
         try {
-            const token = localStorage.getItem('token');
-            const res = await fetch('/api/admin/invite', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(payload)
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Erro ao criar usuário');
+            // Client-side only limitation: Cannot create Auth User easily without Service Role.
+            // We will insert into the Public Table and user must register/link later, or we assume this is a CRM entry.
+            const { error } = await supabase
+                .from('User')
+                .insert([{
+                    email,
+                    name,
+                    plan,
+                    planCycle,
+                    role: 'USER',
+                    active: 1,
+                    // id will be auto-generated uuid, but usually needs to match Auth. 
+                    // This is a known limitation of serverless admin without Edge Functions.
+                }]);
 
-            alert('Usuário criado com sucesso! E-mail de definição de senha enviado.');
+            if (error) throw error;
+
+            alert('Usuário pré-cadastrado no banco de dados! (Nota: O Login requer registro no Auth)');
             setIsInviteModalOpen(false);
             fetchUsers();
-            fetchStats();
         } catch (error: any) {
-            alert(error.message);
+            alert('Erro ao criar: ' + error.message);
         }
     };
 
@@ -87,7 +111,7 @@ export default function AdminUsers() {
         const form = e.target as HTMLFormElement;
         const formData = new FormData(form);
 
-        const payload = {
+        const updates = {
             name: formData.get('name'),
             plan: formData.get('plan'),
             planCycle: formData.get('planCycle'),
@@ -96,21 +120,16 @@ export default function AdminUsers() {
         };
 
         try {
-            const token = localStorage.getItem('token');
-            const res = await fetch(`/api/admin/${selectedUser.id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(payload)
-            });
-            if (!res.ok) throw new Error('Erro ao atualizar');
+            const { error } = await supabase
+                .from('User')
+                .update(updates)
+                .eq('id', selectedUser.id);
+
+            if (error) throw error;
 
             alert('Usuário atualizado!');
             setIsEditModalOpen(false);
             fetchUsers();
-            fetchStats();
         } catch (error: any) {
             alert(error.message);
         }
@@ -120,14 +139,14 @@ export default function AdminUsers() {
         if (!confirm('Tem certeza? Isso deletará a conta e todos os dados permanentemente.')) return;
 
         try {
-            const token = localStorage.getItem('token');
-            const res = await fetch(`/api/admin/${id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!res.ok) throw new Error('Erro ao deletar');
+            const { error } = await supabase
+                .from('User')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
+
             fetchUsers();
-            fetchStats();
         } catch (error: any) {
             alert(error.message);
         }

@@ -45,11 +45,18 @@ export const CompanyService = {
 
         // Generate ID client-side to avoid "null value in column id" error
         const newId = crypto.randomUUID();
+        const now = new Date().toISOString();
 
         // 1. Criar empresa via Supabase
         const { data, error } = await supabase
             .from('Company')
-            .insert([{ ...company, id: newId, userId }])
+            .insert([{
+                ...company,
+                id: newId,
+                userId,
+                createdAt: now,
+                updatedAt: now
+            }])
             .select() // create returns array
             .single();
 
@@ -75,7 +82,7 @@ export const CompanyService = {
                 console.log('[CompanyService] Updating company with logoUrl...');
                 await supabase
                     .from('Company')
-                    .update({ logoUrl })
+                    .update({ logoUrl, updatedAt: new Date().toISOString() })
                     .eq('id', data.id);
 
                 data.logoUrl = logoUrl;
@@ -116,6 +123,9 @@ export const CompanyService = {
             logoUrl = await this.uploadLogo(logoFile, userId, id);
             updates = { ...updates, logoUrl };
         }
+
+        // Add proper updatedAt
+        updates = { ...updates, updatedAt: new Date().toISOString() };
 
         const { data, error } = await supabase
             .from('Company')

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { FinancialService } from '../../services/FinancialService';
 
 interface Props {
     isOpen: boolean;
@@ -16,6 +17,9 @@ export const ROICalculatorModal: React.FC<Props> = ({ isOpen, onClose, onTransac
     const netProfit = revenue - cost;
     const roi = cost > 0 ? (netProfit / cost) * 100 : 0;
 
+
+    // ...
+
     const handleSave = async (type: 'EXPENSE' | 'INCOME') => {
         setIsSaving(true);
         const amount = type === 'EXPENSE' ? cost : revenue;
@@ -23,17 +27,13 @@ export const ROICalculatorModal: React.FC<Props> = ({ isOpen, onClose, onTransac
         const desc = type === 'EXPENSE' ? 'Investimento Campanha' : 'Retorno Campanha';
 
         try {
-            await fetch('/api/financial', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    type,
-                    category,
-                    amount,
-                    date: new Date().toISOString(),
-                    description: desc,
-                    name: 'Campanha ROI'
-                })
+            await FinancialService.create({
+                type,
+                category,
+                amount,
+                date: new Date().toISOString(),
+                description: desc,
+                name: 'Campanha ROI'
             });
             alert(`${type === 'EXPENSE' ? 'Custo' : 'Receita'} registrada!`);
             if (onTransactionCreated) onTransactionCreated();

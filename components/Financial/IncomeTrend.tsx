@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { FinancialService } from '../../services/FinancialService';
 
 export const IncomeTrend: React.FC = () => {
     const [data, setData] = useState<any[]>([]);
@@ -8,10 +9,8 @@ export const IncomeTrend: React.FC = () => {
     useEffect(() => {
         const fetchHistory = async () => {
             try {
-                const res = await fetch('/api/financial/history');
-                if (res.ok) {
-                    setData(await res.json());
-                }
+                const historyData = await FinancialService.getHistory();
+                setData(historyData);
             } catch (error) {
                 console.error("Error fetching history", error);
             } finally {

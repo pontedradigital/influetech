@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { GoalCard } from './GoalCard';
+import { FinancialService } from '../../services/FinancialService';
 
 interface Goal {
     id: string;
@@ -33,10 +34,10 @@ export const GoalsSection: React.FC<GoalsSectionProps> = ({ onTransactionCreated
 
     const fetchGoals = async () => {
         try {
-            const res = await fetch('/api/financial-goals');
-            if (res.ok) setGoals(await res.json());
+            const data = await FinancialService.Goals.getAll();
+            setGoals(data);
         } catch (error) {
-            console.error('Failed to fetch goals');
+            console.error('Failed to fetch goals', error);
         }
     };
 
@@ -47,31 +48,29 @@ export const GoalsSection: React.FC<GoalsSectionProps> = ({ onTransactionCreated
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await fetch('/api/financial-goals', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ...newGoal,
-                    targetAmount: parseFloat(newGoal.targetAmount),
-                    userId: getUserId()
-                })
+            await FinancialService.Goals.create({
+                ...newGoal,
+                targetAmount: parseFloat(newGoal.targetAmount),
             });
-            if (!res.ok) throw new Error('Failed to create goal');
 
             setIsModalOpen(false);
             setNewGoal({ name: '', targetAmount: '', deadline: '' });
             fetchGoals();
         } catch (error) {
             console.error('Error creating goal', error);
-            alert('Erro ao criar meta. Verifique se o servidor está rodando.');
+            alert('Erro ao criar meta.');
         }
     };
 
     const handleDelete = async (id: string) => {
         if (!confirm('Excluir esta meta?')) return;
-        await fetch(`/api/financial-goals/${id}`, { method: 'DELETE' });
-        fetchGoals();
-        if (onTransactionCreated) onTransactionCreated();
+        try {
+            await FinancialService.Goals.delete(id);
+            fetchGoals();
+            if (onTransactionCreated) onTransactionCreated();
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     const openAddFundsModal = (id: string) => {
@@ -85,21 +84,34 @@ export const GoalsSection: React.FC<GoalsSectionProps> = ({ onTransactionCreated
         e.preventDefault();
         if (!selectedGoalId || !fundAmount) return;
 
-        const amount = parseFloat(fundAmount);
+        const amountToAdd = parseFloat(fundAmount);
+        const goal = goals.find(g => g.id === selectedGoalId);
+        if (!goal) return;
 
         try {
-            // Atomic update via backend
-            await fetch(`/api/financial-goals/${selectedGoalId}/fund`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    amount: amount,
-                    createTransaction: registerAsExpense
-                })
+            // 1. Update Goal Amount
+            await FinancialService.Goals.update(selectedGoalId, {
+                currentAmount: (Number(goal.currentAmount) || 0) + amountToAdd
             });
 
-            if (registerAsExpense && onTransactionCreated) {
-                onTransactionCreated();
+            // 2. Create Transaction (if checked)
+            if (registerAsExpense) {
+                await FinancialService.create({
+                    type: 'EXPENSE',
+                    amount: amountToAdd,
+                    description: `Reserva para Meta: ${goal.name}`,
+                    name: `Economia - ${goal.name}`,
+                    currency: 'BRL',
+                    date: new Date().toISOString(),
+                    category: 'Outros',
+                    status: 'COMPLETED',
+                    relatedId: goal.id,
+                    relatedType: 'GOAL_FUNDING'
+                });
+
+                if (onTransactionCreated) {
+                    onTransactionCreated();
+                }
             }
 
             setIsAddFundsModalOpen(false);

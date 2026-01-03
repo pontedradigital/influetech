@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, Cell } from 'recharts';
+import { FinancialService } from '../../services/FinancialService';
 
 export const MonthComparator: React.FC = () => {
     const currentYear = new Date().getFullYear();
@@ -13,10 +14,10 @@ export const MonthComparator: React.FC = () => {
 
     const fetchMonthData = async (m: number, y: number, setData: Function) => {
         try {
-            const res = await fetch(`/api/financial/summary?month=${m}&year=${y}`);
-            if (res.ok) setData(await res.json());
+            const data = await FinancialService.getSummary(m, y);
+            setData(data);
         } catch (error) {
-            console.error('Error fetching comp data');
+            console.error('Error fetching comp data', error);
         }
     };
 

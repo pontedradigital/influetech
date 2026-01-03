@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { FinancialService } from '../../services/FinancialService';
 
 interface Props {
     isOpen: boolean;
@@ -19,22 +20,21 @@ export const TaxSimulatorModal: React.FC<Props> = ({ isOpen, onClose, onTransact
     // Calculate estimated taxes
     const taxSimples = revenue * simplesRate;
 
+
+    // ...
+
     const handleSaveTax = async () => {
         if (!confirm('Deseja lançar este valor como Despesa de Impostos no fluxo de caixa?')) return;
 
         setIsSaving(true);
         try {
-            await fetch('/api/financial', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    type: 'EXPENSE',
-                    category: 'Impostos',
-                    amount: revenue > meiLimit ? taxSimples : 70, // Simples or DAS MEI
-                    date: new Date().toISOString(),
-                    description: `Provisão de Impostos (Faturamento R$ ${revenue})`,
-                    name: 'Impostos Mensais'
-                })
+            await FinancialService.create({
+                type: 'EXPENSE',
+                category: 'Impostos',
+                amount: revenue > meiLimit ? taxSimples : 70, // Simples or DAS MEI
+                date: new Date().toISOString(),
+                description: `Provisão de Impostos (Faturamento R$ ${revenue})`,
+                name: 'Impostos Mensais'
             });
             alert('Despesa de imposto registrada!');
             if (onTransactionCreated) onTransactionCreated();

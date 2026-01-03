@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { FinancialService } from '../../services/FinancialService';
 
 interface Props {
     onTransactionCreated?: () => void;
@@ -12,20 +13,19 @@ export const AdRevenueCalculator: React.FC<Props> = ({ onTransactionCreated }) =
 
     const estimatedRevenue = (views / 1000) * cpm;
 
+
+    // ...
+
     const handleSaveIncome = async () => {
         setIsSaving(true);
         try {
-            await fetch('/api/financial', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    type: 'INCOME',
-                    category: 'Publicidade',
-                    amount: estimatedRevenue,
-                    date: new Date().toISOString(), // Today
-                    description: `Receita Ads (${platform}): ${views} views`,
-                    name: `Ads ${platform}`
-                })
+            await FinancialService.create({
+                type: 'INCOME',
+                category: 'Publicidade',
+                amount: estimatedRevenue,
+                date: new Date().toISOString(), // Today
+                description: `Receita Ads (${platform}): ${views} views`,
+                name: `Ads ${platform}`
             });
             alert('Receita registrada no dashboard!');
             if (onTransactionCreated) onTransactionCreated();

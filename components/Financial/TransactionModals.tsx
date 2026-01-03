@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../services/api';
+import { FinancialService } from '../../services/FinancialService';
 
 const EXPENSE_CATEGORIES = [
     'Imposto',
@@ -49,7 +50,7 @@ export const TransactionModal = ({ isOpen, onClose, type, onSuccess }: {
         }
 
         try {
-            await api.post('/financial', {
+            await FinancialService.create({
                 type,
                 amount: parseFloat(amount),
                 description,
@@ -57,7 +58,7 @@ export const TransactionModal = ({ isOpen, onClose, type, onSuccess }: {
                 currency,
                 date,
                 category,
-                // userId is handled by backend from token
+                status: 'COMPLETED'
             });
 
             onSuccess();

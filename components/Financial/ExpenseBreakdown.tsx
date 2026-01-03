@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { FinancialService } from '../../services/FinancialService';
 
 interface ExpenseBreakdownProps {
     month?: number;
@@ -14,23 +15,20 @@ export const ExpenseBreakdown: React.FC<ExpenseBreakdownProps> = ({ month, year 
 
     useEffect(() => {
         const fetchSummary = async () => {
+            if (!month || !year) return;
             try {
-                const query = month && year ? `?month=${month}&year=${year}` : '';
-                const res = await fetch(`/api/financial/summary${query}`);
-                if (res.ok) {
-                    const result = await res.json();
-                    const categories = result.expensesByCategory || {};
-                    const formattedData = Object.keys(categories).map((key, index) => ({
-                        name: key,
-                        value: categories[key],
-                        color: COLORS[index % COLORS.length]
-                    })).filter(item => item.value > 0);
+                const result = await FinancialService.getSummary(month, year);
+                const categories = result.expensesByCategory || {};
+                const formattedData = Object.keys(categories).map((key, index) => ({
+                    name: key,
+                    value: categories[key],
+                    color: COLORS[index % COLORS.length]
+                })).filter(item => item.value > 0);
 
-                    // Sort by value desc
-                    formattedData.sort((a, b) => b.value - a.value);
+                // Sort by value desc
+                formattedData.sort((a, b) => b.value - a.value);
 
-                    setData(formattedData);
-                }
+                setData(formattedData);
             } catch (error) {
                 console.error("Error fetching expense breakdown", error);
             } finally {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { FinancialService } from '../../services/FinancialService';
 
 interface Platform {
     id: string;
@@ -39,13 +40,31 @@ export const AffiliateSection: React.FC<AffiliateSectionProps> = ({ onTransactio
     };
 
     const fetchPlatforms = async () => {
-        const res = await fetch('/api/affiliate-platforms');
-        if (res.ok) setPlatforms(await res.json());
+        try {
+            const data = await FinancialService.Affiliates.getPlatforms();
+            setPlatforms(data);
+        } catch (error) {
+            console.error('Failed to fetch platforms', error);
+        }
     };
 
     const fetchEarnings = async () => {
-        const res = await fetch('/api/affiliate-earnings');
-        if (res.ok) setEarnings(await res.json());
+        try {
+            const data: any[] = await FinancialService.Affiliates.getEarnings();
+            // Map nested platform data to flat structure expected by UI
+            const mappedEarnings = data.map(e => ({
+                id: e.id,
+                amount: e.amount,
+                requestDate: e.requestDate,
+                receiptDate: e.receiptDate,
+                platformName: e.platform?.name || 'Unknown',
+                platformIcon: e.platform?.icon || 'store',
+                description: e.description
+            }));
+            setEarnings(mappedEarnings);
+        } catch (error) {
+            console.error('Failed to fetch earnings', error);
+        }
     };
 
     useEffect(() => {
@@ -55,41 +74,54 @@ export const AffiliateSection: React.FC<AffiliateSectionProps> = ({ onTransactio
 
     const handleCreatePlatform = async (e: React.FormEvent) => {
         e.preventDefault();
-        await fetch('/api/affiliate-platforms', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...newPlatform, userId: getUserId() })
-        });
-        setIsPlatformModalOpen(false);
-        setNewPlatform({ name: '', paymentTermDays: 30, icon: 'store' });
-        fetchPlatforms();
+        try {
+            await FinancialService.Affiliates.createPlatform({
+                ...newPlatform,
+            });
+            setIsPlatformModalOpen(false);
+            setNewPlatform({ name: '', paymentTermDays: 30, icon: 'store' });
+            fetchPlatforms();
+        } catch (error) {
+            console.error(error);
+        }
     };
 
     const handleCreateEarning = async (e: React.FormEvent) => {
         e.preventDefault();
-        const res = await fetch('/api/affiliate-earnings', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+
+        try {
+            const platform = platforms.find(p => p.id === newEarning.platformId);
+            if (!platform) return;
+
+            // Calculate receipt date locally
+            const reqDate = new Date(newEarning.requestDate);
+            const receiptDate = new Date(reqDate);
+            receiptDate.setDate(receiptDate.getDate() + platform.paymentTermDays);
+
+            await FinancialService.Affiliates.createEarning({
                 ...newEarning,
                 amount: parseFloat(newEarning.amount),
-                userId: getUserId()
-            })
-        });
+                receiptDate: receiptDate.toISOString()
+            });
 
-        if (res.ok) {
             setIsEarningModalOpen(false);
             setNewEarning({ platformId: '', amount: '', requestDate: new Date().toISOString().split('T')[0], description: '' });
             fetchEarnings();
             if (onTransactionCreated) onTransactionCreated();
+        } catch (error) {
+            console.error(error);
         }
     };
 
     const handleDeleteEarning = async (id: string) => {
         if (!confirm('Remover este ganho?')) return;
-        await fetch(`/api/affiliate-earnings/${id}`, { method: 'DELETE' });
-        fetchEarnings();
-        if (onTransactionCreated) onTransactionCreated();
+        try {
+            await FinancialService.Affiliates.deleteEarning(id);
+            fetchEarnings();
+            if (onTransactionCreated) onTransactionCreated();
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     return (

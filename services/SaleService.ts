@@ -1,5 +1,6 @@
 import { supabase } from '../src/lib/supabase';
 import { api } from './api';
+import { FinancialService } from './FinancialService';
 
 export const SaleService = {
     async getAll(searchTerm?: string) {
@@ -78,9 +79,9 @@ export const SaleService = {
 
         // ... (inside create function)
 
-        // 2. Criar Transação Financeira (Receita) via Backend API
+        // 2. Criar Transação Financeira (Receita) via FinancialService (Client-side)
         try {
-            await api.post('/financial', {
+            await FinancialService.create({
                 type: 'INCOME',
                 amount: sale.salePrice,
                 description: `Venda - ${productName}`,
@@ -88,8 +89,7 @@ export const SaleService = {
                 currency: 'BRL',
                 date: now,
                 category: 'Vendas',
-                status: 'COMPLETED',
-                userId // Backend handles auth, but we pass it or it uses req.user
+                status: 'COMPLETED'
             });
         } catch (finError) {
             console.error('Erro ao criar transação financeira:', finError);

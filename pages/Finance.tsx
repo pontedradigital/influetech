@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
+import { FinancialService } from '../services/FinancialService';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, Legend } from 'recharts';
 
 import { TransactionModal, DeleteConfirmModal } from '../components/Financial/TransactionModals';
@@ -36,22 +37,31 @@ export default function Finance() {
   // ... inside component ...
 
   // Fetch Data
-  const fetchSummary = () => {
-    api.get(`/financial/summary?month=${selectedMonth}&year=${selectedYear}`)
-      .then(data => setSummary(data))
-      .catch(err => console.error('Erro ao buscar resumo:', err));
+  const fetchSummary = async () => {
+    try {
+      const data = await FinancialService.getSummary(selectedMonth, selectedYear);
+      setSummary(data);
+    } catch (err) {
+      console.error('Erro ao buscar resumo:', err);
+    }
   };
 
-  const fetchHistory = () => {
-    api.get('/financial/history')
-      .then(data => setHistoryData(data))
-      .catch(err => console.error('Erro ao buscar histórico:', err));
+  const fetchHistory = async () => {
+    try {
+      const data = await FinancialService.getHistory();
+      setHistoryData(data);
+    } catch (err) {
+      console.error('Erro ao buscar histórico:', err);
+    }
   };
 
-  const fetchTransactions = () => {
-    api.get(`/financial?month=${selectedMonth}&year=${selectedYear}`)
-      .then(data => setTransactions(data))
-      .catch(err => console.error('Erro ao buscar transações:', err));
+  const fetchTransactions = async () => {
+    try {
+      const data = await FinancialService.getAll(selectedMonth, selectedYear);
+      setTransactions(data);
+    } catch (err) {
+      console.error('Erro ao buscar transações:', err);
+    }
   };
 
   const refreshData = () => {
@@ -64,17 +74,14 @@ export default function Finance() {
     refreshData();
   }, [selectedMonth, selectedYear]);
 
-  useEffect(() => {
-    fetchHistory();
-  }, []);
-
+  // Handle Delete
   const confirmDelete = async () => {
     if (!deletingId) return;
     try {
-      await api.delete(`/financial/${deletingId}`);
+      await FinancialService.delete(deletingId);
       refreshData();
     } catch (error) {
-      console.error('Erro:', error);
+      console.error('Erro ao deletar:', error);
     }
     setDeletingId(null);
   };

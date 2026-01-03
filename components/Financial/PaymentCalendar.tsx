@@ -1,17 +1,22 @@
 import React, { useState, useEffect } from 'react';
+import { FinancialService } from '../../services/FinancialService';
 
 export const PaymentCalendar: React.FC = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [transactions, setTransactions] = useState<any[]>([]);
 
     useEffect(() => {
-        // Fetch transactions for the current month
-        const month = currentDate.getMonth() + 1;
-        const year = currentDate.getFullYear();
-        fetch(`/api/financial?month=${month}&year=${year}`)
-            .then(res => res.json())
-            .then(data => setTransactions(data.filter((t: any) => t.type === 'INCOME')))
-            .catch(err => console.error(err));
+        const fetchTransactions = async () => {
+            try {
+                const month = currentDate.getMonth() + 1;
+                const year = currentDate.getFullYear();
+                const data = await FinancialService.getAll(month, year);
+                setTransactions(data.filter((t: any) => t.type === 'INCOME'));
+            } catch (err) {
+                console.error(err);
+            }
+        };
+        fetchTransactions();
     }, [currentDate]);
 
     const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();

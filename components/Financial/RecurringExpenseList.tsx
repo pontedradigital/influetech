@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { FinancialService } from '../../services/FinancialService';
 
 interface RecurringExpense {
     id: string;
@@ -28,10 +29,10 @@ export const RecurringExpenseList: React.FC<RecurringExpenseListProps> = ({ onTr
 
     const fetchExpenses = async () => {
         try {
-            const res = await fetch('/api/recurring-expenses');
-            if (res.ok) setExpenses(await res.json());
+            const data = await FinancialService.Recurring.getAll();
+            setExpenses(data);
         } catch (error) {
-            console.error('Failed to fetch expenses');
+            console.error('Failed to fetch expenses', error);
         }
     };
 
@@ -41,35 +42,38 @@ export const RecurringExpenseList: React.FC<RecurringExpenseListProps> = ({ onTr
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
-        await fetch('/api/recurring-expenses', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+        try {
+            await FinancialService.Recurring.create({
                 ...newExpense,
                 amount: parseFloat(newExpense.amount),
-                userId: getUserId()
-            })
-        });
-        setIsModalOpen(false);
-        setNewExpense({ name: '', amount: '', frequency: 'MONTHLY', category: 'Serviço' });
-        fetchExpenses();
-        if (onTransactionCreated) onTransactionCreated();
+            });
+            setIsModalOpen(false);
+            setNewExpense({ name: '', amount: '', frequency: 'MONTHLY', category: 'Serviço' });
+            fetchExpenses();
+            if (onTransactionCreated) onTransactionCreated();
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     const toggleActive = async (id: string, currentStatus: number) => {
-        await fetch(`/api/recurring-expenses/${id}/toggle`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ active: !currentStatus })
-        });
-        fetchExpenses();
+        try {
+            await FinancialService.Recurring.update(id, { active: currentStatus ? 0 : 1 });
+            fetchExpenses();
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     const handleDelete = async (id: string) => {
         if (!confirm('Remover esta assinatura?')) return;
-        await fetch(`/api/recurring-expenses/${id}`, { method: 'DELETE' });
-        fetchExpenses();
-        if (onTransactionCreated) onTransactionCreated();
+        try {
+            await FinancialService.Recurring.delete(id);
+            fetchExpenses();
+            if (onTransactionCreated) onTransactionCreated();
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     const totalMonthly = expenses

@@ -376,7 +376,7 @@ export default function AdminUsers() {
                                                 <button onClick={() => handleToggleStatus(user)} className={`p-2 hover:bg-white/10 rounded-lg transition-colors border border-transparent hover:border-white/10 ${user.active ? 'text-amber-400 hover:text-amber-300' : 'text-emerald-400 hover:text-emerald-300'}`} title={user.active ? "Desativar Acesso" : "Reativar Acesso"}>
                                                     <span className="material-symbols-outlined text-xl">{user.active ? 'block' : 'check_circle'}</span>
                                                 </button>
-                                                <button onClick={() => handleDelete(user.id)} className="p-2 hover:bg-red-500/10 rounded-lg text-slate-300 hover:text-red-400 transition-colors border border-transparent hover:border-red-500/20" title="Deletar">
+                                                <button onClick={() => handleDelete(user.id)} className={`p-2 rounded-lg transition-colors border border-transparent ${user.email === 'influetechapp@gmail.com' ? 'text-slate-600 cursor-not-allowed opacity-50' : 'hover:bg-red-500/10 text-slate-300 hover:text-red-400 hover:border-red-500/20'}`} title="Deletar" disabled={user.email === 'influetechapp@gmail.com'}>
                                                     <span className="material-symbols-outlined text-xl">delete</span>
                                                 </button>
                                             </div>

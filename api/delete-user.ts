@@ -42,6 +42,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json({ error: 'User ID is required' });
         }
 
+        // 0. Protected Users Check
+        // Fetch user email first to check if it's protected
+        const { data: userToCheck, error: fetchError } = await supabase
+            .from('User')
+            .select('email')
+            .eq('id', userId)
+            .single();
+
+        if (fetchError) {
+            // If we can't find in public DB, we might still want to try auth delete, 
+            // BUT for safety of the super admin, let's assume if we can't verify, we should be careful.
+            // However, strictly speaking, we just proceed. 
+            // Let's rely on the specific email check.
+            console.warn('Could not verify user email before delete:', fetchError);
+        }
+
+        if (userToCheck && userToCheck.email === 'influetechapp@gmail.com') {
+            return res.status(403).json({ error: 'Ação Bloqueada: Este usuário mestre não pode ser deletado.' });
+        }
+
         // 1. Delete from Auth (This is the critical part that frontend cannot do)
         const { error: authError } = await supabase.auth.admin.deleteUser(userId);
 

@@ -39,10 +39,14 @@ export const CompanyService = {
     async create(company: any, logoFile?: File) {
         console.log('[CompanyService] Creating company payload:', company);
 
+        const { data: userData } = await supabase.auth.getUser();
+        const userId = userData.user?.id;
+        if (!userId) throw new Error('User not authenticated locally');
+
         // 1. Criar empresa via Supabase
         const { data, error } = await supabase
             .from('Company')
-            .insert([company])
+            .insert([{ ...company, userId }])
             .select() // create returns array
             .single();
 

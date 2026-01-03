@@ -1,4 +1,4 @@
-import { api } from './api';
+import { supabase } from '../src/lib/supabase';
 
 export interface Product {
     id: string;
@@ -20,32 +20,65 @@ export interface Product {
     shippingCost?: number;
     createdAt: string;
     updatedAt: string;
+    company?: string; // Mapped field
+    price?: number; // Mapped field
+    receiveDate?: string; // Mapped field
+    image?: string; // Mapped field
 }
 
 export class ProductService {
     static async getAll(): Promise<Product[]> {
-        return api.get('/products');
+        const { data, error } = await supabase
+            .from('Product')
+            .select('*')
+            .order('createdAt', { ascending: false });
+
+        if (error) throw error;
+        return data as Product[];
     }
 
     static async getAvailableForShipping(): Promise<Product[]> {
-        // Backend doesn't have a specific endpoint for this filter yet, but we can list all and filter on client 
-        // OR add a query param to listProducts. 
-        // For now, let's filter on client side to keep backend simple, or assume list returns all.
-        // Wait, listProducts returns all for user.
-        const products: Product[] = await api.get('/products');
-        return products.filter(p => p.status === 'SOLD');
+        const { data, error } = await supabase
+            .from('Product')
+            .select('*')
+            .eq('status', 'SOLD')
+            .order('createdAt', { ascending: false });
+
+        if (error) throw error;
+        return data as Product[];
     }
 
     static async create(product: Partial<Product>): Promise<Product> {
-        return api.post('/products', product);
+        const { data: userData } = await supabase.auth.getUser();
+        const userId = userData.user?.id;
+        if (!userId) throw new Error('Usuario não autenticado');
+
+        const { data, error } = await supabase
+            .from('Product')
+            .insert([{ ...product, userId }])
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data as Product;
     }
 
     static async update(id: string, product: Partial<Product>): Promise<void> {
-        return api.put(`/products/${id}`, product);
+        const { error } = await supabase
+            .from('Product')
+            .update(product)
+            .eq('id', id);
+
+        if (error) throw error;
     }
 
     static async delete(id: string): Promise<void> {
-        return api.delete(`/products/${id}`);
+        const { error } = await supabase
+            .from('Product')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
     }
 }
 

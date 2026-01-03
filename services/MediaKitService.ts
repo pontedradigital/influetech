@@ -12,9 +12,13 @@ export const MediaKitService = {
     },
 
     async addBrand(brand: any) {
+        const { data: userData } = await supabase.auth.getUser();
+        const userId = userData.user?.id;
+        if (!userId) throw new Error('Usuario não autenticado');
+
         const { data, error } = await supabase
             .from('MediaKitBrand')
-            .insert([brand])
+            .insert([{ ...brand, userId }])
             .select()
             .single();
 

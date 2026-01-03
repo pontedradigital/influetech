@@ -139,10 +139,15 @@ const AdminFinance = () => {
                 oneWeekFromNow.setDate(now.getDate() + 7);
 
                 const mrr = userData.reduce((acc, user) => {
-                    if (user.paymentStatus !== 'ACTIVE' && user.paymentStatus !== 'FREE') return acc;
-                    // Mock values similar to AdminUsers
-                    if (user.plan === 'CREATOR_PLUS') return acc + (user.planCycle === 'MONTHLY' ? 99.90 : 83.25);
-                    if (user.plan === 'START') return acc + (user.planCycle === 'MONTHLY' ? 49.90 : 41.58);
+                    // Strict exclusion of non-paying users
+                    if (user.paymentStatus === 'FREE' || user.paymentStatus === 'CANCELLED' || user.paymentStatus === 'OVERDUE') return acc;
+                    if (user.plan === 'LIFETIME' || user.plan === 'FREE') return acc;
+
+                    // Only count active paying users
+                    if (user.paymentStatus === 'ACTIVE') {
+                        if (user.plan === 'CREATOR_PLUS') return acc + (user.planCycle === 'MONTHLY' ? 99.90 : 83.25);
+                        if (user.plan === 'START') return acc + (user.planCycle === 'MONTHLY' ? 49.90 : 41.58);
+                    }
                     return acc;
                 }, 0);
 

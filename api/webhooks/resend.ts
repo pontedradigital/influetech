@@ -74,7 +74,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 userId: admin.id,
                 title: title,
                 message: message,
-                type: 'ERROR',
+                type: msgType,
                 read: false,
                 link: '/area-administrativa/usuarios' // Direction to check users maybe?
             }));

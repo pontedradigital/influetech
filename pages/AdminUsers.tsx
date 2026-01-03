@@ -80,13 +80,14 @@ export default function AdminUsers() {
         const name = formData.get('name') as string;
         const plan = formData.get('plan') as string;
         const planCycle = formData.get('planCycle') as string;
+        const nextPaymentDate = formData.get('nextPaymentDate') as string;
         const role = formData.get('role') as string || 'USER';
 
         try {
             const res = await fetch('/api/invite', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, name, role, plan, planCycle })
+                body: JSON.stringify({ email, name, role, plan, planCycle, nextPaymentDate })
             });
 
             const data = await res.json();
@@ -294,6 +295,7 @@ export default function AdminUsers() {
                                 <th className="p-5">Usuário</th>
                                 <th className="p-5">Plano / Ciclo</th>
                                 <th className="p-5">Status Pagto</th>
+                                <th className="p-5">Criado em</th>
                                 <th className="p-5">Vencimento</th>
                                 <th className="p-5 text-right">Ações</th>
                             </tr>
@@ -328,6 +330,9 @@ export default function AdminUsers() {
                                         </td>
                                         <td className="p-5">
                                             <Badge status={user.paymentStatus} />
+                                        </td>
+                                        <td className="p-5 text-slate-400 font-medium text-xs">
+                                            {new Date(user.createdAt).toLocaleDateString()}
                                         </td>
                                         <td className="p-5 text-slate-400 font-medium">
                                             {user.nextPaymentDate ? new Date(user.nextPaymentDate).toLocaleDateString() : '-'}
@@ -383,6 +388,11 @@ export default function AdminUsers() {
                                     <option value="FREE" className="bg-neutral-900">Gratuito (Teste)</option>
                                 </select>
                             </div>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Data de Cobrança (Opcional)</label>
+                            <input name="nextPaymentDate" type="date" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none transition-colors [color-scheme:dark]" />
+                            <p className="text-[10px] text-slate-500 mt-1 ml-1">Se definido, será a próxima data de vencimento.</p>
                         </div>
                         <div className="pt-6 flex justify-end gap-3 border-t border-white/5 mt-2">
                             <button type="button" onClick={() => setIsInviteModalOpen(false)} className="px-5 py-2.5 rounded-xl text-slate-400 hover:text-white font-medium transition-colors">Cancelar</button>

@@ -64,6 +64,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 role: role || 'USER',
                 plan: plan || 'START',
                 planCycle: planCycle || 'MONTHLY',
+                nextPaymentDate: req.body.nextPaymentDate || null, // Capture Billing Date
                 active: 1,
                 updatedAt: new Date().toISOString(),
                 password: 'PENDING_SETUP' // Satisfy NOT NULL constraint

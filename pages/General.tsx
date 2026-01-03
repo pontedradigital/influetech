@@ -1783,10 +1783,16 @@ const CompanyStatusBadge = ({ status, onUpdate }: { status: string; onUpdate: (n
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
   const wrapperRef = React.useRef<HTMLDivElement>(null);
   const buttonRef = React.useRef<HTMLButtonElement>(null);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(event.target as Node) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     }
@@ -1846,6 +1852,7 @@ const CompanyStatusBadge = ({ status, onUpdate }: { status: string; onUpdate: (n
 
       {isOpen && ReactDOM.createPortal(
         <div
+          ref={dropdownRef}
           className="fixed w-48 bg-white dark:bg-[#1e1e2e] rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 z-[9999] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
           style={{
             top: dropdownPos.top,

@@ -43,10 +43,13 @@ export const CompanyService = {
         const userId = userData.user?.id;
         if (!userId) throw new Error('User not authenticated locally');
 
+        // Generate ID client-side to avoid "null value in column id" error
+        const newId = crypto.randomUUID();
+
         // 1. Criar empresa via Supabase
         const { data, error } = await supabase
             .from('Company')
-            .insert([{ ...company, userId }])
+            .insert([{ ...company, id: newId, userId }])
             .select() // create returns array
             .single();
 

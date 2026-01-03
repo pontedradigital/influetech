@@ -22,6 +22,7 @@ function MediaKitContent() {
     const [savedBrands, setSavedBrands] = useState<{ id: string; name: string; logo?: string }[]>([]);
     const [newBrandName, setNewBrandName] = useState('');
     const [newBrandLogo, setNewBrandLogo] = useState<string | null>(null);
+    const [newBrandFile, setNewBrandFile] = useState<File | null>(null); // Store the actual file
     const [newBrandColor, setNewBrandColor] = useState('#ffffff');
 
     // Fetch brands on mount
@@ -41,9 +42,10 @@ function MediaKitContent() {
     const handleBrandLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            setNewBrandFile(file); // Save file for upload
             const reader = new FileReader();
             reader.onloadend = () => {
-                setNewBrandLogo(reader.result as string);
+                setNewBrandLogo(reader.result as string); // Preview
             };
             reader.readAsDataURL(file);
         }
@@ -54,12 +56,13 @@ function MediaKitContent() {
         try {
             await MediaKitService.addBrand({
                 name: newBrandName,
-                logo: newBrandLogo,
+                logo: newBrandFile || newBrandLogo, // Prioritize file
                 backgroundColor: newBrandColor
             });
 
             setNewBrandName('');
             setNewBrandLogo(null);
+            setNewBrandFile(null); // Clear file
             setNewBrandColor('#ffffff');
             fetchBrands();
         } catch (error) {

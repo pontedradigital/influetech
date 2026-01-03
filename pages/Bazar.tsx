@@ -34,6 +34,7 @@ function BazarContent() {
   const [showScoreModal, setShowScoreModal] = useState(false);
   const [scoreModalData, setScoreModalData] = useState<BazarSuggestion | null>(null);
   const [loading, setLoading] = useState(true);
+  const [totalProductsCount, setTotalProductsCount] = useState(0);
 
   useEffect(() => {
     fetchData();
@@ -58,6 +59,7 @@ function BazarContent() {
         ]);
 
         // Filtra apenas produtos não vendidos
+        setTotalProductsCount(allProducts.length);
         const invalidStatuses = ['SOLD', 'VENDIDO', 'SHIPPED', 'ENVIADO', 'SENT'];
         setProducts(allProducts.filter((p) => !invalidStatuses.includes(p.status?.toUpperCase())));
         setBazarEvents(eventsData);
@@ -133,8 +135,8 @@ function BazarContent() {
 
           <div className="flex gap-3">
             <div className="bg-primary/10 px-4 py-2 rounded-lg border border-primary/20">
-              <p className="text-xs text-gray-600 dark:text-gray-400">Produtos Disponíveis</p>
-              <p className="text-2xl font-black text-primary">{products.length}</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">Total de Produtos</p>
+              <p className="text-2xl font-black text-primary">{totalProductsCount}</p>
             </div>
             <div className="bg-green-500/10 px-4 py-2 rounded-lg border border-green-500/20">
               <p className="text-xs text-gray-600 dark:text-gray-400">Bazares Agendados</p>

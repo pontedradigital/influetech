@@ -1351,9 +1351,22 @@ export default function Products() {
                       {(() => {
                         const statusInfo = STATUS_MAP[product.status] || STATUS_MAP['RECEIVED'];
                         return (
-                          <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${statusInfo.bg} ${statusInfo.color}`}>
-                            {statusInfo.label}
-                          </span>
+                          <div onClick={(e) => e.stopPropagation()} className="relative group">
+                            <select
+                              value={product.status}
+                              onChange={(e) => handleStatusChange(product.id, e.target.value)}
+                              className={`appearance-none cursor-pointer pl-3 pr-8 py-1 rounded-full text-xs font-bold border-0 ring-1 ring-inset focus:ring-2 focus:ring-primary/50 outline-none transition-all ${statusInfo.bg} ${statusInfo.color} ring-transparent hover:ring-black/10 dark:hover:ring-white/20`}
+                            >
+                              {STATUS_OPTIONS.map(opt => (
+                                <option key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </option>
+                              ))}
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
+                              <span className={`material-symbols-outlined text-[10px] ${statusInfo.color} opacity-70`}>expand_more</span>
+                            </div>
+                          </div>
                         );
                       })()}
                     </td>

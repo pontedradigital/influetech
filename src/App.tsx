@@ -455,11 +455,13 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 const AppContent = () => {
     const location = useLocation();
     const showCookieConsent = location.pathname === '/';
+    const showBetaModal = location.pathname.startsWith('/app');
 
     return (
         <>
             <ScrollToTop />
             {showCookieConsent && <CookieConsent />}
+            {showBetaModal && <BetaWarningModal />}
             <Routes>
                 {/* TSL at Root */}
                 <Route path="/" element={<Home />} />
@@ -528,10 +530,7 @@ function App() {
         <HelmetProvider>
             <InfluencerProvider>
                 <Router>
-                    <ScrollToTop />
-                    <BetaWarningModal />
                     <AppContent />
-                    <CookieConsent />
                 </Router>
             </InfluencerProvider>
         </HelmetProvider>

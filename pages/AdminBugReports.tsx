@@ -32,7 +32,7 @@ const AdminBugReports: React.FC = () => {
     const fetchReports = async () => {
         setLoading(true);
         try {
-            const response = await fetch('http://localhost:3000/api/bug-reports/admin/all', {
+            const response = await fetch('http://localhost:3001/api/bug-reports/admin/all', {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
@@ -50,7 +50,7 @@ const AdminBugReports: React.FC = () => {
 
     const updateStatus = async (reportId: string, status: string, message?: string) => {
         try {
-            const response = await fetch(`http://localhost:3000/api/bug-reports/admin/${reportId}`, {
+            const response = await fetch(`http://localhost:3001/api/bug-reports/admin/${reportId}`, {
                 method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -69,6 +69,32 @@ const AdminBugReports: React.FC = () => {
         } catch (error) {
             console.error('Error updating status:', error);
             alert('Erro ao atualizar status');
+        }
+    };
+
+    const deleteReport = async (reportId: string) => {
+        if (!confirm('Tem certeza que deseja deletar este report? Esta ação não pode ser desfeita.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:3001/api/bug-reports/admin/${reportId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            if (response.ok) {
+                fetchReports();
+                setSelectedReport(null);
+                alert('Report deletado com sucesso!');
+            } else {
+                alert('Erro ao deletar report');
+            }
+        } catch (error) {
+            console.error('Error deleting report:', error);
+            alert('Erro ao deletar report');
         }
     };
 
@@ -252,7 +278,7 @@ const AdminBugReports: React.FC = () => {
                                         {selectedReport.images.map((img, idx) => (
                                             <img
                                                 key={idx}
-                                                src={`http://localhost:3000${img}`}
+                                                src={`http://localhost:3001${img}`}
                                                 alt={`Screenshot ${idx + 1}`}
                                                 className="w-full h-48 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
                                             />
@@ -305,6 +331,13 @@ const AdminBugReports: React.FC = () => {
                                             className="flex-1 px-6 py-3 bg-gradient-to-r from-red-500 to-orange-500 text-white font-bold rounded-lg hover:shadow-lg transition-all"
                                         >
                                             Atualizar Status
+                                        </button>
+                                        <button
+                                            onClick={() => deleteReport(selectedReport.id)}
+                                            className="px-6 py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+                                        >
+                                            <span className="material-symbols-outlined text-sm">delete</span>
+                                            Deletar
                                         </button>
                                         <button
                                             onClick={() => {

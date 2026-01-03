@@ -123,8 +123,8 @@ export const CompanyService = {
 
         if (error) throw error;
 
-        // Adicionar no MediaKit se logo foi adicionado agora
-        if (logoFile && logoUrl) {
+        // Adicionar no MediaKit se o status for "Aceita" e tiver logo (seja novo ou existente)
+        if (data.partnershipStatus === 'Aceita' && data.logoUrl) {
             try {
                 const brands = await MediaKitService.getBrands();
                 const hasInMediaKit = brands.some((b: any) => b.name === data.name);
@@ -132,7 +132,7 @@ export const CompanyService = {
                 if (!hasInMediaKit) {
                     await MediaKitService.addBrand({
                         name: data.name,
-                        logo: logoUrl,
+                        logo: data.logoUrl,
                         backgroundColor: '#ffffff'
                     });
                 }

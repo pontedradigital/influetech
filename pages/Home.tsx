@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import SEO from '../components/SEO';
 import { supabase } from '../src/lib/supabase';
+import { parseDatabaseArray } from '../src/utils/dbHelpers';
 
 export default function Home() {
     const [isAnnual, setIsAnnual] = useState(true);
@@ -676,7 +677,7 @@ export default function Home() {
                                             <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-8"></div>
 
                                             <ul className="space-y-4 mb-10 flex-1 relative z-10">
-                                                {Array.isArray(plan.features) && plan.features.map((item: string, i: number) => (
+                                                {parseDatabaseArray(plan.features).map((item: string, i: number) => (
                                                     <li key={i} className="flex items-start gap-4 group/item">
                                                         <div className={`mt-0.5 p-1 rounded-full ${isRecommended ? 'bg-gradient-to-br from-purple-500 to-cyan-500 shadow-lg shadow-purple-500/20' : 'bg-white/5 group-hover/item:bg-purple-500/20 transition-colors'}`}>
                                                             <span className="material-symbols-outlined text-white text-[10px] font-bold block">check</span>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { supabase } from '../src/lib/supabase';
+import { parseDatabaseArray } from '../src/utils/dbHelpers';
 
 export default function AdminPlans() {
     const [plans, setPlans] = useState<any[]>([]);
@@ -167,7 +168,7 @@ export default function AdminPlans() {
                                             ) : <span className="text-slate-600">-</span>}
                                         </td>
                                         <td className="p-5 text-slate-400 text-xs max-w-xs truncate">
-                                            {Array.isArray(plan.features) ? plan.features.join(', ') : '-'}
+                                            {parseDatabaseArray(plan.features).join(', ')}
                                         </td>
                                         <td className="p-5 text-right">
                                             <div className="flex justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
@@ -256,7 +257,7 @@ export default function AdminPlans() {
                         </div>
                         <div>
                             <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Funcionalidades (Uma por linha)</label>
-                            <textarea name="features" defaultValue={Array.isArray(selectedPlan.features) ? selectedPlan.features.join('\n') : ''} required rows={5} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none resize-none"></textarea>
+                            <textarea name="features" defaultValue={parseDatabaseArray(selectedPlan.features).join('\n')} required rows={5} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none resize-none"></textarea>
                         </div>
 
                         <div className="flex flex-col gap-4 px-2">

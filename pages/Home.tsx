@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import SEO from '../components/SEO';
+import { supabase } from '../src/lib/supabase';
 
 export default function Home() {
     const [isAnnual, setIsAnnual] = useState(true);
@@ -14,11 +15,14 @@ export default function Home() {
     useEffect(() => {
         const fetchPlans = async () => {
             try {
-                const res = await fetch('/api/plans');
-                if (res.ok) {
-                    const data = await res.json();
-                    if (Array.isArray(data)) setPlans(data);
-                }
+                const { data, error } = await supabase
+                    .from('Plan')
+                    .select('*')
+                    .eq('active', true)
+                    .order('priceMonthly', { ascending: true });
+
+                if (error) throw error;
+                if (data) setPlans(data);
             } catch (error) {
                 console.error("Failed to fetch plans", error);
             } finally {
@@ -672,7 +676,7 @@ export default function Home() {
                                             <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-8"></div>
 
                                             <ul className="space-y-4 mb-10 flex-1 relative z-10">
-                                                {plan.features?.map((item: string, i: number) => (
+                                                {Array.isArray(plan.features) && plan.features.map((item: string, i: number) => (
                                                     <li key={i} className="flex items-start gap-4 group/item">
                                                         <div className={`mt-0.5 p-1 rounded-full ${isRecommended ? 'bg-gradient-to-br from-purple-500 to-cyan-500 shadow-lg shadow-purple-500/20' : 'bg-white/5 group-hover/item:bg-purple-500/20 transition-colors'}`}>
                                                             <span className="material-symbols-outlined text-white text-[10px] font-bold block">check</span>

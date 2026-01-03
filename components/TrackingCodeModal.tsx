@@ -11,8 +11,9 @@ export default function TrackingCodeModal({ isOpen, onClose, onSave, currentCode
     const [code, setCode] = useState('');
 
     useEffect(() => {
+        const safeCode = currentCode || '';
         if (isOpen) {
-            setCode(currentCode.startsWith('AG') ? '' : currentCode);
+            setCode(safeCode.startsWith('AG') ? '' : safeCode);
         }
     }, [isOpen, currentCode]);
 

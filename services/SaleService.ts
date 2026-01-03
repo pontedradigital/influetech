@@ -2,23 +2,42 @@ import { supabase } from '../src/lib/supabase';
 
 export const SaleService = {
     async getAll(searchTerm?: string) {
+        // Fetch sales with Product details
         const { data, error } = await supabase
             .from('Sale')
-            .select('*')
+            .select('*, Product(name, category, brand)')
             .order('createdAt', { ascending: false });
 
         if (error) throw error;
 
-        const sales = data;
+        // Map flatten structure
+        const sales = data.map((s: any) => ({
+            ...s,
+            productName: s.Product?.name || 'Produto Removido',
+            productCategory: s.Product?.category || '',
+            productBrand: s.Product?.brand || ''
+        }));
 
         if (searchTerm) {
             const lowerSearch = searchTerm.toLowerCase();
             return sales.filter((s: any) =>
                 (s.customerName && s.customerName.toLowerCase().includes(lowerSearch)) ||
-                (s.customerEmail && s.customerEmail.toLowerCase().includes(lowerSearch))
+                (s.productName && s.productName.toLowerCase().includes(lowerSearch))
             );
         }
         return sales;
+    },
+
+    async updateStatus(id: string, status: string) {
+        const { data, error } = await supabase
+            .from('Sale')
+            .update({ status })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
     },
 
     async create(sale: any) {
@@ -45,15 +64,36 @@ export const SaleService = {
 
         if (saleError) throw saleError;
 
-        // 2. Tentar criar o Envio (Shipment) automaticamente
-        try {
-            // Buscar dados do produto para obter peso/dimensões
-            const { data: product } = await supabase
-                .from('Product')
-                .select('*')
-                .eq('id', sale.productId)
-                .single();
+        // Fetch product name for descriptions
+        const { data: product } = await supabase
+            .from('Product')
+            .select('name, marketValue, weight, height, width, length')
+            .eq('id', sale.productId)
+            .single();
 
+        const productName = product?.name || 'Produto';
+
+        // 2. Criar Transação Financeira (Receita)
+        try {
+            await supabase.from('FinancialTransaction').insert([{
+                type: 'INCOME',
+                amount: sale.salePrice,
+                description: `Venda - ${productName}`,
+                name: `Venda - ${sale.customerName}`,
+                currency: 'BRL',
+                date: now,
+                category: 'Vendas',
+                status: 'COMPLETED',
+                userId,
+                relatedId: newId,
+                relatedType: 'SALE'
+            }]);
+        } catch (finError) {
+            console.error('Erro ao criar transação financeira:', finError);
+        }
+
+        // 3. Tentar criar o Envio (Shipment) automaticamente
+        try {
             if (product) {
                 const shipmentId = crypto.randomUUID();
                 await supabase.from('Shipment').insert([{
@@ -69,7 +109,7 @@ export const SaleService = {
                     recipientCity: sale.city,
                     recipientState: sale.state,
                     recipientCep: sale.cep,
-                    recipientCpfCnpj: sale.customerCpf || '', // Se houver campo CPF na venda
+                    recipientCpfCnpj: sale.customerCpf || '',
 
                     // Dados do Conteúdo (Produto)
                     contentDescription: product.name,
@@ -93,7 +133,6 @@ export const SaleService = {
             }
         } catch (shipmentError) {
             console.error('Erro ao criar envio automático:', shipmentError);
-            // Não falhar a venda se o envio falhar, mas logar
         }
 
         return saleData;

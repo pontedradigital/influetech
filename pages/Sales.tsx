@@ -707,14 +707,48 @@ export default function Sales() {
         setDeletingSaleId(null);
     };
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'PENDING': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
-            case 'SHIPPED': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
-            case 'DELIVERED': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
-            case 'CANCELLED': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
-            default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300';
+    const handleStatusChange = async (id: string, newStatus: string) => {
+        try {
+            await SaleService.updateStatus(id, newStatus);
+            // Optimistic update
+            setSales(sales.map(s => s.id === id ? { ...s, status: newStatus } : s));
+        } catch (error) {
+            console.error('Erro ao atualizar status:', error);
+            alert('Erro ao atualizar status');
         }
+    };
+
+    const getContactLink = (sale: any) => {
+        const { contactChannel, contactValue } = sale;
+        if (!contactValue) return '#';
+
+        switch (contactChannel) {
+            case 'WhatsApp':
+                // Remove non-numeric chars
+                const cleanNum = contactValue.replace(/\D/g, '');
+                return `https://wa.me/55${cleanNum}`;
+            case 'Instagram Direct':
+                return contactValue.startsWith('http') ? contactValue : `https://instagram.com/${contactValue.replace('@', '')}`;
+            case 'Discord':
+                return '#'; // Discord doesn't have a direct user link, maybe copy to clipboard?
+            case 'TikTok':
+                return contactValue.startsWith('http') ? contactValue : `https://tiktok.com/${contactValue.startsWith('@') ? contactValue : '@' + contactValue}`;
+            case 'Facebook Messenger':
+                return contactValue.startsWith('http') ? contactValue : `https://m.me/${contactValue}`;
+            default:
+                return '#';
+        }
+    };
+
+    const STATUS_OPTIONS = [
+        { value: 'PENDING', label: 'Pendente', bg: 'bg-yellow-100', color: 'text-yellow-800' },
+        { value: 'SHIPPED', label: 'Enviado', bg: 'bg-blue-100', color: 'text-blue-800' },
+        { value: 'DELIVERED', label: 'Entregue', bg: 'bg-green-100', color: 'text-green-800' },
+        { value: 'CANCELLED', label: 'Cancelado', bg: 'bg-red-100', color: 'text-red-800' },
+    ];
+
+    const getStatusInfo = (status: string) => {
+        return STATUS_OPTIONS.find(o => o.value === status) || STATUS_OPTIONS[0];
     };
 
     return (
@@ -791,49 +825,68 @@ export default function Sales() {
                                 sales.map(sale => (
                                     <tr
                                         key={sale.id}
-                                        className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors cursor-pointer"
-                                        onClick={() => setViewingSale(sale)}
+                                        className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
                                     >
-                                        <td className="px-6 py-4">
+                                        <td onClick={() => setViewingSale(sale)} className="px-6 py-4 cursor-pointer">
                                             <div>
                                                 <p className="font-bold text-gray-900 dark:text-white">{sale.productName}</p>
                                                 <p className="text-sm text-gray-500">{sale.productCategory}</p>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <span className="text-sm text-gray-600 dark:text-gray-300">{sale.customerName}</span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-900 dark:text-white">{sale.contactChannel}</p>
-                                                <p className="text-xs text-gray-500">{sale.contactValue}</p>
+                                        <td onClick={() => setViewingSale(sale)} className="px-6 py-4 font-medium text-gray-700 dark:text-gray-300 cursor-pointer">{sale.customerName}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-500">
+                                            <div className="flex flex-col">
+                                                <span className="font-semibold text-gray-900 dark:text-gray-200">{sale.contactChannel}</span>
+                                                <a
+                                                    href={getContactLink(sale)}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-xs text-primary hover:underline flex items-center gap-1"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    {sale.contactValue}
+                                                    <span className="material-symbols-outlined text-[10px]">open_in_new</span>
+                                                </a>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <span className="font-bold text-primary">
-                                                R$ {parseFloat(sale.salePrice).toFixed(2)}
-                                            </span>
+                                        <td onClick={() => setViewingSale(sale)} className="px-6 py-4 font-bold text-primary cursor-pointer">
+                                            R$ {parseFloat(sale.salePrice).toFixed(2)}
+                                        </td>
+                                        <td onClick={() => setViewingSale(sale)} className="px-6 py-4 text-sm text-gray-500 cursor-pointer">
+                                            {new Date(sale.saleDate).toLocaleDateString('pt-BR')}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="text-sm text-gray-600 dark:text-gray-300">
-                                                {new Date(sale.saleDate).toLocaleDateString('pt-BR')}
-                                            </span>
+                                            {(() => {
+                                                const statusInfo = getStatusInfo(sale.status);
+                                                return (
+                                                    <div className="relative group">
+                                                        <select
+                                                            value={sale.status}
+                                                            onChange={(e) => handleStatusChange(sale.id, e.target.value)}
+                                                            className={`appearance-none cursor-pointer pl-3 pr-8 py-1 rounded-full text-xs font-bold border-0 ring-1 ring-inset focus:ring-2 focus:ring-primary/50 outline-none transition-all ${statusInfo.bg} ${statusInfo.color} ring-transparent hover:ring-black/10 dark:hover:ring-white/20`}
+                                                        >
+                                                            {STATUS_OPTIONS.map(opt => (
+                                                                <option key={opt.value} value={opt.value}>
+                                                                    {opt.label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
+                                                            <span className={`material-symbols-outlined text-[10px] ${statusInfo.color} opacity-70`}>expand_more</span>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })()}
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${getStatusColor(sale.status)}`}>
-                                                {sale.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                                        <td className="px-6 py-4 text-right">
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     setDeletingSaleId(sale.id);
                                                 }}
-                                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                                title="Excluir"
+                                                className="text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
                                             >
-                                                <span className="material-symbols-outlined text-lg">delete</span>
+                                                <span className="material-symbols-outlined text-xl">delete</span>
                                             </button>
                                         </td>
                                     </tr>

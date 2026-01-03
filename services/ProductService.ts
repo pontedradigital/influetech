@@ -53,9 +53,18 @@ export class ProductService {
         const userId = userData.user?.id;
         if (!userId) throw new Error('Usuario não autenticado');
 
+        const newId = crypto.randomUUID();
+        const now = new Date().toISOString();
+
         const { data, error } = await supabase
             .from('Product')
-            .insert([{ ...product, userId }])
+            .insert([{
+                ...product,
+                id: newId,
+                userId,
+                createdAt: now,
+                updatedAt: now
+            }])
             .select()
             .single();
 
@@ -64,9 +73,14 @@ export class ProductService {
     }
 
     static async update(id: string, product: Partial<Product>): Promise<void> {
+        const updates = {
+            ...product,
+            updatedAt: new Date().toISOString()
+        };
+
         const { error } = await supabase
             .from('Product')
-            .update(product)
+            .update(updates)
             .eq('id', id);
 
         if (error) throw error;

@@ -27,9 +27,16 @@ export default function AdminUsers() {
         oneWeekFromNow.setDate(now.getDate() + 7);
 
         const mrr = userData.reduce((acc, user) => {
-            if (user.paymentStatus !== 'ACTIVE' && user.paymentStatus !== 'FREE') return acc;
-            if (user.plan === 'CREATOR_PLUS') return acc + (user.planCycle === 'MONTHLY' ? 99.90 : 83.25); // Estimativa
-            if (user.plan === 'START') return acc + (user.planCycle === 'MONTHLY' ? 49.90 : 41.58);
+            // Strict exclusion of non-paying users
+            if (user.paymentStatus === 'FREE' || user.paymentStatus === 'CANCELLED' || user.paymentStatus === 'OVERDUE') return acc;
+            if (user.planCycle === 'LIFETIME' || user.planCycle === 'FREE') return acc;
+            if (user.plan === 'FREE') return acc;
+
+            // Only count active paying users
+            if (user.paymentStatus === 'ACTIVE') {
+                if (user.plan === 'CREATOR_PLUS') return acc + (user.planCycle === 'MONTHLY' ? 99.90 : 83.25);
+                if (user.plan === 'START') return acc + (user.planCycle === 'MONTHLY' ? 49.90 : 41.58);
+            }
             return acc;
         }, 0);
 
@@ -384,49 +391,12 @@ export default function AdminUsers() {
 
             {/* Invite Modal (New User) */}
             {isInviteModalOpen && (
-                <Modal title="Criar Novo Usuário" onClose={() => setIsInviteModalOpen(false)}>
-                    <form onSubmit={handleInvite} className="space-y-4">
-                        <div>
-                            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Nome Completo</label>
-                            <input name="name" required className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none transition-colors" placeholder="Ex: Maria Silva" />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">E-mail</label>
-                            <input name="email" type="email" required className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none transition-colors" placeholder="maria@exemplo.com" />
-                            <p className="text-[10px] text-slate-500 mt-1 ml-1">Um e-mail de boas-vindas será enviado com instruções.</p>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Plano</label>
-                                <select name="plan" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none appearance-none cursor-pointer">
-                                    <option value="START" className="bg-neutral-900">Start</option>
-                                    <option value="CREATOR_PLUS" className="bg-neutral-900">Creator+</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Ciclo</label>
-                                <select name="planCycle" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none appearance-none cursor-pointer">
-                                    <option value="MONTHLY" className="bg-neutral-900">Mensal</option>
-                                    <option value="ANNUAL" className="bg-neutral-900">Anual</option>
-                                    <option value="LIFETIME" className="bg-neutral-900">Vitalício (Gratuito)</option>
-                                    <option value="FREE" className="bg-neutral-900">Gratuito (Teste)</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div>
-                            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Data de Cobrança (Opcional)</label>
-                            <input name="nextPaymentDate" type="date" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none transition-colors [color-scheme:dark]" />
-                            <p className="text-[10px] text-slate-500 mt-1 ml-1">Se definido, será a próxima data de vencimento.</p>
-                        </div>
-                        <div className="pt-6 flex justify-end gap-3 border-t border-white/5 mt-2">
-                            <button type="button" onClick={() => setIsInviteModalOpen(false)} className="px-5 py-2.5 rounded-xl text-slate-400 hover:text-white font-medium transition-colors">Cancelar</button>
-                            <button type="submit" disabled={isLoading} className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl font-bold shadow-lg shadow-purple-900/20 disabled:opacity-50 flex items-center gap-2">
-                                {isLoading ? <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span> : null}
-                                Enviar Convite por E-mail
-                            </button>
-                        </div>
-                    </form>
-                </Modal>
+                <InviteUserModal
+                    isOpen={isInviteModalOpen}
+                    onClose={() => setIsInviteModalOpen(false)}
+                    onSubmit={handleInvite}
+                    isLoading={isLoading}
+                />
             )}
 
             {/* Edit Modal */}

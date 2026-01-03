@@ -35,7 +35,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         // 3. Check Event Type
         // Resend events: email.sent, email.delivered, email.delivery_delayed, email.complained, email.bounced, email.opened, email.clicked
-        const relevantEvents = ['email.bounced', 'email.delivery_delayed', 'email.complained'];
+        const relevantEvents = ['email.sent', 'email.delivered', 'email.bounced', 'email.delivery_delayed', 'email.complained'];
 
         if (!event || !relevantEvents.includes(event.type)) {
             // We acknowledge success to Resend so it doesn't retry events we don't care about
@@ -48,16 +48,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // 4. Determine Notification Message based on type
         let title = 'Problema de E-mail';
         let message = `Ocorreu um evento de e-mail: ${type}`;
+        let msgType = 'INFO';
 
         if (type === 'email.bounced') {
             title = 'Falha na Entrega (Bounce)';
             message = `O e-mail enviado para ${recipient} voltou (Bounced). Verifique se o endereço está correto.`;
+            msgType = 'ERROR';
         } else if (type === 'email.complained') {
             title = 'Reclamação de Spam';
             message = `O destinatário ${recipient} marcou um e-mail como Spam.`;
+            msgType = 'ERROR';
         } else if (type === 'email.delivery_delayed') {
             title = 'Entrega Atrasada';
             message = `A entrega do e-mail para ${recipient} está atrasada. O servidor tentará novamente.`;
+            msgType = 'WARNING';
+        } else if (type === 'email.sent') {
+            title = 'E-mail Enviado';
+            message = `O e-mail para ${recipient} foi enviado com sucesso.`;
+            msgType = 'INFO';
+        } else if (type === 'email.delivered') {
+            title = 'E-mail Entregue';
+            message = `O e-mail para ${recipient} foi entregue na caixa de entrada.`;
+            msgType = 'SUCCESS';
         }
 
         // 5. Find Admins to Notify

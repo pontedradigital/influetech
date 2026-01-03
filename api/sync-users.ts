@@ -54,6 +54,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     // Only update if not exists? Or upsert basic fields.
                     // For now, let's upsert basics. "role" might be risky if we hardcode USER.
                     // Let's FETCH existing first to preserve role if exists.
+                    password: 'MANAGED_BY_SUPABASE_AUTH' // Placeholder for NOT NULL constraint
                 }, { onConflict: 'id', ignoreDuplicates: true });
             // ignoreDuplicates: true works effectively "INSERT IF NOT EXISTS"
             // but supabase js upsert with ignoreDuplicates might not update fields.

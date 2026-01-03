@@ -65,7 +65,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 plan: plan || 'START',
                 planCycle: planCycle || 'MONTHLY',
                 active: 1,
-                updatedAt: new Date().toISOString()
+                updatedAt: new Date().toISOString(),
+                password: 'PENDING_SETUP' // Satisfy NOT NULL constraint
             }, { onConflict: 'id' });
 
         if (profileError) {

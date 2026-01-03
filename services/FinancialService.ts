@@ -124,6 +124,7 @@ export const FinancialService = {
             .from('FinancialTransaction')
             .insert([{
                 ...transaction,
+                id: crypto.randomUUID(), // Fix: Ensure ID is generated client-side
                 userId: userData.user.id,
                 status: transaction.status || 'COMPLETED',
                 currency: transaction.currency || 'BRL'
@@ -154,12 +155,25 @@ export const FinancialService = {
         async create(goal: any) {
             const { data: userData } = await supabase.auth.getUser();
             if (!userData.user) throw new Error('User not authenticated');
-            const { data, error } = await supabase.from('FinancialGoal').insert([{ ...goal, userId: userData.user.id }]).select().single();
+
+            // Sanitize deadline
+            const cleanGoal = { ...goal };
+            if (cleanGoal.deadline === "") cleanGoal.deadline = null;
+
+            const { data, error } = await supabase.from('FinancialGoal').insert([{
+                ...cleanGoal,
+                id: crypto.randomUUID(),
+                userId: userData.user.id
+            }]).select().single();
             if (error) throw error;
             return data;
         },
         async update(id: string, updates: any) {
-            const { data, error } = await supabase.from('FinancialGoal').update(updates).eq('id', id).select().single();
+            // Sanitize deadline
+            const cleanUpdates = { ...updates };
+            if (cleanUpdates.deadline === "") cleanUpdates.deadline = null;
+
+            const { data, error } = await supabase.from('FinancialGoal').update(cleanUpdates).eq('id', id).select().single();
             if (error) throw error;
             return data;
         },
@@ -179,7 +193,11 @@ export const FinancialService = {
         async create(expense: any) {
             const { data: userData } = await supabase.auth.getUser();
             if (!userData.user) throw new Error('User not authenticated');
-            const { data, error } = await supabase.from('RecurringExpense').insert([{ ...expense, userId: userData.user.id }]).select().single();
+            const { data, error } = await supabase.from('RecurringExpense').insert([{
+                ...expense,
+                id: crypto.randomUUID(),
+                userId: userData.user.id
+            }]).select().single();
             if (error) throw error;
             return data;
         },

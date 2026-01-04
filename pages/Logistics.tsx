@@ -11,7 +11,9 @@ import { TrackingService, TrackingData } from '../services/TrackingService';
 import { FreightService, FreightCalculationRequest, FreightCalculationResponse, FreightOption } from '../services/FreightService';
 import { ShipmentService } from '../services/ShipmentService';
 import { LabelGenerator } from '../services/LabelGenerator';
+import { LabelGenerator } from '../services/LabelGenerator';
 import DeclarationDataModal from '../components/DeclarationDataModal';
+import { StatusBadge, StatusOption } from '../components/StatusBadge';
 
 const ShippingCalculator = () => {
   const { data } = useInfluencer();
@@ -452,9 +454,11 @@ const SHIPMENT_STATUS_MAP: Record<string, { label: string; color: string; bg: st
   'cancelled': { label: 'Cancelado', color: 'text-red-800 dark:text-red-300', bg: 'bg-red-100 dark:bg-red-900/30' }
 };
 
-const getShipmentStatusInfo = (status: string) => {
-  return SHIPMENT_STATUS_MAP[status] || { label: status, color: 'text-gray-800', bg: 'bg-gray-100' };
-};
+const SHIPMENT_STATUS_OPTIONS: StatusOption[] = Object.entries(SHIPMENT_STATUS_MAP).map(([value, info]) => ({
+  value,
+  label: info.label,
+  color: `${info.bg} ${info.color}`
+}));
 
 const ShipmentList = () => {
   const { data } = useInfluencer(); // Hook added to access profile data
@@ -805,9 +809,12 @@ const ShipmentList = () => {
                   <td className="px-6 py-4 text-gray-500">{s.recipientName}</td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${getShipmentStatusInfo(s.status).bg} ${getShipmentStatusInfo(s.status).color}`}>
-                        {getShipmentStatusInfo(s.status).label}
-                      </span>
+                      <StatusBadge
+                        status={s.status}
+                        options={SHIPMENT_STATUS_OPTIONS}
+                        onUpdate={() => { }} // Read-only or implement update logic
+                        readOnly={true}
+                      />
 
                       {/* Indicadores de documentos */}
                       <div className="flex gap-1">

@@ -7,6 +7,7 @@ import { CompanyService } from '../services/CompanyService';
 import { compressImage, validateImage } from '../src/utils/imageCompression';
 import { ProductService } from '../services/ProductService';
 import { SaleService } from '../services/SaleService';
+import { StatusBadge, StatusOption } from '../components/StatusBadge';
 
 
 // Lista de países
@@ -47,9 +48,10 @@ const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> =
   'SHIPPED': { label: 'Enviado', color: 'text-cyan-800 dark:text-cyan-300', bg: 'bg-cyan-100 dark:bg-cyan-900/30' }
 };
 
-const STATUS_OPTIONS = Object.entries(STATUS_MAP).map(([key, value]) => ({
+const STATUS_OPTIONS: StatusOption[] = Object.entries(STATUS_MAP).map(([key, value]) => ({
   value: key,
-  label: value.label
+  label: value.label,
+  color: `${value.bg} ${value.color}`
 }));
 
 // Mapa de Cores (Nome PT -> Hex CSS)
@@ -1349,24 +1351,13 @@ export default function Products() {
                     </td>
                     <td className="px-6 py-4">
                       {(() => {
-                        const statusInfo = STATUS_MAP[product.status] || STATUS_MAP['RECEIVED'];
+                        // Adaptação: caso statusOptions já esteja em formato correto de StatusOption[]
                         return (
-                          <div onClick={(e) => e.stopPropagation()} className="relative group">
-                            <select
-                              value={product.status}
-                              onChange={(e) => handleStatusChange(product.id, e.target.value)}
-                              className={`appearance-none cursor-pointer pl-3 pr-8 py-1 rounded-full text-xs font-bold border-0 ring-1 ring-inset focus:ring-2 focus:ring-primary/50 outline-none transition-all ${statusInfo.bg} ${statusInfo.color} ring-transparent hover:ring-black/10 dark:hover:ring-white/20`}
-                            >
-                              {STATUS_OPTIONS.map(opt => (
-                                <option key={opt.value} value={opt.value}>
-                                  {opt.label}
-                                </option>
-                              ))}
-                            </select>
-                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
-                              <span className={`material-symbols-outlined text-[10px] ${statusInfo.color} opacity-70`}>expand_more</span>
-                            </div>
-                          </div>
+                          <StatusBadge
+                            status={product.status}
+                            options={STATUS_OPTIONS}
+                            onUpdate={(newStatus) => handleStatusChange(product.id, newStatus)}
+                          />
                         );
                       })()}
                     </td>
@@ -1783,7 +1774,7 @@ const NewCompanyModal = ({ isOpen, onClose, onSave, editingCompany }: {
 
 
 // Status constants for Companies
-const COMPANY_STATUS_OPTIONS = [
+const COMPANY_STATUS_OPTIONS: StatusOption[] = [
   { value: 'Solicitada', label: 'Solicitada', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' },
   { value: 'Aceita', label: 'Aceita', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' },
   { value: 'Iniciada', label: 'Iniciada', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' },
@@ -1791,115 +1782,7 @@ const COMPANY_STATUS_OPTIONS = [
   { value: 'Rejeitada', label: 'Rejeitada', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' },
 ];
 
-const CompanyStatusBadge = ({ status, onUpdate }: { status: string; onUpdate: (newStatus: string) => void }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
-  const wrapperRef = React.useRef<HTMLDivElement>(null);
-  const buttonRef = React.useRef<HTMLButtonElement>(null);
-  const dropdownRef = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        wrapperRef.current &&
-        !wrapperRef.current.contains(event.target as Node) &&
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    }
-
-    function handleScroll() {
-      if (isOpen) setIsOpen(false);
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    window.addEventListener("scroll", handleScroll, true);
-    window.addEventListener("resize", handleScroll);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      window.removeEventListener("scroll", handleScroll, true);
-      window.removeEventListener("resize", handleScroll);
-    };
-  }, [isOpen]);
-
-  const toggleOpen = () => {
-    if (!isOpen && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const dropdownHeight = 200; // Approx max height
-
-      let top = rect.bottom + 8;
-      // If not enough space below, position above
-      if (spaceBelow < dropdownHeight) {
-        top = rect.top - dropdownHeight - 8;
-      }
-
-      setDropdownPos({
-        top: top,
-        left: rect.left
-      });
-    }
-    setIsOpen(!isOpen);
-  };
-
-  const currentOption = COMPANY_STATUS_OPTIONS.find(o => o.value === status) || COMPANY_STATUS_OPTIONS[0];
-
-  // Resolve color classes safely
-  const badgeClasses = currentOption.color;
-  // Extract just the background color class for the dot
-  const dotColorClass = badgeClasses.split(' ')[0];
-
-  return (
-    <div className="relative" ref={wrapperRef} onClick={e => e.stopPropagation()}>
-      <button
-        ref={buttonRef}
-        onClick={toggleOpen}
-        className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 hover:opacity-80 transition-all shadow-sm ${badgeClasses}`}
-      >
-        {status || 'Solicitada'}
-        <span className="material-symbols-outlined text-[14px]">expand_more</span>
-      </button>
-
-      {isOpen && ReactDOM.createPortal(
-        <div
-          ref={dropdownRef}
-          className="fixed w-48 bg-white dark:bg-[#1e1e2e] rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 z-[9999] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
-          style={{
-            top: dropdownPos.top,
-            left: dropdownPos.left
-          }}
-          onClick={e => e.stopPropagation()}
-        >
-          <div className="p-2 space-y-1">
-            {COMPANY_STATUS_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => {
-                  onUpdate(option.value);
-                  setIsOpen(false);
-                }}
-                className={`w-full text-left px-3 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center gap-3 ${status === option.value
-                  ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-white'
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
-                  }`}
-              >
-                <span className={`w-2 h-2 rounded-full ${option.color.split(' ')[0]}`}></span>
-                {option.label}
-                {status === option.value && (
-                  <span className="material-symbols-outlined text-sm ml-auto">check</span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>,
-        document.body
-      )}
-    </div>
-  );
-};
+// CompanyStatusBadge removed in favor of generic StatusBadge component
 
 export function Companies() {
   const [companies, setCompanies] = useState<any[]>([]);
@@ -2082,8 +1965,9 @@ export function Companies() {
                     <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{company.contactName || '-'}</td>
                     <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{company.country || '-'}</td>
                     <td className="px-6 py-4">
-                      <CompanyStatusBadge
+                      <StatusBadge
                         status={company.partnershipStatus}
+                        options={COMPANY_STATUS_OPTIONS}
                         onUpdate={(newStatus) => handleStatusUpdate(company.id, newStatus)}
                       />
                     </td>

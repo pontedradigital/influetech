@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { StatusBadge, StatusOption } from '../components/StatusBadge';
 import { SaleService } from '../services/SaleService';
 import { ProductService } from '../services/ProductService';
 
@@ -608,9 +610,12 @@ const SaleDetailsModal = ({ isOpen, onClose, sale, onDelete }: {
                         </div>
                         <div>
                             <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Status</label>
-                            <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${getStatusInfo(sale.status).bg} ${getStatusInfo(sale.status).color}`}>
-                                {getStatusInfo(sale.status).label}
-                            </span>
+                            <StatusBadge
+                                status={sale.status}
+                                options={STATUS_OPTIONS}
+                                onUpdate={() => { }} // Read-only in details mostly, or implement update
+                                readOnly={true}
+                            />
                         </div>
                     </div>
 
@@ -749,9 +754,11 @@ export default function Sales() {
         'CANCELLED': { label: 'Cancelado', color: 'text-red-800 dark:text-red-300', bg: 'bg-red-100 dark:bg-red-900/30' },
     };
 
-    const STATUS_OPTIONS = Object.entries(SALE_STATUS_MAP).map(([value, info]) => ({
+    // Format options for StatusBadge
+    const STATUS_OPTIONS: StatusOption[] = Object.entries(SALE_STATUS_MAP).map(([value, info]) => ({
         value,
-        ...info
+        label: info.label,
+        color: `${info.bg} ${info.color}`
     }));
 
     const getStatusInfo = (status: string) => {
@@ -864,24 +871,12 @@ export default function Sales() {
                                         </td>
                                         <td className="px-6 py-4">
                                             {(() => {
-                                                const statusInfo = getStatusInfo(sale.status);
                                                 return (
-                                                    <div className="relative group">
-                                                        <select
-                                                            value={sale.status}
-                                                            onChange={(e) => handleStatusChange(sale.id, e.target.value)}
-                                                            className={`appearance-none cursor-pointer pl-3 pr-8 py-1 rounded-full text-xs font-bold border-0 ring-1 ring-inset focus:ring-2 focus:ring-primary/50 outline-none transition-all ${statusInfo.bg} ${statusInfo.color} ring-transparent hover:ring-black/10 dark:hover:ring-white/20`}
-                                                        >
-                                                            {STATUS_OPTIONS.map(opt => (
-                                                                <option key={opt.value} value={opt.value}>
-                                                                    {opt.label}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
-                                                            <span className={`material-symbols-outlined text-[10px] ${statusInfo.color} opacity-70`}>expand_more</span>
-                                                        </div>
-                                                    </div>
+                                                    <StatusBadge
+                                                        status={sale.status}
+                                                        options={STATUS_OPTIONS}
+                                                        onUpdate={(newStatus) => handleStatusChange(sale.id, newStatus)}
+                                                    />
                                                 );
                                             })()}
                                         </td>

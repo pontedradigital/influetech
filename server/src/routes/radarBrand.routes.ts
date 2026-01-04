@@ -8,6 +8,9 @@ const router = Router();
 // Public read (for Dashboard user) or authentication required?
 // Usually authenticated. Admin only for write.
 
+// 0. Sync
+router.post('/sync', authenticate, requireAdmin, radarBrandController.syncMocks);
+
 router.get('/', authenticate, radarBrandController.getAll);
 router.post('/', authenticate, requireAdmin, radarBrandController.create);
 router.post('/analyze', authenticate, requireAdmin, radarBrandController.analyze);

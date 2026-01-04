@@ -53,6 +53,21 @@ const AdminBrands: React.FC = () => {
         }
     };
 
+    const handleSync = async () => {
+        if (!confirm('Isso irá restaurar as marcas padrão do sistema no banco de dados. Deseja continuar?')) return;
+        setLoading(true);
+        try {
+            await api.post('/radar-brands/sync', {});
+            alert('Marcas sincronizadas com sucesso!');
+            fetchBrands();
+        } catch (error: any) {
+            console.error('Sync failed', error);
+            alert('Erro ao sincronizar: ' + (error.response?.data?.error || error.message));
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleAnalyze = async () => {
         if (!formData.website) {
             alert('Por favor, insira um site para analisar.');
@@ -179,6 +194,13 @@ const AdminBrands: React.FC = () => {
                 >
                     <span className="material-symbols-outlined">add</span>
                     Adicionar Marca
+                </button>
+                <button
+                    onClick={handleSync}
+                    className="ml-4 px-4 py-2 border border-slate-600 hover:bg-white/5 text-slate-300 font-bold rounded-lg transition-all flex items-center gap-2"
+                    title="Restaurar marcas padrão no banco de dados"
+                >
+                    <span className="material-symbols-outlined">cloud_sync</span>
                 </button>
             </div>
 

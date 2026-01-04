@@ -47,12 +47,27 @@ export const RecurringExpenseList: React.FC<RecurringExpenseListProps> = ({ onTr
                 ...newExpense,
                 amount: parseFloat(newExpense.amount),
             });
+
+            // Auto-create the first transaction for immediate impact
+            await FinancialService.create({
+                type: 'EXPENSE',
+                amount: parseFloat(newExpense.amount),
+                description: `Assinatura: ${newExpense.name}`,
+                name: newExpense.name,
+                currency: 'BRL',
+                date: new Date().toISOString(),
+                category: newExpense.category,
+                status: 'COMPLETED'
+            });
+
             setIsModalOpen(false);
             setNewExpense({ name: '', amount: '', frequency: 'MONTHLY', category: 'Serviço' });
             fetchExpenses();
             if (onTransactionCreated) onTransactionCreated();
+            alert('Assinatura salva e lançada nas despesas deste mês!');
         } catch (err) {
             console.error(err);
+            alert('Erro ao salvar assinatura.');
         }
     };
 

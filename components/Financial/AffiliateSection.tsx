@@ -104,12 +104,26 @@ export const AffiliateSection: React.FC<AffiliateSectionProps> = ({ onTransactio
                 receiptDate: receiptDate.toISOString()
             });
 
+            // Auto-create the future transaction (Income - Pending)
+            await FinancialService.create({
+                type: 'INCOME',
+                amount: parseFloat(newEarning.amount),
+                description: `Saque: ${platform.name}`,
+                name: `Saque ${platform.name}`,
+                currency: 'BRL',
+                date: receiptDate.toISOString(),
+                category: 'Venda de Afiliação',
+                status: 'PENDING' // Future income is pending
+            });
+
             setIsEarningModalOpen(false);
             setNewEarning({ platformId: '', amount: '', requestDate: new Date().toISOString().split('T')[0], description: '' });
             fetchEarnings();
             if (onTransactionCreated) onTransactionCreated();
+            alert(`Saque registrado! Previsão de recebimento em: ${receiptDate.toLocaleDateString()}`);
         } catch (error) {
             console.error(error);
+            alert('Erro ao registrar saque.');
         }
     };
 

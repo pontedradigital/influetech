@@ -81,9 +81,12 @@ export const SaleService = {
 
         // 2. Criar Transação Financeira (Receita) via FinancialService (Client-side)
         try {
+            console.log('Criando transação financeira para venda:', sale);
+            const amount = Number(sale.salePrice) || 0;
+
             await FinancialService.create({
                 type: 'INCOME',
-                amount: sale.salePrice,
+                amount: amount,
                 description: `Venda - ${productName}`,
                 name: `Venda - ${sale.customerName}`,
                 currency: 'BRL',
@@ -91,8 +94,10 @@ export const SaleService = {
                 category: 'Vendas',
                 status: 'COMPLETED'
             });
+            console.log('Transação financeira criada com sucesso!');
         } catch (finError) {
-            console.error('Erro ao criar transação financeira:', finError);
+            console.error('FATAL: Erro ao criar transação financeira da venda:', finError);
+            // Non-blocking: we still return the sale data
         }
 
         // 3. Tentar criar o Envio (Shipment) automaticamente

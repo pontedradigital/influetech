@@ -117,22 +117,36 @@ export const FinancialService = {
     },
 
     async create(transaction: Partial<FinancialTransaction>) {
+        console.log('FinancialService.create called (v2)', transaction);
         const { data: userData } = await supabase.auth.getUser();
         if (!userData.user) throw new Error('User not authenticated');
 
+        const now = new Date().toISOString();
+        const payload = {
+            ...transaction,
+            id: crypto.randomUUID(),
+            userId: userData.user.id,
+            status: transaction.status || 'COMPLETED',
+            currency: transaction.currency || 'BRL',
+            createdAt: now,
+            updatedAt: now,
+
+            // Defensive coding: send snake_case too just in case DB schema is mixed
+            created_at: now,
+            updated_at: now
+        };
+        console.log('Sending payload to Supabase:', payload);
+
         const { data, error } = await supabase
             .from('FinancialTransaction')
-            .insert([{
-                ...transaction,
-                id: crypto.randomUUID(), // Fix: Ensure ID is generated client-side
-                userId: userData.user.id,
-                status: transaction.status || 'COMPLETED',
-                currency: transaction.currency || 'BRL'
-            }])
+            .insert([payload])
             .select()
             .single();
 
-        if (error) throw error;
+        if (error) {
+            console.error('Supabase Insert Error:', error);
+            throw error;
+        }
         return data;
     },
 
@@ -163,7 +177,9 @@ export const FinancialService = {
             const { data, error } = await supabase.from('FinancialGoal').insert([{
                 ...cleanGoal,
                 id: crypto.randomUUID(),
-                userId: userData.user.id
+                userId: userData.user.id,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
             }]).select().single();
             if (error) throw error;
             return data;
@@ -172,6 +188,7 @@ export const FinancialService = {
             // Sanitize deadline
             const cleanUpdates = { ...updates };
             if (cleanUpdates.deadline === "") cleanUpdates.deadline = null;
+            cleanUpdates.updatedAt = new Date().toISOString();
 
             const { data, error } = await supabase.from('FinancialGoal').update(cleanUpdates).eq('id', id).select().single();
             if (error) throw error;
@@ -196,13 +213,17 @@ export const FinancialService = {
             const { data, error } = await supabase.from('RecurringExpense').insert([{
                 ...expense,
                 id: crypto.randomUUID(),
-                userId: userData.user.id
+                userId: userData.user.id,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
             }]).select().single();
             if (error) throw error;
             return data;
         },
         async update(id: string, updates: any) {
-            const { data, error } = await supabase.from('RecurringExpense').update(updates).eq('id', id).select().single();
+            const cleanUpdates = { ...updates };
+            cleanUpdates.updatedAt = new Date().toISOString();
+            const { data, error } = await supabase.from('RecurringExpense').update(cleanUpdates).eq('id', id).select().single();
             if (error) throw error;
             return data;
         },
@@ -222,7 +243,7 @@ export const FinancialService = {
         async createPlatform(platform: any) {
             const { data: userData } = await supabase.auth.getUser();
             if (!userData.user) throw new Error('User not authenticated');
-            const { data, error } = await supabase.from('AffiliatePlatform').insert([{ ...platform, id: crypto.randomUUID(), userId: userData.user.id }]).select().single();
+            const { data, error } = await supabase.from('AffiliatePlatform').insert([{ ...platform, id: crypto.randomUUID(), userId: userData.user.id, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }]).select().single();
             if (error) throw error;
             // Create initial earning? No, just platform.
             return data;
@@ -236,7 +257,7 @@ export const FinancialService = {
             const { data: userData } = await supabase.auth.getUser();
             if (!userData.user) throw new Error('User not authenticated');
             // receiptDate calc should happen client side or database trigger? Client side for now.
-            const { data, error } = await supabase.from('AffiliateEarning').insert([{ ...earning, id: crypto.randomUUID(), userId: userData.user.id }]).select().single();
+            const { data, error } = await supabase.from('AffiliateEarning').insert([{ ...earning, id: crypto.randomUUID(), userId: userData.user.id, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }]).select().single();
             if (error) throw error;
             return data;
         },

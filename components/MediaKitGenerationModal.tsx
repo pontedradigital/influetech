@@ -20,6 +20,25 @@ const LANGUAGES = [
     { code: 'en', name: 'English', flag: '🇺🇸' }
 ];
 
+const urlToBase64 = async (url: string): Promise<string | null> => {
+    if (!url) return null;
+    if (url.startsWith('data:')) return url;
+
+    try {
+        const response = await fetch(url, { mode: 'cors' });
+        const blob = await response.blob();
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    } catch (error) {
+        console.error('Error converting image to base64:', error);
+        return url;
+    }
+};
+
 export default function MediaKitGenerationModal({ isOpen, onClose, initialData }: MediaKitGenerationModalProps) {
     const [step, setStep] = useState(1);
     const [selectedLanguage, setSelectedLanguage] = useState('pt');
@@ -81,7 +100,7 @@ export default function MediaKitGenerationModal({ isOpen, onClose, initialData }
                 location: initialData.location || '',
                 email: initialData.email || '',
                 phone: initialData.phone || '',
-                photo: customPhoto || initialData.photo || null,
+                photo: customPhoto || (initialData.photo ? await urlToBase64(initialData.photo) : null),
                 niche: TranslationService.translateObject(initialData.niche || '', selectedLanguage as any) || '',
 
                 socialMedia: Array.isArray(initialData.socialMedia)
@@ -122,7 +141,11 @@ export default function MediaKitGenerationModal({ isOpen, onClose, initialData }
                 audienceGenderMale: initialData.audienceGenderMale !== undefined ? initialData.audienceGenderMale : undefined,
                 audienceGenderFemale: initialData.audienceGenderFemale !== undefined ? initialData.audienceGenderFemale : undefined,
 
-                brands: brands.map((b: any) => ({ name: b.name, logo: b.logo, backgroundColor: b.backgroundColor })),
+                brands: await Promise.all(brands.map(async (b: any) => ({
+                    name: b.name,
+                    logo: await urlToBase64(b.logo) || b.logo,
+                    backgroundColor: b.backgroundColor
+                }))),
 
                 labels
             };

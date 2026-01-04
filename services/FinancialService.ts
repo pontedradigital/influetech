@@ -36,6 +36,7 @@ export const FinancialService = {
         const { data, error } = await supabase
             .from('FinancialTransaction')
             .select('*')
+            .eq('userId', userData.user.id)
             .gte('date', startDate)
             .lte('date', endDate)
             .order('date', { ascending: false });
@@ -81,6 +82,9 @@ export const FinancialService = {
 
     // Get 6-month history (calculated on client)
     async getHistory() {
+        const { data: userData } = await supabase.auth.getUser();
+        if (!userData.user) return [];
+
         const today = new Date();
         const months = [];
 
@@ -91,6 +95,7 @@ export const FinancialService = {
         const { data: transactions, error } = await supabase
             .from('FinancialTransaction')
             .select('*')
+            .eq('userId', userData.user.id)
             .gte('date', startDate)
             .lte('date', endDate);
 
@@ -172,7 +177,9 @@ export const FinancialService = {
     // --- GOALS ---
     Goals: {
         async getAll() {
-            const { data, error } = await supabase.from('FinancialGoal').select('*').order('createdAt', { ascending: false });
+            const { data: userData } = await supabase.auth.getUser();
+            if (!userData.user) return [];
+            const { data, error } = await supabase.from('FinancialGoal').select('*').eq('userId', userData.user.id).order('createdAt', { ascending: false });
             if (error) throw error;
             return data;
         },
@@ -213,7 +220,9 @@ export const FinancialService = {
     // --- RECURRING EXPENSES ---
     Recurring: {
         async getAll() {
-            const { data, error } = await supabase.from('RecurringExpense').select('*').order('createdAt', { ascending: false });
+            const { data: userData } = await supabase.auth.getUser();
+            if (!userData.user) return [];
+            const { data, error } = await supabase.from('RecurringExpense').select('*').eq('userId', userData.user.id).order('createdAt', { ascending: false });
             if (error) throw error;
             return data;
         },
@@ -246,7 +255,9 @@ export const FinancialService = {
     // --- AFFILIATES ---
     Affiliates: {
         async getPlatforms() {
-            const { data, error } = await supabase.from('AffiliatePlatform').select('*').order('name');
+            const { data: userData } = await supabase.auth.getUser();
+            if (!userData.user) return [];
+            const { data, error } = await supabase.from('AffiliatePlatform').select('*').eq('userId', userData.user.id).order('name');
             if (error) throw error;
             return data;
         },
@@ -259,7 +270,9 @@ export const FinancialService = {
             return data;
         },
         async getEarnings() {
-            const { data, error } = await supabase.from('AffiliateEarning').select('*, platform:AffiliatePlatform(*)').order('requestDate', { ascending: false });
+            const { data: userData } = await supabase.auth.getUser();
+            if (!userData.user) return [];
+            const { data, error } = await supabase.from('AffiliateEarning').select('*, platform:AffiliatePlatform(*)').eq('userId', userData.user.id).order('requestDate', { ascending: false });
             if (error) throw error;
             return data;
         },

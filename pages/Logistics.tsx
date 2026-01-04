@@ -807,9 +807,6 @@ const ShipmentList = () => {
                     <div className="flex items-center gap-2">
                       <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${getShipmentStatusInfo(s.status).bg} ${getShipmentStatusInfo(s.status).color}`}>
                         {getShipmentStatusInfo(s.status).label}
-                      </span>                          s.status === 'delivered' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
-                            'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'}`}>
-                        {s.status === 'shipped' ? 'Enviado' : s.status === 'delivered' ? 'Entregue' : 'Pendente'}
                       </span>
 
                       {/* Indicadores de documentos */}
@@ -897,10 +894,10 @@ const ShipmentList = () => {
                   </td>
                 </tr>
               ))}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
     </div >
   );
 };

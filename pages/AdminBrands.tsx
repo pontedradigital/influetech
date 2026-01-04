@@ -27,20 +27,27 @@ const AdminBrands: React.FC = () => {
 
     const [analyzing, setAnalyzing] = useState(false);
 
+    const [error, setError] = useState<string | null>(null);
+
     useEffect(() => {
         fetchBrands();
     }, []);
 
     const fetchBrands = async () => {
+        setLoading(true);
+        setError(null);
         try {
             const data = await api.get('/radar-brands');
-            if (data) {
-                // Ensure arrays are strings for display in the simple table if needed,
-                // but the form expects strings for 'categories' (comma separated)
+            if (data && Array.isArray(data)) {
                 setBrands(data);
+            } else if (data) {
+                // Handle potential object response or empty
+                setBrands([]);
+                console.warn('API returned non-array:', data);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching brands', error);
+            setError(error.message || 'Falha ao carregar marcas');
         } finally {
             setLoading(false);
         }
@@ -175,6 +182,14 @@ const AdminBrands: React.FC = () => {
                 </button>
             </div>
 
+            {/* Error Message */}
+            {error && (
+                <div className="bg-red-500/20 border border-red-500/50 text-red-200 p-4 rounded-xl flex items-center gap-3">
+                    <span className="material-symbols-outlined">error</span>
+                    <span>{error}</span>
+                </div>
+            )}
+
             {/* Table */}
             <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-xl">
                 <table className="w-full text-left text-sm text-slate-300">
@@ -191,7 +206,9 @@ const AdminBrands: React.FC = () => {
                         {loading ? (
                             <tr><td colSpan={5} className="p-6 text-center">Carregando...</td></tr>
                         ) : brands.length === 0 ? (
-                            <tr><td colSpan={5} className="p-6 text-center text-slate-500">Nenhuma marca cadastrada.</td></tr>
+                            <tr><td colSpan={5} className="p-6 text-center text-slate-500">
+                                {error ? 'Erro ao carregar dados.' : 'Nenhuma marca cadastrada.'}
+                            </td></tr>
                         ) : (
                             brands.map((brand) => (
                                 <tr key={brand.id} className="hover:bg-white/5 transition-colors">

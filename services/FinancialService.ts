@@ -117,7 +117,7 @@ export const FinancialService = {
     },
 
     async create(transaction: Partial<FinancialTransaction>) {
-        console.log('FinancialService.create called (v2)', transaction);
+
         const { data: userData } = await supabase.auth.getUser();
         if (!userData.user) throw new Error('User not authenticated');
 
@@ -131,11 +131,9 @@ export const FinancialService = {
             createdAt: now,
             updatedAt: now,
 
-            // Defensive coding: send snake_case too just in case DB schema is mixed
-            created_at: now,
-            updated_at: now
+
         };
-        console.log('Sending payload to Supabase:', payload);
+
 
         const { data, error } = await supabase
             .from('FinancialTransaction')

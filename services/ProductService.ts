@@ -48,6 +48,17 @@ export class ProductService {
         return data as Product[];
     }
 
+    static async getAvailableForSale(): Promise<Product[]> {
+        const { data, error } = await supabase
+            .from('Product')
+            .select('*')
+            .neq('status', 'SOLD') // Filter out sold items
+            .order('createdAt', { ascending: false });
+
+        if (error) throw error;
+        return data as Product[];
+    }
+
     static async create(product: Partial<Product>): Promise<Product> {
         const { data: userData } = await supabase.auth.getUser();
         const userId = userData.user?.id;

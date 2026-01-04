@@ -143,6 +143,16 @@ export const SaleService = {
             console.error('Erro ao criar envio automático:', shipmentError);
         }
 
+        // 4. Update Product Status to SOLD
+        try {
+            await supabase
+                .from('Product')
+                .update({ status: 'SOLD', updatedAt: now })
+                .eq('id', sale.productId);
+        } catch (updateError) {
+            console.error('Erro ao atualizar status do produto:', updateError);
+        }
+
         return saleData;
     },
 

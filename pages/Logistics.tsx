@@ -444,7 +444,17 @@ const ShippingCalculator = () => {
   );
 };
 
+// Status Map for Shipments (Consistent with General.tsx and Sales.tsx)
+const SHIPMENT_STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
+  'pending': { label: 'Pendente', color: 'text-yellow-800 dark:text-yellow-300', bg: 'bg-yellow-100 dark:bg-yellow-900/30' },
+  'shipped': { label: 'Enviado', color: 'text-cyan-800 dark:text-cyan-300', bg: 'bg-cyan-100 dark:bg-cyan-900/30' },
+  'delivered': { label: 'Entregue', color: 'text-green-800 dark:text-green-300', bg: 'bg-green-100 dark:bg-green-900/30' },
+  'cancelled': { label: 'Cancelado', color: 'text-red-800 dark:text-red-300', bg: 'bg-red-100 dark:bg-red-900/30' }
+};
 
+const getShipmentStatusInfo = (status: string) => {
+  return SHIPMENT_STATUS_MAP[status] || { label: status, color: 'text-gray-800', bg: 'bg-gray-100' };
+};
 
 const ShipmentList = () => {
   const { data } = useInfluencer(); // Hook added to access profile data
@@ -795,10 +805,9 @@ const ShipmentList = () => {
                   <td className="px-6 py-4 text-gray-500">{s.recipientName}</td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      {/* Status do envio */}
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold
-                        ${s.status === 'shipped' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
-                          s.status === 'delivered' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${getShipmentStatusInfo(s.status).bg} ${getShipmentStatusInfo(s.status).color}`}>
+                        {getShipmentStatusInfo(s.status).label}
+                      </span>                          s.status === 'delivered' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
                             'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'}`}>
                         {s.status === 'shipped' ? 'Enviado' : s.status === 'delivered' ? 'Entregue' : 'Pendente'}
                       </span>
@@ -888,11 +897,11 @@ const ShipmentList = () => {
                   </td>
                 </tr>
               ))}
-            </tbody>
-          </table>
-        </div>
+          </tbody>
+        </table>
       </div>
     </div>
+    </div >
   );
 };
 

@@ -78,7 +78,7 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
         const loadProducts = async () => {
             if (isOpen) {
                 try {
-                    const data = await ProductService.getAll();
+                    const data = await ProductService.getAvailableForSale();
                     setProducts(Array.isArray(data) ? data : []);
                 } catch (err) {
                     console.error('Erro ao buscar produtos:', err);
@@ -546,14 +546,16 @@ const SaleDetailsModal = ({ isOpen, onClose, sale, onDelete }: {
 }) => {
     if (!isOpen || !sale) return null;
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'PENDING': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
-            case 'SHIPPED': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
-            case 'DELIVERED': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
-            case 'CANCELLED': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
-            default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300';
-        }
+    // Mapeamento de Status de Venda (Visual idêntico ao de Produtos)
+    const SALE_STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
+        'PENDING': { label: 'Pendente', color: 'text-yellow-800 dark:text-yellow-300', bg: 'bg-yellow-100 dark:bg-yellow-900/30' },
+        'SHIPPED': { label: 'Enviado', color: 'text-cyan-800 dark:text-cyan-300', bg: 'bg-cyan-100 dark:bg-cyan-900/30' },
+        'DELIVERED': { label: 'Entregue', color: 'text-green-800 dark:text-green-300', bg: 'bg-green-100 dark:bg-green-900/30' },
+        'CANCELLED': { label: 'Cancelado', color: 'text-red-800 dark:text-red-300', bg: 'bg-red-100 dark:bg-red-900/30' },
+    };
+
+    const getStatusInfo = (status: string) => {
+        return SALE_STATUS_MAP[status] || { label: status, color: 'text-gray-800', bg: 'bg-gray-100' };
     };
 
     return (
@@ -606,8 +608,8 @@ const SaleDetailsModal = ({ isOpen, onClose, sale, onDelete }: {
                         </div>
                         <div>
                             <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Status</label>
-                            <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(sale.status)}`}>
-                                {sale.status}
+                            <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${getStatusInfo(sale.status).bg} ${getStatusInfo(sale.status).color}`}>
+                                {getStatusInfo(sale.status).label}
                             </span>
                         </div>
                     </div>
@@ -740,15 +742,20 @@ export default function Sales() {
         }
     };
 
-    const STATUS_OPTIONS = [
-        { value: 'PENDING', label: 'Pendente', bg: 'bg-yellow-100', color: 'text-yellow-800' },
-        { value: 'SHIPPED', label: 'Enviado', bg: 'bg-blue-100', color: 'text-blue-800' },
-        { value: 'DELIVERED', label: 'Entregue', bg: 'bg-green-100', color: 'text-green-800' },
-        { value: 'CANCELLED', label: 'Cancelado', bg: 'bg-red-100', color: 'text-red-800' },
-    ];
+    const SALE_STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
+        'PENDING': { label: 'Pendente', color: 'text-yellow-800 dark:text-yellow-300', bg: 'bg-yellow-100 dark:bg-yellow-900/30' },
+        'SHIPPED': { label: 'Enviado', color: 'text-cyan-800 dark:text-cyan-300', bg: 'bg-cyan-100 dark:bg-cyan-900/30' },
+        'DELIVERED': { label: 'Entregue', color: 'text-green-800 dark:text-green-300', bg: 'bg-green-100 dark:bg-green-900/30' },
+        'CANCELLED': { label: 'Cancelado', color: 'text-red-800 dark:text-red-300', bg: 'bg-red-100 dark:bg-red-900/30' },
+    };
+
+    const STATUS_OPTIONS = Object.entries(SALE_STATUS_MAP).map(([value, info]) => ({
+        value,
+        ...info
+    }));
 
     const getStatusInfo = (status: string) => {
-        return STATUS_OPTIONS.find(o => o.value === status) || STATUS_OPTIONS[0];
+        return SALE_STATUS_MAP[status] || { label: status, color: 'text-gray-800', bg: 'bg-gray-100' };
     };
 
     return (

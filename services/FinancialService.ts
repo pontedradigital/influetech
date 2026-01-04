@@ -17,6 +17,13 @@ export interface FinancialTransaction {
     updatedAt?: string;
 }
 
+// Helper to get local ISO string (preserves local day/time)
+const getLocalISOString = () => {
+    const date = new Date();
+    const offset = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() - offset).toISOString();
+};
+
 export const FinancialService = {
     // List transactions with filtering
     async getAll(month: number, year: number) {
@@ -117,34 +124,26 @@ export const FinancialService = {
     },
 
     async create(transaction: Partial<FinancialTransaction>) {
-
         const { data: userData } = await supabase.auth.getUser();
         if (!userData.user) throw new Error('User not authenticated');
 
-        const now = new Date().toISOString();
-        const payload = {
-            ...transaction,
-            id: crypto.randomUUID(),
-            userId: userData.user.id,
-            status: transaction.status || 'COMPLETED',
-            currency: transaction.currency || 'BRL',
-            createdAt: now,
-            updatedAt: now,
-
-
-        };
-
+        const now = getLocalISOString();
 
         const { data, error } = await supabase
             .from('FinancialTransaction')
-            .insert([payload])
+            .insert([{
+                ...transaction,
+                id: crypto.randomUUID(), // Fix: Ensure ID is generated client-side
+                userId: userData.user.id,
+                status: transaction.status || 'COMPLETED',
+                currency: transaction.currency || 'BRL',
+                createdAt: now,
+                updatedAt: now
+            }])
             .select()
             .single();
 
-        if (error) {
-            console.error('Supabase Insert Error:', error);
-            throw error;
-        }
+        if (error) throw error;
         return data;
     },
 
@@ -155,6 +154,19 @@ export const FinancialService = {
             .eq('id', id);
 
         if (error) throw error;
+    },
+
+    async deleteByRelatedId(relatedId: string, relatedType: string) {
+        const { error } = await supabase
+            .from('FinancialTransaction')
+            .delete()
+            .eq('relatedId', relatedId)
+            .eq('relatedType', relatedType);
+
+        if (error) {
+            console.error('Error deleting related transaction:', error);
+            // Don't throw, just log. It's a cleanup task.
+        }
     },
 
     // --- GOALS ---

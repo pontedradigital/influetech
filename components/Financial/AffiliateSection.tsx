@@ -98,7 +98,7 @@ export const AffiliateSection: React.FC<AffiliateSectionProps> = ({ onTransactio
             const receiptDate = new Date(reqDate);
             receiptDate.setDate(receiptDate.getDate() + platform.paymentTermDays);
 
-            await FinancialService.Affiliates.createEarning({
+            const newEarningData = await FinancialService.Affiliates.createEarning({
                 ...newEarning,
                 amount: parseFloat(newEarning.amount),
                 receiptDate: receiptDate.toISOString()
@@ -113,7 +113,9 @@ export const AffiliateSection: React.FC<AffiliateSectionProps> = ({ onTransactio
                 currency: 'BRL',
                 date: receiptDate.toISOString(),
                 category: 'Venda de Afiliação',
-                status: 'PENDING' // Future income is pending
+                status: 'PENDING', // Future income is pending
+                relatedId: newEarningData.id,
+                relatedType: 'AFFILIATE_EARNING'
             });
 
             setIsEarningModalOpen(false);
@@ -131,6 +133,9 @@ export const AffiliateSection: React.FC<AffiliateSectionProps> = ({ onTransactio
         if (!confirm('Remover este ganho?')) return;
         try {
             await FinancialService.Affiliates.deleteEarning(id);
+            // Cascade delete the financial transaction
+            await FinancialService.deleteByRelatedId(id, 'AFFILIATE_EARNING');
+
             fetchEarnings();
             if (onTransactionCreated) onTransactionCreated();
         } catch (err) {

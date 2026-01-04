@@ -9,6 +9,8 @@ interface MediaKitGenerationModalProps {
     initialData: any;
 }
 
+import { PROXY_URL_BASE } from './proxyConfig';
+
 interface Brand {
     id: string;
     name: string;
@@ -25,8 +27,8 @@ const urlToBase64 = async (url: string): Promise<string | null> => {
     if (url.startsWith('data:')) return url;
 
     try {
-        // Use backend proxy to bypass CORS
-        const proxyUrl = `/api/proxy/image?url=${encodeURIComponent(url)}`;
+        // Use configurable proxy (Local or Supabase)
+        const proxyUrl = `${PROXY_URL_BASE}${encodeURIComponent(url)}`;
         const response = await fetch(proxyUrl);
         const blob = await response.blob();
         return new Promise((resolve, reject) => {

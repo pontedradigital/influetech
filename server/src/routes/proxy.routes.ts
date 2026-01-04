@@ -28,10 +28,11 @@ router.get('/image', async (req, res) => {
             res.setHeader('Content-Type', contentType);
         }
 
-        // Pipe the image data to the response
-        // Typescript might complain about body not being a stream in some versions of node-fetch/types
-        // Casting to any to bypass strict type check for the pipe
-        (response.body as any).pipe(res);
+        // Read the body as an ArrayBuffer and convert to Buffer
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        res.send(buffer);
 
     } catch (error: any) {
         console.error('Proxy Error:', error);

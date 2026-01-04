@@ -49,107 +49,77 @@ const TransactionRow: React.FC<{ tx: any }> = ({ tx }) => {
 import { supabase } from '../src/lib/supabase';
 
 const AdminFinance = () => {
-    const [isChargeModalOpen, setIsChargeModalOpen] = useState(false);
     const [stats, setStats] = useState<any>({ overdue: 0, dueThisWeek: 0, mrr: 0 });
     const [transactions, setTransactions] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Modal Form State
-    const [chargeUser, setChargeUser] = useState('');
-    const [chargeAmount, setChargeAmount] = useState('');
-    const [chargeDesc, setChargeDesc] = useState('');
-
-    // Autocomplete State
-    const [userSuggestions, setUserSuggestions] = useState<any[]>([]);
-    const [showSuggestions, setShowSuggestions] = useState(false);
-
-    // Plans State for Auto-fill
-    const [availablePlans, setAvailablePlans] = useState<any[]>([]);
-
-    useEffect(() => {
-        const delayDebounceFn = setTimeout(async () => {
-            if (chargeUser.length > 1) {
-                try {
-                    const { data } = await supabase
-                        .from('User')
-                        .select('id, name, email')
-                        .or(`name.ilike.%${chargeUser}%,email.ilike.%${chargeUser}%`)
-                        .limit(5);
-
-                    if (data) {
-                        setUserSuggestions(data);
-                        setShowSuggestions(true);
-                    }
-                } catch (error) {
-                    console.error('Error searching users:', error);
-                }
-            } else {
-                setUserSuggestions([]);
-                setShowSuggestions(false);
-            }
-        }, 300);
-
-        return () => clearTimeout(delayDebounceFn);
-    }, [chargeUser]);
-
     useEffect(() => {
         fetchData();
-        fetchPlans();
     }, []);
-
-    const fetchPlans = async () => {
-        try {
-            const { data } = await supabase
-                .from('Plan')
-                .select('*')
-                .eq('active', true);
-            if (data) setAvailablePlans(data);
-        } catch (error) {
-            console.error('Error fetching plans:', error);
-        }
-    };
 
     const fetchData = async () => {
         try {
-            // Fetch Transactions (with User relation)
-            const { data: txs, error: txError } = await supabase
-                .from('FinancialTransaction')
-                .select('*, user:User(name)')
-                .order('date', { ascending: false })
+            // Fetch Users to simulate "Transactions" (Active Subscriptions)
+            // Now we read directly from User table as requested
+            const { data: users, error } = await supabase
+                .from('User')
+                .select('id, name, plan, planCycle, paymentStatus, createdAt, nextPaymentDate')
+                .order('createdAt', { ascending: false })
                 .limit(50);
 
-            if (txs) {
-                // Map user object to user name string to match UI expectation
-                const formattedTxs = txs.map(tx => ({
-                    ...tx,
-                    user: (tx.user as any)?.name || 'Desconhecido'
-                }));
+            if (users) {
+                const formattedTxs = users.map(user => {
+                    // Determine amount based on plan
+                    let amount = 0;
+                    if (user.plan === 'CREATOR_PLUS') amount = user.planCycle === 'MONTHLY' ? 99.90 : 83.25;
+                    else if (user.plan === 'START') amount = user.planCycle === 'MONTHLY' ? 49.90 : 41.58;
+
+                    // If lifetime or free, amount is 0 (or one-time for lifetime, but let's keep it simple as MRR view)
+                    if (user.planCycle === 'LIFETIME' || user.planCycle === 'FREE' || user.plan === 'FREE') amount = 0;
+
+                    return {
+                        id: user.id,
+                        user: user.name || 'Usuário',
+                        description: `Assinatura ${user.plan} (${user.planCycle == 'MONTHLY' ? 'Mensal' : user.planCycle == 'ANNUAL' ? 'Anual' : 'Vitalício'})`, // Friendly cycle name
+                        date: user.createdAt, // Showing when they joined/started
+                        status: user.paymentStatus || 'PENDING',
+                        amount: amount
+                    };
+                });
+                // Filter out non-paying if desired, but user wants "manage finance", so seeing Free users might be relevant? 
+                // The prompt implies "sum values... as they are registered". showing 0 values is fine for clarity.
+                // Let's filter out completely invalid ones if needed, but showing all recent signups is good for "New Sale" visibility.
                 setTransactions(formattedTxs);
-            }
 
-            // Stats Logic (Simplified for Client-Side)
-            // Ideally should use a specific query or aggregated view
-            const { data: userData } = await supabase
-                .from('User')
-                .select('paymentStatus, nextPaymentDate, plan, planCycle');
 
-            if (userData) {
+                // Stats Logic
                 const now = new Date();
                 const oneWeekFromNow = new Date();
                 oneWeekFromNow.setDate(now.getDate() + 7);
 
-                const mrr = userData.reduce((acc, user) => {
-                    // Strict exclusion of non-paying users
-                    // Check if payment status is effectively non-paying
+                const mrr = users.reduce((acc, user) => {
+                    // Same MRR logic as before, but iterating over the fetched list (or we could fetch all if pagination becomes an issue)
+                    // NOTE: The previous query fetched ALL users for stats. The limit(50) above might break MRR if we only use those 50.
+                    // We should do a separate fetch for stats if we want total accuracy, or remove limit if user base is small.
+                    // IMPORTANT: To keep it consistent with previous logic, I'll do a separate light fetch for stats or just standard fetch.
+                    return acc; // We'll recalculate MRR properly below
+                }, 0);
+            }
+
+            // Separate Fetch for Full Stats (to account for all users, not just last 50)
+            const { data: allUsers } = await supabase
+                .from('User')
+                .select('paymentStatus, nextPaymentDate, plan, planCycle');
+
+            if (allUsers) {
+                const now = new Date();
+                const oneWeekFromNow = new Date();
+                oneWeekFromNow.setDate(now.getDate() + 7);
+
+                const mrr = allUsers.reduce((acc, user) => {
                     if (user.paymentStatus === 'FREE' || user.paymentStatus === 'CANCELLED' || user.paymentStatus === 'OVERDUE') return acc;
-
-                    // Check if plan cycle is free or lifetime (one-time payment, not MRR)
                     if (user.planCycle === 'LIFETIME' || user.planCycle === 'FREE') return acc;
-
-                    // Also exclude if plan itself is marked as free (defensive)
                     if (user.plan === 'FREE') return acc;
-
-                    // Only count active paying users with recurring cycles
                     if (user.paymentStatus === 'ACTIVE') {
                         if (user.plan === 'CREATOR_PLUS') return acc + (user.planCycle === 'MONTHLY' ? 99.90 : 83.25);
                         if (user.plan === 'START') return acc + (user.planCycle === 'MONTHLY' ? 49.90 : 41.58);
@@ -157,8 +127,8 @@ const AdminFinance = () => {
                     return acc;
                 }, 0);
 
-                const overdue = userData.filter(u => u.paymentStatus === 'OVERDUE').length;
-                const dueThisWeek = userData.filter(u => {
+                const overdue = allUsers.filter(u => u.paymentStatus === 'OVERDUE').length;
+                const dueThisWeek = allUsers.filter(u => {
                     if (!u.nextPaymentDate) return false;
                     const date = new Date(u.nextPaymentDate);
                     return date >= now && date <= oneWeekFromNow;
@@ -174,50 +144,6 @@ const AdminFinance = () => {
         }
     };
 
-    const handleCreateCharge = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        try {
-            // 1. Find User ID
-            const { data: users } = await supabase
-                .from('User')
-                .select('id')
-                .eq('email', chargeUser)
-                .single();
-
-            if (!users) {
-                alert('Usuário não encontrado!');
-                return;
-            }
-
-            // 2. Create Transaction
-            const { error } = await supabase
-                .from('FinancialTransaction')
-                .insert([{
-                    userId: users.id,
-                    type: 'INCOME', // Receita
-                    category: 'Vendas', // Ou Assinaturas
-                    amount: parseFloat(chargeAmount),
-                    description: chargeDesc,
-                    date: new Date(),
-                    status: 'PENDING',
-                    currency: 'BRL'
-                }]);
-
-            if (error) throw error;
-
-            alert(`Cobrança registrada para ${chargeUser} com sucesso!`);
-            setIsChargeModalOpen(false);
-            setChargeUser('');
-            setChargeAmount('');
-            setChargeDesc('');
-            fetchData();
-        } catch (error: any) {
-            console.error('Charge error:', error);
-            alert('Erro ao criar cobrança: ' + error.message);
-        }
-    };
-
     return (
         <>
             <Helmet>
@@ -229,15 +155,8 @@ const AdminFinance = () => {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h2 className="text-3xl font-bold text-white tracking-tight">Gestão Financeira</h2>
-                        <p className="text-slate-300 mt-1">Visão geral de receitas e cobranças em tempo real.</p>
+                        <p className="text-slate-300 mt-1">Visão geral automática baseada em assinaturas ativas.</p>
                     </div>
-                    <button
-                        onClick={() => setIsChargeModalOpen(true)}
-                        className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 transition-all transform hover:scale-105 flex items-center gap-2 border border-emerald-400/20"
-                    >
-                        <span className="material-symbols-outlined">add_card</span>
-                        Gerar Nova Cobrança
-                    </button>
                 </div>
 
                 {/* Stats Grid */}
@@ -265,10 +184,10 @@ const AdminFinance = () => {
                     />
                 </div>
 
-                {/* Recent Transactions Table */}
+                {/* Recent 'Transactions' (Users) Table */}
                 <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl overflow-hidden shadow-2xl">
                     <div className="p-6 border-b border-white/10 flex justify-between items-center bg-white/5">
-                        <h3 className="text-lg font-bold text-white">Transações Recentes</h3>
+                        <h3 className="text-lg font-bold text-white">Últimas Assinaturas / Renovações</h3>
                         <button className="text-sm text-cyan-400 hover:text-cyan-300 font-bold uppercase tracking-wider">Ver Todas</button>
                     </div>
                     <div className="overflow-x-auto">
@@ -276,17 +195,17 @@ const AdminFinance = () => {
                             <thead className="bg-black/20">
                                 <tr>
                                     <th className="py-4 px-6 text-left text-xs font-bold text-slate-300 uppercase tracking-wider">Usuário</th>
-                                    <th className="py-4 px-6 text-left text-xs font-bold text-slate-300 uppercase tracking-wider">Descrição</th>
-                                    <th className="py-4 px-6 text-left text-xs font-bold text-slate-300 uppercase tracking-wider">Data</th>
+                                    <th className="py-4 px-6 text-left text-xs font-bold text-slate-300 uppercase tracking-wider">Plano</th>
+                                    <th className="py-4 px-6 text-left text-xs font-bold text-slate-300 uppercase tracking-wider">Início</th>
                                     <th className="py-4 px-6 text-left text-xs font-bold text-slate-300 uppercase tracking-wider">Status</th>
-                                    <th className="py-4 px-6 text-right text-xs font-bold text-slate-300 uppercase tracking-wider">Valor</th>
+                                    <th className="py-4 px-6 text-right text-xs font-bold text-slate-300 uppercase tracking-wider">Valor Mensal</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {isLoading ? (
-                                    <tr><td colSpan={5} className="p-8 text-center text-slate-400 animate-pulse">Carregando transações...</td></tr>
+                                    <tr><td colSpan={5} className="p-8 text-center text-slate-400 animate-pulse">Carregando dados...</td></tr>
                                 ) : transactions.length === 0 ? (
-                                    <tr><td colSpan={5} className="p-8 text-center text-slate-400">Nenhuma transação registrada.</td></tr>
+                                    <tr><td colSpan={5} className="p-8 text-center text-slate-400">Nenhum usuário pagante encontrado.</td></tr>
                                 ) : (
                                     transactions.map(tx => (
                                         <TransactionRow key={tx.id} tx={tx} />
@@ -297,165 +216,6 @@ const AdminFinance = () => {
                     </div>
                 </div>
             </div>
-
-            {/* CHARGE MODAL */}
-            {isChargeModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
-                    <div className="bg-[#1e293b] border border-white/10 rounded-3xl w-full max-w-lg shadow-2xl relative overflow-hidden animate-in zoom-in-95">
-                        {/* Decorative Gradient Top */}
-                        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500"></div>
-
-                        <div className="p-8">
-                            <div className="flex justify-between items-center mb-8">
-                                <h3 className="text-2xl font-bold text-white flex items-center gap-3">
-                                    <div className="p-2 rounded-lg bg-emerald-500/20 text-emerald-500">
-                                        <span className="material-symbols-outlined">payments</span>
-                                    </div>
-                                    Gerar Cobrança
-                                </h3>
-                                <button
-                                    onClick={() => setIsChargeModalOpen(false)}
-                                    className="p-2 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
-                                >
-                                    <span className="material-symbols-outlined">close</span>
-                                </button>
-                            </div>
-
-                            <form onSubmit={handleCreateCharge} className="flex flex-col gap-5">
-                                <div className="relative">
-                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 ml-1">Usuário / Email</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={chargeUser}
-                                        onChange={e => setChargeUser(e.target.value)}
-                                        onFocus={() => chargeUser.length > 1 && setShowSuggestions(true)}
-                                        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                                        className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3.5 text-white focus:border-emerald-500 outline-none transition-all placeholder:text-slate-600"
-                                        placeholder="Busque por nome ou email..."
-                                        autoComplete="off"
-                                    />
-
-                                    {showSuggestions && userSuggestions.length > 0 && (
-                                        <div className="absolute top-[85px] left-0 w-full bg-[#1e293b] border border-white/10 rounded-xl shadow-2xl z-50 max-h-48 overflow-y-auto custom-scrollbar ring-1 ring-white/10">
-                                            {userSuggestions.map(user => (
-                                                <div
-                                                    key={user.id}
-                                                    className="px-4 py-3 hover:bg-white/5 cursor-pointer border-b border-white/5 last:border-0 transition-colors flex items-center justify-between group"
-                                                    onClick={() => {
-                                                        setChargeUser(user.email);
-                                                        setShowSuggestions(false);
-                                                    }}
-                                                >
-                                                    <div>
-                                                        <p className="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors">{user.name}</p>
-                                                        <p className="text-xs text-slate-400">{user.email}</p>
-                                                    </div>
-                                                    <span className="material-symbols-outlined text-slate-600 text-sm group-hover:text-emerald-500">add</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    <p className="text-[11px] text-slate-500 mt-1.5 ml-1 flex items-center gap-1">
-                                        <span className="material-symbols-outlined text-[14px]">info</span>
-                                        O usuário receberá um email com o link de pagamento.
-                                    </p>
-                                </div>
-
-                                {/* Plan Selection Integration */}
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 ml-1">Preencher com Plano (Opcional)</label>
-                                    <select
-                                        onChange={(e) => {
-                                            const value = e.target.value;
-                                            if (!value) return;
-                                            const [planId, type] = value.split('|');
-                                            const plan = availablePlans.find(p => p.id === planId);
-
-                                            if (plan) {
-                                                if (type === 'MONTHLY') {
-                                                    setChargeAmount(plan.priceMonthly.toString());
-                                                    setChargeDesc(`Assinatura ${plan.name} - Mensal`);
-                                                } else {
-                                                    setChargeAmount(plan.priceAnnual.toString());
-                                                    setChargeDesc(`Assinatura ${plan.name} - Anual`);
-                                                }
-                                            }
-                                        }}
-                                        className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3.5 text-slate-300 focus:border-emerald-500 outline-none transition-all cursor-pointer"
-                                    >
-                                        <option value="" className="bg-[#1e293b] text-slate-300">Selecione para preencher...</option>
-                                        {availablePlans.map(plan => (
-                                            <React.Fragment key={plan.id}>
-                                                <option value={`${plan.id}|MONTHLY`} className="bg-[#1e293b] text-white">
-                                                    {plan.name} (Mensal) - R$ {parseFloat(plan.priceMonthly).toFixed(2).replace('.', ',')}
-                                                </option>
-                                                <option value={`${plan.id}|ANNUAL`} className="bg-[#1e293b] text-white">
-                                                    {plan.name} (Anual) - R$ {parseFloat(plan.priceAnnual).toFixed(2).replace('.', ',')}
-                                                </option>
-                                            </React.Fragment>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 ml-1">Valor (R$)</label>
-                                        <div className="relative">
-                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold">R$</span>
-                                            <input
-                                                type="number"
-                                                required
-                                                step="0.01"
-                                                value={chargeAmount}
-                                                onChange={e => setChargeAmount(e.target.value)}
-                                                className="w-full bg-black/20 border border-white/10 rounded-xl pl-10 pr-4 py-3.5 text-white focus:border-emerald-500 outline-none transition-all placeholder:text-slate-600"
-                                                placeholder="0,00"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 ml-1">Vencimento</label>
-                                        <input
-                                            type="date"
-                                            className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3.5 text-white focus:border-emerald-500 outline-none transition-all [color-scheme:dark]"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5 ml-1">Descrição</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={chargeDesc}
-                                        onChange={e => setChargeDesc(e.target.value)}
-                                        className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3.5 text-white focus:border-emerald-500 outline-none transition-all placeholder:text-slate-600"
-                                        placeholder="ex: Assinatura Anual"
-                                    />
-                                </div>
-
-                                <div className="mt-6 pt-6 border-t border-white/10 flex justify-end gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsChargeModalOpen(false)}
-                                        className="px-6 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 font-bold transition-colors"
-                                    >
-                                        Cancelar
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        className="px-8 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-900/40 transition-all transform hover:scale-[1.02]"
-                                    >
-                                        Enviar Cobrança
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            )}
         </>
     );
 };

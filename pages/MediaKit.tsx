@@ -87,7 +87,7 @@ function MediaKitContent() {
         location: data.profile.location,
         email: data.profile.email,
         phone: data.profile.phone,
-        photo: null,
+        photo: data.profile.photoUrl || null,
 
         // Pass saved brands to the modal
         brands: savedBrands.map(b => ({ name: b.name, logo: b.logo, backgroundColor: (b as any).backgroundColor })),

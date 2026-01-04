@@ -39,6 +39,10 @@ model User {
   socialYoutube   String?
   socialTikTok    String?
   socialWhatsapp  String? // For direct contact
+  
+  // Extended Profile Data (JSONB)
+  profileData     Json?
+
 
   // Address Information
   cep             String?

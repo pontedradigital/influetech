@@ -58,6 +58,7 @@ export const updateProfile = async (req: Request, res: Response) => {
             city: req.body.city ?? undefined,
             state: req.body.state ?? undefined,
             cpfCnpj: req.body.cpfCnpj ?? undefined,
+            profileData: req.body.profileData ?? undefined // Update JSON data
         };
 
         const updatedUser = await db.user.update({
@@ -65,7 +66,8 @@ export const updateProfile = async (req: Request, res: Response) => {
             data: updateData,
             select: {
                 id: true, name: true, email: true, plan: true, isPublicProfile: true, bio: true, niche: true, location: true,
-                socialInstagram: true, socialLinkedin: true, socialYoutube: true, socialTikTok: true, socialWhatsapp: true
+                socialInstagram: true, socialLinkedin: true, socialYoutube: true, socialTikTok: true, socialWhatsapp: true,
+                profileData: true // Return new data
             }
         });
 
@@ -89,7 +91,8 @@ export const getUser = async (req: Request, res: Response) => {
             select: {
                 id: true, name: true, email: true, plan: true, isPublicProfile: true, bio: true, niche: true, location: true,
                 socialInstagram: true, socialLinkedin: true, socialYoutube: true, socialTikTok: true, socialWhatsapp: true,
-                cep: true, street: true, number: true, complement: true, neighborhood: true, city: true, state: true, cpfCnpj: true
+                cep: true, street: true, number: true, complement: true, neighborhood: true, city: true, state: true, cpfCnpj: true,
+                profileData: true
             }
         });
 

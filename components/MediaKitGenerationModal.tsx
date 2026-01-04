@@ -25,7 +25,9 @@ const urlToBase64 = async (url: string): Promise<string | null> => {
     if (url.startsWith('data:')) return url;
 
     try {
-        const response = await fetch(url, { mode: 'cors' });
+        // Use backend proxy to bypass CORS
+        const proxyUrl = `/api/proxy/image?url=${encodeURIComponent(url)}`;
+        const response = await fetch(proxyUrl);
         const blob = await response.blob();
         return new Promise((resolve, reject) => {
             const reader = new FileReader();

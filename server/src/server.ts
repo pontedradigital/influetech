@@ -54,6 +54,7 @@ app.use('/api/bazares', bazarRoutes);
 app.use('/api/trending-products', trendingProductRoutes);
 app.use('/api/shipments', shipmentRoutes);
 app.use('/api/plans', planRoutes);
+import proxyRoutes from './routes/proxy.routes';
 import adminRoutes from './routes/admin.routes';
 import radarBrandRoutes from './routes/radarBrand.routes';
 
@@ -62,6 +63,7 @@ app.use('/api/media-kit-brands', mediaKitBrandRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/radar-brands', radarBrandRoutes);
 app.use('/api/bug-reports', bugReportRoutes);
+app.use('/api/proxy', proxyRoutes);
 
 import db from './db';
 

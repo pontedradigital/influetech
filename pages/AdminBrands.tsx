@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../src/lib/supabase';
+import { api } from '../services/api';
 
 const AdminBrands: React.FC = () => {
     const [brands, setBrands] = useState<any[]>([]);
@@ -31,17 +31,14 @@ const AdminBrands: React.FC = () => {
         fetchBrands();
     }, []);
 
-
-
     const fetchBrands = async () => {
         try {
-            const { data, error } = await supabase
-                .from('RadarBrand')
-                .select('*')
-                .order('name', { ascending: true });
-
-            if (data) setBrands(data);
-            if (error) console.error(error);
+            const data = await api.get('/radar-brands');
+            if (data) {
+                // Ensure arrays are strings for display in the simple table if needed,
+                // but the form expects strings for 'categories' (comma separated)
+                setBrands(data);
+            }
         } catch (error) {
             console.error('Error fetching brands', error);
         } finally {
@@ -50,7 +47,37 @@ const AdminBrands: React.FC = () => {
     };
 
     const handleAnalyze = async () => {
-        alert('Funcionalidade de Análise IA indisponível na versão atual. Por favor, preencha manualmente.');
+        if (!formData.website) {
+            alert('Por favor, insira um site para analisar.');
+            return;
+        }
+
+        setAnalyzing(true);
+        try {
+            const result = await api.post('/radar-brands/analyze', { url: formData.website });
+
+            if (result) {
+                setFormData(prev => ({
+                    ...prev,
+                    name: result.name || prev.name,
+                    description: result.description || prev.description,
+                    tier: result.tier || prev.tier,
+                    instagram: result.instagram || prev.instagram,
+                    youtube: result.youtube || prev.youtube,
+                    contactMethod: result.contactMethod || prev.contactMethod,
+                    difficulty: result.difficulty || prev.difficulty,
+                    matchScore: result.matchScore || prev.matchScore,
+                    budget: result.budget || prev.budget,
+                    affinity: result.affinity || prev.affinity,
+                    // Handle categories if returned, otherwise keep
+                }));
+            }
+        } catch (error) {
+            console.error('Analysis failed', error);
+            alert('Falha na análise. Verifique a URL.');
+        } finally {
+            setAnalyzing(false);
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -64,19 +91,10 @@ const AdminBrands: React.FC = () => {
 
             if (editingBrand) {
                 // Update
-                const { error } = await supabase
-                    .from('RadarBrand')
-                    .update(payload)
-                    .eq('id', editingBrand.id);
-
-                if (error) throw error;
+                await api.put(`/radar-brands/${editingBrand.id}`, payload);
             } else {
                 // Insert
-                const { error } = await supabase
-                    .from('RadarBrand')
-                    .insert([payload]);
-
-                if (error) throw error;
+                await api.post('/radar-brands', payload);
             }
 
             setIsModalOpen(false);
@@ -93,15 +111,11 @@ const AdminBrands: React.FC = () => {
     const handleDelete = async (id: string) => {
         if (!confirm('Tem certeza?')) return;
         try {
-            const { error } = await supabase
-                .from('RadarBrand')
-                .delete()
-                .eq('id', id);
-
-            if (error) throw error;
+            await api.delete(`/radar-brands/${id}`);
             fetchBrands();
         } catch (error) {
             console.error(error);
+            alert('Erro ao excluir marca');
         }
     };
 

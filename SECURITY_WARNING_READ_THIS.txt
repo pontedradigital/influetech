@@ -1,0 +1,23 @@
+ATENÇÃO: FALHA DE SEGURANÇA CRÍTICA IDENTIFICADA
+
+O problema relatado (vazamento de dados na tela de Vendas) foi corrigido isoladamente alterando o SaleService para usar a API segura do backend (que filtra pelo ID do usuário).
+
+ENTRETANTO, o projeto ainda possui vulnerabilidades graves em outras áreas porque o cliente Supabase é usado diretamente no frontend sem Políticas de Segurança (RLS - Row Level Security) habilitadas no banco de dados.
+
+Serviços que ainda podem estar vulneráveis se estiverem usando 'supabase.from(...)' diretamente:
+- FinancialService.ts (Financeiro)
+- ProductService.ts (Produtos)
+- CompanyService.ts (Empresa)
+- Outros serviços clientes
+
+RECOMENDAÇÃO URGENTE:
+1. Habilite RLS (Row Level Security) em TODAS as tabelas do banco de dados imediatamente via Supabase Dashboard.
+2. Crie políticas (Policies) para permitir que apenas o dono do registro (userId = auth.uid()) possa ver/editar seus dados.
+
+Exemplo de SQL para correção no Supabase:
+
+ALTER TABLE "Sale" ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can only access their own sales" ON "Sale" USING (userId = auth.uid());
+-- Repita para Company, Product, FinancialTransaction, etc.
+
+Alternativamente, refatore todos os serviços restantes para usar a API do backend (/server/src/controllers/*) assim como foi feito no SaleService.ts.

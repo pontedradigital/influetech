@@ -85,7 +85,7 @@ export const SaleService = {
         }
 
         // Parallelize secondary operations for speed, but handle errors individually
-        const secondaryOperations: Promise<any>[] = [];
+        const secondaryOperations: any[] = [];
 
         // 2. Update Product Status to SOLD
         if (sale.productId) {

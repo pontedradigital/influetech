@@ -64,6 +64,7 @@ export const SaleService = {
             .from('Sale')
             .insert([{
                 ...sale,
+                id: crypto.randomUUID(),
                 userId: userData.user.id,
                 // Ensure numeric/date formats if needed, though Supabase handles ISO strings well
             }])

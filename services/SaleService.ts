@@ -72,6 +72,8 @@ export const SaleService = {
                 id: saleId,
                 userId: userId,
                 saleDate: saleDate,
+                createdAt: saleDate,
+                updatedAt: saleDate
             }])
             .select()
             .single();

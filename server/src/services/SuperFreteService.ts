@@ -1,5 +1,5 @@
 
-import fetch from 'node-fetch';
+import axios from 'axios';
 
 interface ShippingCalculationRequest {
     from: {
@@ -29,32 +29,34 @@ export class SuperFreteService {
 
     static async calculateShipping(data: ShippingCalculationRequest) {
         if (!this.TOKEN) {
+            console.error('❌ SuperFrete Token missing configuration');
             throw new Error('SuperFrete Token not configured');
         }
 
         const url = `${this.API_URL}/calculator`;
 
-        console.log('🚚 Calculating shipping via SuperFrete:', url);
-        // console.log('Payload:', JSON.stringify(data, null, 2));
+        console.log('🚚 Calculating shipping via SuperFrete (Axios):', url);
 
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'Authorization': `Bearer ${this.TOKEN}`,
-                'User-Agent': 'Influetech/1.0'
-            },
-            body: JSON.stringify(data)
-        });
+        try {
+            const response = await axios.post(url, data, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${this.TOKEN}`,
+                    'User-Agent': 'Influetech/1.0'
+                },
+                timeout: 10000 // 10s timeout to avoid hanging
+            });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('❌ SuperFrete API Error:', response.status, errorText);
-            throw new Error(`SuperFrete API Error: ${errorText}`);
+            return response.data;
+        } catch (error: any) {
+            if (axios.isAxiosError(error)) {
+                console.error('❌ SuperFrete API Error (Axios):', error.response?.status, error.response?.data || error.message);
+                throw new Error(`SuperFrete API Error: ${JSON.stringify(error.response?.data || error.message)}`);
+            } else {
+                console.error('❌ SuperFrete Unexpected Error:', error);
+                throw new Error(`unexpected error: ${error.message}`);
+            }
         }
-
-        const result = await response.json();
-        return result;
     }
 }

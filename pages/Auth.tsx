@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../src/lib/supabase';
 import { translateAuthError } from '../src/lib/auth-errors';
+import BlessedFooter from '../src/components/BlessedFooter';
 
 const AuthLayout: React.FC<{ children: React.ReactNode, title: string, subtitle: string }> = ({ children, title, subtitle }) => (
   <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-[#111621]">
@@ -11,6 +12,10 @@ const AuthLayout: React.FC<{ children: React.ReactNode, title: string, subtitle:
         <p className="text-gray-500 mt-2">{subtitle}</p>
       </div>
       {children}
+    </div>
+
+    <div className="fixed bottom-0 left-0 w-full z-0">
+      <BlessedFooter />
     </div>
   </div>
 );

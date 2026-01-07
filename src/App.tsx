@@ -12,6 +12,7 @@ import { supabase } from './lib/supabase';
 import ScrollToTop from '../components/ScrollToTop';
 import CookieConsent from '../components/CookieConsent';
 import BetaWarningModal from '../components/BetaWarningModal';
+import BlessedFooter from './components/BlessedFooter';
 
 // Pages
 import Dashboard from '../pages/Dashboard';
@@ -197,8 +198,12 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 </header>
 
                 {/* Scrollable Content Area */}
-                <div className="flex-1 overflow-auto p-4 md:p-8">
+                <div className="flex-1 overflow-auto p-4 md:p-8 relative">
                     {children}
+                    <div className="pb-8"></div>
+                    <div className="mt-auto">
+                        <BlessedFooter />
+                    </div>
                 </div>
             </main>
             <TutorialModal isOpen={showTutorial} onClose={() => setShowTutorial(false)} />
@@ -467,9 +472,14 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     </div>
                 </header>
 
-                {/* Content */}
-                <div className="flex-1 overflow-auto p-4 md:p-8 relative z-10">
-                    {children}
+                {/* Scrollable Content Area */}
+                <div className="flex-1 overflow-auto p-4 md:p-8 relative flex flex-col">
+                    <div className="flex-1">
+                        {children}
+                    </div>
+                    <div className="mt-8">
+                        <BlessedFooter />
+                    </div>
                 </div>
             </main>
             <TutorialModal isOpen={showTutorial} onClose={() => setShowTutorial(false)} />

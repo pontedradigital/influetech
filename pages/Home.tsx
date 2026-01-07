@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import BlessedFooter from '../src/components/BlessedFooter';
 import SEO from '../components/SEO';
 import { supabase } from '../src/lib/supabase';
 import { parseDatabaseArray } from '../src/utils/dbHelpers';
@@ -788,6 +789,7 @@ export default function Home() {
                     <a href="#" className="hover:text-white transition-colors">Instagram</a>
                 </div>
             </footer>
+            <BlessedFooter />
         </div>
     );
 }

@@ -317,18 +317,18 @@ export default function AdminUsers() {
                 />
             </div>
 
-            {/* Users Table (Glass Container) */}
-            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl overflow-hidden shadow-2xl">
+            {/* Users Table (Desktop) */}
+            <div className="hidden md:block bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl overflow-hidden shadow-2xl">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="border-b border-white/5 bg-black/20 text-slate-400 text-xs font-bold uppercase tracking-wider">
-                                <th className="p-3 md:p-5">Usuário</th>
-                                <th className="p-3 md:p-5">Plano / Ciclo</th>
-                                <th className="p-3 md:p-5">Status</th>
-                                <th className="p-3 md:p-5 hidden md:table-cell">Criado em</th>
-                                <th className="p-3 md:p-5 hidden md:table-cell">Vencimento</th>
-                                <th className="p-3 md:p-5 text-right">Ações</th>
+                                <th className="p-5">Usuário</th>
+                                <th className="p-5">Plano / Ciclo</th>
+                                <th className="p-5">Status</th>
+                                <th className="p-5">Criado em</th>
+                                <th className="p-5">Vencimento</th>
+                                <th className="p-5 text-right">Ações</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5 text-sm">
@@ -339,45 +339,45 @@ export default function AdminUsers() {
                             ) : (
                                 filteredUsers.map(user => (
                                     <tr key={user.id} className="hover:bg-white/5 transition-colors group">
-                                        <td className="p-3 md:p-5">
-                                            <div className="flex items-center gap-3 md:gap-4">
-                                                <div className={`w-8 h-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-lg relative ${user.active ? 'bg-gradient-to-br from-purple-600 to-indigo-600' : 'bg-red-500/20 text-red-500 border border-red-500/30'}`}>
-                                                    <span className="text-sm md:text-base">{user.name?.charAt(0)}</span>
+                                        <td className="p-5">
+                                            <div className="flex items-center gap-4">
+                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-lg relative ${user.active ? 'bg-gradient-to-br from-purple-600 to-indigo-600' : 'bg-red-500/20 text-red-500 border border-red-500/30'}`}>
+                                                    <span>{user.name?.charAt(0)}</span>
                                                     <div className={`absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full border-2 border-[#1e1e2e] ${user.active ? 'bg-emerald-500' : 'bg-red-500'} shadow`}></div>
                                                 </div>
-                                                <div className="min-w-0">
-                                                    <div className="font-bold text-white text-sm md:text-base truncate max-w-[120px] md:max-w-none">{user.name}</div>
-                                                    <div className="text-slate-400 text-[10px] md:text-xs truncate max-w-[120px] md:max-w-none">{user.email}</div>
+                                                <div>
+                                                    <div className="font-bold text-white">{user.name}</div>
+                                                    <div className="text-slate-400 text-xs">{user.email}</div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="p-3 md:p-5">
+                                        <td className="p-5">
                                             <div className="flex flex-col">
-                                                <span className={`font-bold text-xs md:text-sm ${user.plan === 'CREATOR_PLUS' ? 'text-purple-300' : 'text-slate-300'}`}>
+                                                <span className={`font-bold text-sm ${user.plan === 'CREATOR_PLUS' ? 'text-purple-300' : 'text-slate-300'}`}>
                                                     {user.plan === 'CREATOR_PLUS' ? 'Creator+' : 'Start'}
                                                 </span>
-                                                <span className="text-[10px] md:text-xs text-slate-500 lowercase bg-white/5 px-2 py-0.5 rounded-full w-fit mt-1 border border-white/5">{user.planCycle}</span>
+                                                <span className="text-xs text-slate-500 lowercase bg-white/5 px-2 py-0.5 rounded-full w-fit mt-1 border border-white/5">{user.planCycle}</span>
                                             </div>
                                         </td>
-                                        <td className="p-3 md:p-5">
+                                        <td className="p-5">
                                             <Badge status={user.paymentStatus} />
                                         </td>
-                                        <td className="p-3 md:p-5 text-slate-400 font-medium text-xs hidden md:table-cell">
+                                        <td className="p-5 text-slate-400 font-medium text-xs">
                                             {new Date(user.createdAt).toLocaleDateString()}
                                         </td>
-                                        <td className="p-3 md:p-5 text-slate-400 font-medium hidden md:table-cell">
+                                        <td className="p-5 text-slate-400 font-medium text-xs">
                                             {user.nextPaymentDate ? new Date(user.nextPaymentDate).toLocaleDateString() : '-'}
                                         </td>
-                                        <td className="p-3 md:p-5 text-right">
-                                            <div className="flex justify-end gap-1 md:gap-2 opacity-100 md:opacity-60 md:group-hover:opacity-100 transition-opacity">
-                                                <button onClick={() => { setSelectedUser(user); setIsEditModalOpen(true); }} className="p-2 hover:bg-white/10 rounded-lg text-slate-300 hover:text-white transition-colors">
-                                                    <span className="material-symbols-outlined text-lg md:text-xl">edit_note</span>
+                                        <td className="p-5 text-right">
+                                            <div className="flex justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                <button onClick={() => { setSelectedUser(user); setIsEditModalOpen(true); }} className="p-2 hover:bg-white/10 rounded-lg text-slate-300 hover:text-white transition-colors" title="Editar">
+                                                    <span className="material-symbols-outlined text-xl">edit_note</span>
                                                 </button>
-                                                <button onClick={() => handleToggleStatus(user)} className={`p-2 hover:bg-white/10 rounded-lg transition-colors ${user.active ? 'text-amber-400 hover:text-amber-300' : 'text-emerald-400 hover:text-emerald-300'}`}>
-                                                    <span className="material-symbols-outlined text-lg md:text-xl">{user.active ? 'block' : 'check_circle'}</span>
+                                                <button onClick={() => handleToggleStatus(user)} className={`p-2 hover:bg-white/10 rounded-lg transition-colors ${user.active ? 'text-amber-400 hover:text-amber-300' : 'text-emerald-400 hover:text-emerald-300'}`} title={user.active ? 'Bloquear' : 'Ativar'}>
+                                                    <span className="material-symbols-outlined text-xl">{user.active ? 'block' : 'check_circle'}</span>
                                                 </button>
-                                                <button onClick={() => handleDelete(user.id)} className={`p-2 rounded-lg transition-colors ${user.email === 'influetechapp@gmail.com' ? 'text-slate-600 cursor-not-allowed opacity-50' : 'hover:bg-red-500/10 text-slate-300 hover:text-red-400'}`} disabled={user.email === 'influetechapp@gmail.com'}>
-                                                    <span className="material-symbols-outlined text-lg md:text-xl">delete</span>
+                                                <button onClick={() => handleDelete(user.id)} className={`p-2 rounded-lg transition-colors ${user.email === 'influetechapp@gmail.com' ? 'text-slate-600 cursor-not-allowed opacity-50' : 'hover:bg-red-500/10 text-slate-300 hover:text-red-400'}`} disabled={user.email === 'influetechapp@gmail.com'} title="Excluir">
+                                                    <span className="material-symbols-outlined text-xl">delete</span>
                                                 </button>
                                             </div>
                                         </td>
@@ -387,6 +387,79 @@ export default function AdminUsers() {
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-4">
+                {isLoading ? (
+                    <div className="text-center text-slate-500 py-8 animate-pulse">Carregando usuários...</div>
+                ) : filteredUsers.length === 0 ? (
+                    <div className="text-center text-slate-500 py-8">Nenhum usuário encontrado.</div>
+                ) : (
+                    filteredUsers.map(user => (
+                        <div key={user.id} className="bg-white/5 border border-white/10 rounded-2xl p-5 shadow-lg backdrop-blur-sm relative overflow-hidden">
+                            {/* Status Indicator Stripe */}
+                            <div className={`absolute top-0 left-0 w-1 h-full ${user.active ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+
+                            <div className="flex justify-between items-start mb-4 pl-3">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg text-white shadow-lg ${user.active ? 'bg-gradient-to-br from-purple-600 to-indigo-600' : 'bg-red-500/20 text-red-500 border border-red-500/30'}`}>
+                                        {user.name?.charAt(0)}
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-white text-lg leading-tight">{user.name}</h3>
+                                        <p className="text-slate-400 text-xs break-all">{user.email}</p>
+                                    </div>
+                                </div>
+                                <Badge status={user.paymentStatus} />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 pl-3 mb-4 border-t border-white/5 pt-3">
+                                <div>
+                                    <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1">Plano</p>
+                                    <p className={`text-sm font-bold ${user.plan === 'CREATOR_PLUS' ? 'text-purple-300' : 'text-slate-300'}`}>
+                                        {user.plan === 'CREATOR_PLUS' ? 'Creator+' : 'Start'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1">Ciclo</p>
+                                    <p className="text-sm text-slate-300 capitalize">{user.planCycle.toLowerCase()}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1">Criado em</p>
+                                    <p className="text-sm text-slate-400">{new Date(user.createdAt).toLocaleDateString()}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1">Vencimento</p>
+                                    <p className="text-sm text-slate-400">{user.nextPaymentDate ? new Date(user.nextPaymentDate).toLocaleDateString() : '-'}</p>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-2 pl-3 pt-2">
+                                <button
+                                    onClick={() => { setSelectedUser(user); setIsEditModalOpen(true); }}
+                                    className="flex-1 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-slate-300 hover:text-white transition-colors flex items-center justify-center gap-2 border border-white/5"
+                                >
+                                    <span className="material-symbols-outlined text-lg">edit_note</span>
+                                    <span className="text-sm font-medium">Editar</span>
+                                </button>
+                                <button
+                                    onClick={() => handleToggleStatus(user)}
+                                    className={`w-12 flex items-center justify-center rounded-lg transition-colors border border-white/5 ${user.active ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}
+                                >
+                                    <span className="material-symbols-outlined text-xl">{user.active ? 'check_circle' : 'block'}</span>
+                                </button>
+                                <button
+                                    onClick={() => handleDelete(user.id)}
+                                    disabled={user.email === 'influetechapp@gmail.com'}
+                                    className={`w-12 flex items-center justify-center rounded-lg transition-colors border border-white/5 ${user.email === 'influetechapp@gmail.com' ? 'opacity-30 cursor-not-allowed' : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'}`}
+                                >
+                                    <span className="material-symbols-outlined text-xl">delete</span>
+                                </button>
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
 
             {/* Invite Modal (New User) */}

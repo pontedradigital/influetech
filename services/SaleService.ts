@@ -70,7 +70,11 @@ export const SaleService = {
             .select()
             .single();
 
-        if (error) throw error;
+        if (error) {
+            console.error('SERVER ERROR - Sale Create:', JSON.stringify(error, null, 2));
+            console.error('Payload sent:', JSON.stringify(sale, null, 2));
+            throw error;
+        }
 
         // 2. Update Product Status to SOLD
         if (sale.productId) {

@@ -1,23 +1,96 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="utf-8">
   <title>Bem-vindo à Influetech</title>
   <style>
-    body { margin: 0; padding: 0; background-color: #0f172a; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    .container { max-width: 600px; margin: 0 auto; background-color: #0f172a; color: #ffffff; padding: 40px 20px; }
-    .card { background-color: #1e293b; border-radius: 16px; border: 1px solid #334155; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
-    .header { padding: 40px; text-align: center; background: linear-gradient(to right, #1e293b, #0f172a); border-bottom: 1px solid #334155; }
-    .logo { max-height: 50px; }
-    .content { padding: 40px; text-align: center; }
-    h1 { color: #ffffff; margin-bottom: 20px; font-size: 24px; font-weight: 700; }
-    p { color: #94a3b8; font-size: 16px; line-height: 1.6; margin-bottom: 30px; }
-    .btn { display: inline-block; padding: 16px 32px; background: linear-gradient(90deg, #9333ea 0%, #06b6d4 100%); color: #ffffff !important; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 16px; margin-top: 20px; box-shadow: 0 0 20px rgba(147, 51, 234, 0.3); transition: transform 0.2s; }
-    .btn:hover { transform: scale(1.05); }
-    .footer { text-align: center; padding: 30px; color: #64748b; font-size: 12px; }
-    .divider { height: 1px; background: linear-gradient(90deg, transparent, #334155, transparent); margin: 30px 0; }
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #0f172a;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #0f172a;
+      color: #ffffff;
+      padding: 40px 20px;
+    }
+
+    .card {
+      background-color: #1e293b;
+      border-radius: 16px;
+      border: 1px solid #334155;
+      overflow: hidden;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .header {
+      padding: 40px;
+      text-align: center;
+      background: linear-gradient(to right, #1e293b, #0f172a);
+      border-bottom: 1px solid #334155;
+    }
+
+    .logo {
+      max-height: 50px;
+    }
+
+    .content {
+      padding: 40px;
+      text-align: center;
+    }
+
+    h1 {
+      color: #ffffff;
+      margin-bottom: 20px;
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    p {
+      color: #94a3b8;
+      font-size: 16px;
+      line-height: 1.6;
+      margin-bottom: 30px;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 16px 32px;
+      background: linear-gradient(90deg, #9333ea 0%, #06b6d4 100%);
+      color: #ffffff !important;
+      text-decoration: none;
+      border-radius: 50px;
+      font-weight: bold;
+      font-size: 16px;
+      margin-top: 20px;
+      box-shadow: 0 0 20px rgba(147, 51, 234, 0.3);
+      transition: transform 0.2s;
+    }
+
+    .btn:hover {
+      transform: scale(1.05);
+    }
+
+    .footer {
+      text-align: center;
+      padding: 30px;
+      color: #64748b;
+      font-size: 12px;
+    }
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #334155, transparent);
+      margin: 30px 0;
+    }
   </style>
 </head>
+
 <body>
   <div class="container">
     <div class="card">
@@ -25,37 +98,39 @@
         <!-- Substitua pelo link público do seu logo -->
         <img src="https://influetech.pontedra.com/logo-full.png" alt="Influetech" class="logo">
       </div>
-      
+
       <div class="content">
         <h1>Bem-vindo à Comunidade! 🚀</h1>
-        
+
         <p>Olá,</p>
-        
+
         <p>
-          Estamos muito felizes em ter você conosco na <strong>Influetech</strong>. 
+          Estamos muito felizes em ter você conosco na <strong>Influetech</strong>.
           Sua conta foi criada e você está a um passo de profissionalizar sua carreira de Creator.
         </p>
-        
+
         <p>
-          Com a Influetech, você terá gestão financeira, mídia kit automático e muito mais. 
+          Com a Influetech, você terá gestão financeira, mídia kit automático e muito mais.
           Para começar, precisamos que defina sua senha segura.
         </p>
-        
+
         <div class="divider"></div>
-        
+
         <a href="{{ .ConfirmationURL }}" class="btn">Definir Minha Senha</a>
-        
+
         <p style="margin-top: 30px; font-size: 14px;">
           Se o botão não funcionar, copie este link:<br>
           <a href="{{ .ConfirmationURL }}" style="color: #06b6d4;">{{ .ConfirmationURL }}</a>
         </p>
       </div>
     </div>
-    
+
     <div class="footer">
       <p>Influetech © 2026 - Uma tecnologia Pontedra.<br>
-      Este link expira em 24 horas.</p>
+        Este link tem validade de 1 hora após receber.<br>
+        Caso não consiga dentro do prazo ou der erro para gerar a senha, entre em contato com o suporte.</p>
     </div>
   </div>
 </body>
+
 </html>

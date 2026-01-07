@@ -233,6 +233,22 @@ export default function AdminUsers() {
         }
     };
 
+    const handleSendPasswordReset = async (email: string) => {
+        if (!confirm(`Enviar e-mail de redefinição de senha para ${email}?`)) return;
+
+        try {
+            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: window.location.origin + '/auth/update-password',
+            });
+
+            if (error) throw error;
+
+            alert(`E-mail de redefinição enviado com sucesso para ${email}!`);
+        } catch (error: any) {
+            alert('Erro ao enviar e-mail: ' + error.message);
+        }
+    };
+
     // Filter Logic
     const filteredUsers = users.filter(u =>
         u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -376,6 +392,9 @@ export default function AdminUsers() {
                                                 <button onClick={() => handleToggleStatus(user)} className={`p-2 hover:bg-white/10 rounded-lg transition-colors ${user.active ? 'text-amber-400 hover:text-amber-300' : 'text-emerald-400 hover:text-emerald-300'}`} title={user.active ? 'Bloquear' : 'Ativar'}>
                                                     <span className="material-symbols-outlined text-xl">{user.active ? 'block' : 'check_circle'}</span>
                                                 </button>
+                                                <button onClick={() => handleSendPasswordReset(user.email)} className="p-2 hover:bg-white/10 rounded-lg text-slate-300 hover:text-cyan-400 transition-colors" title="Enviar Redefinição de Senha">
+                                                    <span className="material-symbols-outlined text-xl">lock_reset</span>
+                                                </button>
                                                 <button onClick={() => handleDelete(user.id)} className={`p-2 rounded-lg transition-colors ${user.email === 'influetechapp@gmail.com' ? 'text-slate-600 cursor-not-allowed opacity-50' : 'hover:bg-red-500/10 text-slate-300 hover:text-red-400'}`} disabled={user.email === 'influetechapp@gmail.com'} title="Excluir">
                                                     <span className="material-symbols-outlined text-xl">delete</span>
                                                 </button>
@@ -448,6 +467,13 @@ export default function AdminUsers() {
                                     className={`w-12 flex items-center justify-center rounded-lg transition-colors border border-white/5 ${user.active ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}
                                 >
                                     <span className="material-symbols-outlined text-xl">{user.active ? 'check_circle' : 'block'}</span>
+                                </button>
+                                <button
+                                    onClick={() => handleSendPasswordReset(user.email)}
+                                    className="w-12 flex items-center justify-center rounded-lg transition-colors border border-white/5 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-cyan-400"
+                                    title="Redefinir Senha"
+                                >
+                                    <span className="material-symbols-outlined text-xl">lock_reset</span>
                                 </button>
                                 <button
                                     onClick={() => handleDelete(user.id)}

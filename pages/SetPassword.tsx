@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { translateAuthError } from '../src/lib/auth-errors';
 
 const SetPassword: React.FC = () => {
     const [searchParams] = useSearchParams();
@@ -71,7 +72,7 @@ const SetPassword: React.FC = () => {
 
         } catch (err: any) {
             console.error('Error setting password:', err);
-            setError(err.message || 'Erro ao criar senha. Tente novamente.');
+            setError(translateAuthError(err.message));
         } finally {
             setLoading(false);
         }

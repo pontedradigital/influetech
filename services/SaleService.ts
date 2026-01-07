@@ -84,99 +84,139 @@ export const SaleService = {
             throw saleError;
         }
 
-        // Parallelize secondary operations for speed
-        try {
-            const promises = [];
+        // Parallelize secondary operations for speed, but handle errors individually
+        const secondaryOperations: Promise<any>[] = [];
 
-            // 2. Update Product Status to SOLD
-            if (sale.productId) {
-                promises.push(
-                    supabase.from('Product').update({ status: 'SOLD' }).eq('id', sale.productId)
-                );
-            }
+        // 2. Update Product Status to SOLD
+        if (sale.productId) {
+            secondaryOperations.push(
+                supabase.from('Product')
+                    .update({ status: 'SOLD' })
+                    .eq('id', sale.productId)
+                    .then(({ error }) => {
+                        if (error) console.error('Error updating Product status:', error);
+                        else console.log('Product status updated to SOLD');
+                    })
+            );
+        }
 
-            // 3. Create Shipment Record (Envios)
-            // Map Sale fields to Shipment fields
-            const shipmentPayload = {
-                id: crypto.randomUUID(),
-                userId: userId,
-                saleId: saleId,
-                recipientName: sale.customerName || 'Cliente',
-                recipientAddress: `${sale.street || ''}, ${sale.number || ''} ${sale.complement || ''}`,
-                recipientCity: sale.city || '',
-                recipientState: sale.state || '',
-                recipientCep: sale.cep || '',
-                // Defaults for required fields not in Sale form
-                weight: 0.5, // Default placeholder
-                height: 10,
-                width: 10,
-                length: 10,
-                carrier: 'A Definir',
-                price: 0,
-                deliveryTime: 0,
-                status: 'pending',
-                contentDescription: 'Produto vendido via Influetech',
-                contentQuantity: 1
-            };
-            promises.push(supabase.from('Shipment').insert([shipmentPayload]));
+        // 3. Create Shipment Record (Envios)
+        const shipmentPayload = {
+            id: crypto.randomUUID(),
+            userId: userId,
+            saleId: saleId,
+            recipientName: sale.customerName || 'Cliente',
+            recipientAddress: `${sale.street || ''}, ${sale.number || ''} ${sale.complement || ''}`.trim(),
+            recipientCity: sale.city || '',
+            recipientState: sale.state || '',
+            recipientCep: sale.cep || '',
+            // Defaults as placeholder
+            weight: 0.5,
+            height: 10,
+            width: 10,
+            length: 10,
+            carrier: 'A Definir',
+            price: 0,
+            deliveryTime: 0,
+            status: 'pending',
+            contentDescription: `Venda ${sale.customerName}`,
+            contentQuantity: 1,
+            labelGenerated: 0,
+            declarationGenerated: 0,
+            createdAt: saleDate,
+            updatedAt: saleDate
+        };
+
+        secondaryOperations.push(
+            supabase.from('Shipment')
+                .insert([shipmentPayload])
+                .then(({ error }) => {
+                    if (error) {
+                        console.error('Error creating Shipment:', JSON.stringify(error, null, 2));
+                        console.error('Shipment Payload:', JSON.stringify(shipmentPayload, null, 2));
+                    } else {
+                        console.log('Shipment created successfully');
+                    }
+                })
+        );
 
 
-            // 4. Create Financial Transaction (Ganhos)
-            const financialPayload = {
-                id: crypto.randomUUID(),
-                userId: userId,
-                type: 'INCOME',
-                amount: sale.salePrice || 0,
-                description: `Venda - ${sale.customerName}`,
-                category: 'Vendas',
-                currency: 'BRL',
-                date: saleDate,
-                status: 'COMPLETED'
-            };
-            promises.push(supabase.from('FinancialTransaction').insert([financialPayload]));
+        // 4. Create Financial Transaction (Ganhos)
+        const financialPayload = {
+            id: crypto.randomUUID(),
+            userId: userId,
+            type: 'INCOME',
+            amount: Number(sale.salePrice) || 0,
+            description: `Venda - ${sale.customerName}`,
+            name: `Venda - ${sale.customerName}`,
+            category: 'Vendas',
+            currency: 'BRL',
+            date: saleDate,
+            status: 'COMPLETED',
+            createdAt: saleDate,
+            updatedAt: saleDate
+        };
+
+        secondaryOperations.push(
+            supabase.from('FinancialTransaction')
+                .insert([financialPayload])
+                .then(({ error }) => {
+                    if (error) {
+                        console.error('Error creating FinancialTransaction:', JSON.stringify(error, null, 2));
+                        console.error('Financial Payload:', JSON.stringify(financialPayload, null, 2));
+                    } else {
+                        console.log('FinancialTransaction created successfully');
+                    }
+                })
+        );
 
 
-            // 5. Remove from Bazares (Cleanup)
-            // Fetch upcoming bazaars that might contain this product
-            if (sale.productId) {
-                const cleanupBazar = async () => {
-                    const { data: events } = await supabase
-                        .from('BazarEvent')
-                        .select('*')
-                        .eq('userId', userId)
-                        .or('status.eq.PLANNED,status.eq.CONFIRMED');
+        // 5. Remove from Bazares (Cleanup)
+        if (sale.productId) {
+            const cleanupBazar = async () => {
+                const { data: events, error: fetchError } = await supabase
+                    .from('BazarEvent')
+                    .select('*')
+                    .eq('userId', userId)
+                    .or('status.eq.PLANNED,status.eq.CONFIRMED');
 
-                    if (events && events.length > 0) {
-                        for (const event of events) {
-                            let productIds: string[] = [];
-                            try {
-                                // productIds is stored as JSON string
+                if (fetchError) {
+                    console.error('Error fetching bazars for cleanup:', fetchError);
+                    return;
+                }
+
+                if (events && events.length > 0) {
+                    for (const event of events) {
+                        let productIds: string[] = [];
+                        try {
+                            if (typeof event.productIds === 'string') {
                                 productIds = JSON.parse(event.productIds || '[]');
-                            } catch (e) {
-                                // fallback if array or invalid
-                                if (Array.isArray(event.productIds)) productIds = event.productIds;
+                            } else if (Array.isArray(event.productIds)) {
+                                productIds = event.productIds;
                             }
+                        } catch (e) {
+                            console.warn('Error parsing productIds for event', event.id, e);
+                            continue;
+                        }
 
-                            if (productIds.includes(sale.productId as string)) {
-                                const newProductIds = productIds.filter(id => id !== sale.productId);
-                                await supabase
-                                    .from('BazarEvent')
-                                    .update({ productIds: JSON.stringify(newProductIds) })
-                                    .eq('id', event.id);
-                            }
+                        if (productIds.includes(sale.productId as string)) {
+                            const newProductIds = productIds.filter(id => id !== sale.productId);
+                            const { error: updateError } = await supabase
+                                .from('BazarEvent')
+                                .update({ productIds: JSON.stringify(newProductIds) })
+                                .eq('id', event.id);
+
+                            if (updateError) console.error('Error updating BazarEvent:', updateError);
+                            else console.log('Removed product from BazarEvent:', event.id);
                         }
                     }
-                };
-                promises.push(cleanupBazar());
-            }
-
-            await Promise.all(promises);
-
-        } catch (secondaryError) {
-            console.error('Error in post-sale operations:', secondaryError);
-            // We do not throw here to avoid failing the "Sale Creation" UI if only a side-effect failed.
-            // But we log it.
+                }
+            };
+            secondaryOperations.push(cleanupBazar());
         }
+
+        // Execute all side effects without blocking the return
+        await Promise.allSettled(secondaryOperations);
 
         return saleData;
     },

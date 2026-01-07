@@ -364,10 +364,10 @@ const ShippingCalculator = () => {
           <div className="flex items-start gap-3">
             <span className="material-symbols-outlined text-amber-600 dark:text-amber-500 mt-0.5">warning</span>
             <div className="flex-1">
-              <h4 className="font-bold text-amber-900 dark:text-amber-100 mb-1">Valores Simulados (API Indisponível)</h4>
+              <h4 className="font-bold text-amber-900 dark:text-amber-100 mb-1">Valores Simulados</h4>
               <p className="text-sm text-amber-800 dark:text-amber-200">
-                O sistema não conseguiu conectar com a API do Melhor Envio (verifique o token em .env.local).
-                Os valores abaixo são <strong>apenas estimativas matemáticas</strong> e podem diferir significativamente do valor real.
+                O sistema não conseguiu conectar com a API de fretes.
+                Os valores abaixo são <strong>apenas estimativas</strong>.
               </p>
             </div>
           </div>
@@ -377,10 +377,9 @@ const ShippingCalculator = () => {
           <div className="flex items-start gap-3">
             <span className="material-symbols-outlined text-green-600 dark:text-green-500 mt-0.5">check_circle</span>
             <div className="flex-1">
-              <h4 className="font-bold text-green-900 dark:text-green-100 mb-1">Valores da API Melhor Envio (Sandbox)</h4>
+              <h4 className="font-bold text-green-900 dark:text-green-100 mb-1">Cotação Realizada</h4>
               <p className="text-sm text-green-800 dark:text-green-200">
-                Os valores foram calculados diretamente pela API em ambiente de testes.
-                Descontos reais podem variar na produção.
+                Os valores foram calculados diretamente pela API de fretes.
               </p>
             </div>
           </div>
@@ -393,16 +392,7 @@ const ShippingCalculator = () => {
             </svg>
             <div className="flex-1">
               <p className="text-sm text-blue-900 dark:text-blue-100">
-                <strong>Cálculos Estimados:</strong> Os valores exibidos são estimativas baseadas na API do Melhor Envio.
-                Para obter valores exatos e descontos de até 80%, recomendamos criar uma conta gratuita em{' '}
-                <a
-                  href="https://melhorenvio.com.br"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline hover:text-blue-700 dark:hover:text-blue-300 font-semibold"
-                >
-                  melhorenvio.com.br
-                </a>
+                <strong>Calculadora de Fretes:</strong> Preencha os dados acima para cotar o envio.
               </p>
             </div>
           </div>

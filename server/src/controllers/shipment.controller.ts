@@ -1,5 +1,7 @@
+
 import { Request, Response } from 'express';
 import db from '../db';
+import { SuperFreteService } from '../services/SuperFreteService';
 import { v4 as uuidv4 } from 'uuid';
 
 // Criar novo envio
@@ -270,49 +272,55 @@ export const updateShipmentStatus = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Failed to update status' });
     }
 };
+// ... (existing exports)
 
 // Export delete as "delete"
 export { deleteShipment as delete };
 
-// Calcular Frete (Proxy para Melhor Envio)
+// Calcular Frete (SuperFrete)
 export const calculateFreight = async (req: Request, res: Response) => {
     try {
-        const token = process.env.VITE_MELHOR_ENVIO_TOKEN || process.env.MELHOR_ENVIO_TOKEN;
-        const isSandbox = (process.env.VITE_MELHOR_ENVIO_SANDBOX !== 'false');
+        console.log('📦 Calculando frete via SuperFrete...');
+        const { from, to, products, options } = req.body;
 
-        if (!token) {
-            console.error('❌ Token do Melhor Envio não configurado no servidor');
-            return res.status(500).json({ error: 'Configuração de frete ausente no servidor' });
+        // Validar dados básicos
+        if (!to?.postal_code || !products?.[0]) {
+            return res.status(400).json({ error: 'Dados incompletos para cálculo de frete.' });
         }
 
-        const url = isSandbox
-            ? 'https://sandbox.melhorenvio.com.br/api/v2/me/shipment/calculate'
-            : 'https://melhorenvio.com.br/api/v2/me/shipment/calculate';
+        // Mapear payload do frontend para o serviço
+        // O frontend envia 'products' array, mas o SuperFrete simplificado (calculadora) pode usar 'package'.
+        // Vamos usar as dimensões do primeiro produto ou somar (por enquanto, assumindo 1 pacote conforme o frontend manda)
+        const pkg = products[0];
 
-        console.log('📦 Calculando frete via Backend:', url);
-
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-                'User-Agent': `${process.env.VITE_APP_NAME || 'InflueTech'} (${process.env.VITE_APP_EMAIL || 'contato@influetech.com.br'})`
+        const requestData = {
+            from: {
+                postal_code: from?.postal_code || '01001-000' // Origem padrão se não enviada? Melhor falhar ou pegar do env.
             },
-            body: JSON.stringify(req.body)
-        });
+            to: {
+                postal_code: to.postal_code
+            },
+            services: "1,2,17", // PAC, SEDEX, Mini Envios
+            options: {
+                own_hand: false,
+                receipt: false,
+                insurance_value: options?.insurance_value || 0,
+                use_insurance_value: (options?.insurance_value || 0) > 0
+            },
+            package: {
+                weight: parseFloat(pkg.weight),
+                height: parseFloat(pkg.height),
+                width: parseFloat(pkg.width),
+                length: parseFloat(pkg.length)
+            }
+        };
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('❌ Erro da API Melhor Envio:', response.status, errorText);
-            return res.status(response.status).send(errorText);
-        }
-
-        const data = await response.json();
-        res.json(data);
+        const result = await SuperFreteService.calculateShipping(requestData);
+        res.json(result);
 
     } catch (error: any) {
         console.error('Erro ao calcular frete:', error);
         res.status(500).json({ error: 'Erro interno ao calcular frete', details: error.message });
     }
 };
+

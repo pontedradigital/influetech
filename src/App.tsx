@@ -154,6 +154,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     </div>
 
                     {/* Bottom Actions - Removed (moved to header) */}
+                    <div className="mt-auto pt-4 border-t border-gray-100 dark:border-gray-800">
+                        <BlessedFooter className="py-1.5 bg-transparent border-gray-100 dark:border-gray-800" textClassName="text-[6px] tracking-[0.2em]" />
+                    </div>
                 </div>
             </aside>
 
@@ -200,10 +203,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 {/* Scrollable Content Area */}
                 <div className="flex-1 overflow-auto p-4 md:p-8 relative">
                     {children}
-                    <div className="pb-8"></div>
-                    <div className="mt-auto">
-                        <BlessedFooter />
-                    </div>
                 </div>
             </main>
             <TutorialModal isOpen={showTutorial} onClose={() => setShowTutorial(false)} />
@@ -367,9 +366,8 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                         </nav>
                     </div>
 
-                    {/* User Profile Snippet (Bottom) */}
-                    <div className="mt-auto pt-6 border-t border-white/10">
-                        <div className="flex items-center gap-3 px-2 opacity-60 hover:opacity-100 transition-opacity cursor-default">
+                    <div className="mt-auto pt-4 border-t border-white/10">
+                        <div className="flex items-center gap-3 px-2 opacity-60 hover:opacity-100 transition-opacity cursor-default mb-4">
                             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-cyan-500 p-[1px]">
                                 <div className="w-full h-full rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-xs font-bold text-white">
                                     {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
@@ -380,6 +378,7 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                                 <p className="text-slate-400 w-32 truncate" title={user?.email}>{user?.email || 'admin@sistema'}</p>
                             </div>
                         </div>
+                        <BlessedFooter className="py-1.5 bg-transparent border-white/5" textClassName="text-[6px] tracking-[0.2em]" />
                     </div>
                 </div>
             </aside>
@@ -473,13 +472,8 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 </header>
 
                 {/* Scrollable Content Area */}
-                <div className="flex-1 overflow-auto p-4 md:p-8 relative flex flex-col">
-                    <div className="flex-1">
-                        {children}
-                    </div>
-                    <div className="mt-8">
-                        <BlessedFooter />
-                    </div>
+                <div className="flex-1 overflow-auto p-4 md:p-8 relative">
+                    {children}
                 </div>
             </main>
             <TutorialModal isOpen={showTutorial} onClose={() => setShowTutorial(false)} />

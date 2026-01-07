@@ -37,6 +37,15 @@
               light: '#f6f6f8',
               dark: '#111621',
             }
+          },
+          keyframes: {
+            ticker: {
+              '0%': { transform: 'translateX(0)' },
+              '100%': { transform: 'translateX(-50%)' },
+            }
+          },
+          animation: {
+            ticker: 'ticker 20s linear infinite',
           }
         },
       },

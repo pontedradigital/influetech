@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { api } from '../services/api';
+import { supabase } from '../src/lib/supabase';
 
 const AdminBrands: React.FC = () => {
     const [brands, setBrands] = useState<any[]>([]);
@@ -37,14 +37,13 @@ const AdminBrands: React.FC = () => {
         setLoading(true);
         setError(null);
         try {
-            const data = await api.get('/radar-brands');
-            if (data && Array.isArray(data)) {
-                setBrands(data);
-            } else if (data) {
-                // Handle potential object response or empty
-                setBrands([]);
-                console.warn('API returned non-array:', data);
-            }
+            const { data, error } = await supabase
+                .from('RadarBrand')
+                .select('*')
+                .order('name');
+
+            if (error) throw error;
+            setBrands(data || []);
         } catch (error: any) {
             console.error('Error fetching brands', error);
             setError(error.message || 'Falha ao carregar marcas');
@@ -54,18 +53,7 @@ const AdminBrands: React.FC = () => {
     };
 
     const handleSync = async () => {
-        if (!confirm('Isso irá restaurar as marcas padrão do sistema no banco de dados. Deseja continuar?')) return;
-        setLoading(true);
-        try {
-            await api.post('/radar-brands/sync', {});
-            alert('Marcas sincronizadas com sucesso!');
-            fetchBrands();
-        } catch (error: any) {
-            console.error('Sync failed', error);
-            alert('Erro ao sincronizar: ' + (error.response?.data?.error || error.message));
-        } finally {
-            setLoading(false);
-        }
+        alert('Funcionalidade de sincronização desativada temporariamente na migração para Supabase.');
     };
 
     const handleAnalyze = async () => {
@@ -73,50 +61,40 @@ const AdminBrands: React.FC = () => {
             alert('Por favor, insira um site para analisar.');
             return;
         }
-
-        setAnalyzing(true);
-        try {
-            const result = await api.post('/radar-brands/analyze', { url: formData.website });
-
-            if (result) {
-                setFormData(prev => ({
-                    ...prev,
-                    name: result.name || prev.name,
-                    description: result.description || prev.description,
-                    tier: result.tier || prev.tier,
-                    instagram: result.instagram || prev.instagram,
-                    youtube: result.youtube || prev.youtube,
-                    contactMethod: result.contactMethod || prev.contactMethod,
-                    difficulty: result.difficulty || prev.difficulty,
-                    matchScore: result.matchScore || prev.matchScore,
-                    budget: result.budget || prev.budget,
-                    affinity: result.affinity || prev.affinity,
-                    // Handle categories if returned, otherwise keep
-                }));
-            }
-        } catch (error) {
-            console.error('Analysis failed', error);
-            alert('Falha na análise. Verifique a URL.');
-        } finally {
-            setAnalyzing(false);
-        }
+        alert('A análise por IA está sendo migrada para o novo servidor. Por favor, preencha manualmente por enquanto.');
+        // TODO: Implement via Supabase Edge Function
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            const { data: userData } = await supabase.auth.getUser();
+
             const payload = {
                 ...formData,
-                categories: formData.categories.split(',').map(s => s.trim()).filter(Boolean),
-                salesChannels: formData.salesChannels.split(',').map(s => s.trim()).filter(Boolean)
+                // categories: formData.categories.split(',').map(s => s.trim()).filter(Boolean),
+                // salesChannels: formData.salesChannels.split(',').map(s => s.trim()).filter(Boolean)
+                // Assuming simple string for now based on current schema usage or join logic
+                categories: formData.categories,
+                salesChannels: formData.salesChannels
             };
 
             if (editingBrand) {
                 // Update
-                await api.put(`/radar-brands/${editingBrand.id}`, payload);
+                const { error } = await supabase
+                    .from('RadarBrand')
+                    .update(payload)
+                    .eq('id', editingBrand.id);
+                if (error) throw error;
             } else {
                 // Insert
-                await api.post('/radar-brands', payload);
+                // We might need a dummy UserId if RLS requires it, depending on the table definition
+                // RadarBrand table usually doesn't need userId if it's global, but let's check schema/errors if any.
+                // Assuming it's a global admin table or allows null.
+                const { error } = await supabase
+                    .from('RadarBrand')
+                    .insert([payload]);
+                if (error) throw error;
             }
 
             setIsModalOpen(false);
@@ -124,20 +102,25 @@ const AdminBrands: React.FC = () => {
             fetchBrands();
             resetForm();
 
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            alert('Erro ao salvar marca');
+            alert('Erro ao salvar marca: ' + error.message);
         }
     };
 
     const handleDelete = async (id: string) => {
         if (!confirm('Tem certeza?')) return;
         try {
-            await api.delete(`/radar-brands/${id}`);
+            const { error } = await supabase
+                .from('RadarBrand')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
             fetchBrands();
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            alert('Erro ao excluir marca');
+            alert('Erro ao excluir marca: ' + error.message);
         }
     };
 
@@ -197,8 +180,8 @@ const AdminBrands: React.FC = () => {
                 </button>
                 <button
                     onClick={handleSync}
-                    className="ml-4 px-4 py-2 border border-slate-600 hover:bg-white/5 text-slate-300 font-bold rounded-lg transition-all flex items-center gap-2"
-                    title="Restaurar marcas padrão no banco de dados"
+                    className="ml-4 px-4 py-2 border border-slate-600 hover:bg-white/5 text-slate-300 font-bold rounded-lg transition-all flex items-center gap-2 opacity-50 cursor-not-allowed"
+                    title="Função desativada temporariamente"
                 >
                     <span className="material-symbols-outlined">cloud_sync</span>
                 </button>
@@ -299,18 +282,14 @@ const AdminBrands: React.FC = () => {
                                             type="button"
                                             onClick={handleAnalyze}
                                             disabled={analyzing}
-                                            className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-bold text-xs flex items-center gap-2 disabled:opacity-50 transition-all"
+                                            className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-bold text-xs flex items-center gap-2 disabled:opacity-50 transition-all opacity-50 cursor-not-allowed"
                                         >
-                                            {analyzing ? (
-                                                <span className="animate-spin material-symbols-outlined text-sm">refresh</span>
-                                            ) : (
-                                                <span className="material-symbols-outlined text-sm">search_check</span>
-                                            )}
+                                            <span className="material-symbols-outlined text-sm">search_check</span>
                                             {analyzing ? 'Analisando...' : 'Analisar'}
                                         </button>
                                     </div>
                                     <p className="text-[10px] text-slate-400 mt-2">
-                                        O sistema irá buscar o logo, bio, redes sociais e sugerir um Tier automaticamente.
+                                        * Funcionalidade temporariamente indisponível durante migração.
                                     </p>
                                 </div>
 

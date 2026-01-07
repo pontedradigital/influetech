@@ -1,15 +1,22 @@
-import { api } from './api';
+import { supabase } from '../src/lib/supabase';
 import { InfluencerData } from '../context/InfluencerContext';
 
 export const UserService = {
     async getUser(userId: string) {
-        return api.get(`/users/${userId}`);
+        const { data, error } = await supabase
+            .from('User')
+            .select('*')
+            .eq('id', userId)
+            .single();
+
+        if (error) throw error;
+        return data;
     },
 
     async updateProfile(userId: string, data: Partial<InfluencerData>) {
-        // Prepare payload, separating flat fields from complex nested JSON
+        // Construct the payload matching the schema
         const payload: any = {
-            // Flat fields (kept for backward compatibility and simpler querying)
+            // Flat fields
             name: data.profile?.name,
             bio: data.profile?.bio,
             niche: data.profile?.niche,
@@ -23,18 +30,26 @@ export const UserService = {
             state: (data.profile as any)?.state,
             cpfCnpj: (data.profile as any)?.cpfCnpj,
 
-            // New JSON column for full data persistence
+            // JSONB column
             profileData: {
                 profile: data.profile,
                 socials: data.socials,
-                partnerships: data.partnerships, // Verify if we want partnerships here or separate
+                partnerships: data.partnerships,
                 importSettings: data.importSettings
             }
         };
 
-        // Remove undefined keys
+        // Clean undefined values
         Object.keys(payload).forEach(key => payload[key] === undefined && delete payload[key]);
 
-        return api.put(`/users/${userId}`, payload);
+        const { data: updatedUser, error } = await supabase
+            .from('User')
+            .update(payload)
+            .eq('id', userId)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return updatedUser;
     }
 };

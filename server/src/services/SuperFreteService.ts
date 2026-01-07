@@ -1,4 +1,5 @@
 
+import fetch from 'node-fetch';
 
 interface ShippingCalculationRequest {
     from: {

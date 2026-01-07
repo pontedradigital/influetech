@@ -1168,26 +1168,26 @@ export default function Products() {
 
   const handleStatusChange = async (productId: string, newStatus: string) => {
     try {
-      const product = products.find(p => p.id === productId);
-      if (!product) return;
+      // Optimistic update for UI responsiveness
+      const updatedProducts = products.map(p =>
+        p.id === productId ? { ...p, status: newStatus } : p
+      );
+      setProducts(updatedProducts);
 
-      const response = await fetch(`/ api / products / ${productId} `, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...product,
-          status: newStatus
-        })
-      });
-
-      if (response.ok) {
-        fetchProducts();
-        if (viewingProduct && viewingProduct.id === productId) {
-          setViewingProduct({ ...viewingProduct, status: newStatus });
-        }
+      if (viewingProduct && viewingProduct.id === productId) {
+        setViewingProduct({ ...viewingProduct, status: newStatus });
       }
+
+      // Persist to Supabase
+      await ProductService.update(productId, { status: newStatus } as any);
+
+      // Silent re-fetch to ensure consistency
+      fetchProducts();
     } catch (error) {
       console.error('Erro ao atualizar status:', error);
+      // Revert optimization on error would be complex here, usually re-fetch is enough
+      fetchProducts();
+      alert('Falha ao atualizar status no servidor.');
     }
   };
 

@@ -123,8 +123,8 @@ export const SaleService = {
             contentQuantity: 1,
             labelGenerated: 0,
             declarationGenerated: 0,
-            createdAt: saleDate,
-            updatedAt: saleDate
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
         };
 
         secondaryOperations.push(
@@ -151,10 +151,10 @@ export const SaleService = {
             name: `Venda - ${sale.customerName}`,
             category: 'Vendas',
             currency: 'BRL',
-            date: saleDate,
+            date: new Date().toISOString(),
             status: 'COMPLETED',
-            createdAt: saleDate,
-            updatedAt: saleDate
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
         };
 
         secondaryOperations.push(

@@ -28,9 +28,14 @@ export class ShipmentService {
     }
 
     static async list(): Promise<Shipment[]> {
+        const { data: userData } = await supabase.auth.getUser();
+        const userId = userData.user?.id;
+        if (!userId) return [];
+
         const { data, error } = await supabase
             .from('Shipment')
             .select('*')
+            .eq('userId', userId)
             .order('createdAt', { ascending: false });
 
         if (error) throw error;

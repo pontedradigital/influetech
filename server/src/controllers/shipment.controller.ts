@@ -281,21 +281,28 @@ export { deleteShipment as delete };
 export const calculateFreight = async (req: Request, res: Response) => {
     try {
         console.log('📦 Calculando frete via SuperFrete...');
-        const { from, to, products, options } = req.body;
+
+
+        const { from, to, products, options, package: bodyPackage } = req.body;
 
         // Validar dados básicos
-        if (!to?.postal_code || !products?.[0]) {
-            return res.status(400).json({ error: 'Dados incompletos para cálculo de frete.' });
+        const hasPackageInfo = (products && products.length > 0) || bodyPackage;
+        if (!to?.postal_code || !hasPackageInfo) {
+            return res.status(400).json({ error: 'Dados incompletos para cálculo de frete (Destino ou Pacote faltando).' });
         }
 
         // Mapear payload do frontend para o serviço
-        // O frontend envia 'products' array, mas o SuperFrete simplificado (calculadora) pode usar 'package'.
-        // Vamos usar as dimensões do primeiro produto ou somar (por enquanto, assumindo 1 pacote conforme o frontend manda)
-        const pkg = products[0];
+        // Prioridade: body.package > products[0]
+        let pkg;
+        if (bodyPackage) {
+            pkg = bodyPackage;
+        } else if (products && products.length > 0) {
+            pkg = products[0];
+        }
 
         const requestData = {
             from: {
-                postal_code: from?.postal_code || '01001-000' // Origem padrão se não enviada? Melhor falhar ou pegar do env.
+                postal_code: from?.postal_code || '01001-000'
             },
             to: {
                 postal_code: to.postal_code

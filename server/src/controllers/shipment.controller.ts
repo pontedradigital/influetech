@@ -2,7 +2,7 @@
 import { Request, Response } from 'express';
 import db from '../db';
 import { SuperFreteService } from '../services/SuperFreteService';
-import { v4 as uuidv4 } from 'uuid';
+
 
 // Criar novo envio
 export const create = async (req: Request, res: Response) => {

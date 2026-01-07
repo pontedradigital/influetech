@@ -273,7 +273,7 @@ const AdminBugReports: React.FC = () => {
                                             <img
                                                 key={idx}
                                                 // Handle full URL from Supabase Storage or fallback (removing localhost)
-                                                src={img.startsWith('http') ? img : img.replace('http://localhost:3001', '')}
+                                                src={img.startsWith('http') ? img : img.replace('/uploads', '/uploads')}
                                                 alt={`Screenshot ${idx + 1}`}
                                                 className="w-full h-48 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
                                             />

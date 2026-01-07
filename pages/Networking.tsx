@@ -30,7 +30,7 @@ const NetworkingContent = () => {
             if (searchTerm) params.append('search', searchTerm);
             if (selectedNiche) params.append('niche', selectedNiche);
 
-            const res = await fetch(`http://localhost:3001/api/users/public?${params.toString()}`);
+            const res = await fetch(`/api/users/public?${params.toString()}`);
             const data = await res.json();
             setPublicUsers(data);
         } catch (error) {
@@ -40,7 +40,7 @@ const NetworkingContent = () => {
 
     const fetchCurrentUser = async () => {
         try {
-            const res = await fetch(`http://localhost:3001/api/users/${CURRENT_USER_ID}`);
+            const res = await fetch(`/api/users/${CURRENT_USER_ID}`);
             const data = await res.json();
             setCurrentUser(data);
         } catch (error) {
@@ -53,7 +53,7 @@ const NetworkingContent = () => {
             const params = new URLSearchParams();
             if (selectedOppType) params.append('type', selectedOppType);
 
-            const res = await fetch(`http://localhost:3001/api/opportunities?${params.toString()}`);
+            const res = await fetch(`/api/opportunities?${params.toString()}`);
             const data = await res.json();
             setOpportunities(data);
         } catch (error) {
@@ -72,7 +72,7 @@ const NetworkingContent = () => {
 
     const handleTogglePublic = async (newState: boolean) => {
         try {
-            const res = await fetch(`http://localhost:3001/api/users/${CURRENT_USER_ID}`, {
+            const res = await fetch(`/api/users/${CURRENT_USER_ID}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ isPublicProfile: newState })
@@ -87,7 +87,7 @@ const NetworkingContent = () => {
 
     const handleLike = async (toUserId: string) => {
         try {
-            const res = await fetch('http://localhost:3001/api/users/like', {
+            const res = await fetch('/api/users/like', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ fromUserId: CURRENT_USER_ID, toUserId })
@@ -398,7 +398,7 @@ const EditProfileModal = ({ isOpen, onClose, currentUser, onSave }: any) => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await fetch(`http://localhost:3001/api/users/${CURRENT_USER_ID}`, {
+            const res = await fetch(`/api/users/${CURRENT_USER_ID}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
@@ -497,7 +497,7 @@ const NewOpportunityModal = ({ isOpen, onClose, onSave }: any) => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await fetch('http://localhost:3001/api/opportunities', {
+            await fetch('/api/opportunities', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...formData, userId: CURRENT_USER_ID })

@@ -325,7 +325,7 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             {/* Sidebar (Glass) */}
             <aside
                 className={`fixed inset-y-0 left-0 z-50 w-72 bg-white/5 backdrop-blur-xl border-r border-white/10 transform transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:flex md:flex-col ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-                    } overflow-y-auto shadow-2xl relative`}
+                    } overflow-y-auto shadow-2xl`}
             >
                 <div className="flex h-full flex-col justify-between p-6">
                     <div className="flex flex-col gap-10">

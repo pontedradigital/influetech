@@ -58,10 +58,32 @@ function BazarContent() {
           BazarService.getEvents()
         ]);
 
-        // Filtra apenas produtos não vendidos
+        // 1. Identifica produtos já usados em outros bazares (exceto cancelados)
+        const productsInUse = new Set<string>();
+        eventsData.forEach(event => {
+          if (event.status !== 'CANCELLED') {
+            try {
+              const ids = JSON.parse(event.productIds || '[]');
+              if (Array.isArray(ids)) {
+                ids.forEach(id => productsInUse.add(String(id)));
+              }
+            } catch (e) {
+              console.error('Error parsing productIds for event:', event.id, e);
+            }
+          }
+        });
+
+        // 2. Filtra produtos: não vendidos E não usados em outros bazares
         setTotalProductsCount(allProducts.length);
         const invalidStatuses = ['SOLD', 'VENDIDO', 'SHIPPED', 'ENVIADO', 'SENT'];
-        setProducts(allProducts.filter((p) => !invalidStatuses.includes(p.status?.toUpperCase())));
+
+        const availableProducts = allProducts.filter((p) => {
+          const isSold = invalidStatuses.includes(p.status?.toUpperCase());
+          const isInUse = productsInUse.has(p.id); // Check adherence to exclusivity rule
+          return !isSold && !isInUse;
+        });
+
+        setProducts(availableProducts);
         setBazarEvents(eventsData);
       } catch (error) {
         console.error('Error fetching user data (products/events):', error);

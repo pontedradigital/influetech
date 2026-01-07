@@ -1,4 +1,4 @@
-// Interfaces para a API do Melhor Envio
+// Interfaces para a API do SuperFrete (compatível com Correios/Melhor Envio)
 export interface FreightPackage {
     height: number; // cm
     width: number; // cm

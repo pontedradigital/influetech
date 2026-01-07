@@ -262,7 +262,7 @@ export default function Home() {
                             </div>
                             {/* Image */}
                             <img
-                                src="/dashboard-preview-v2.png"
+                                src="/dashboard-preview-new.png"
                                 alt="Influetech Dashboard"
                                 className="w-full h-auto object-cover opacity-95 pointer-events-none"
                             />

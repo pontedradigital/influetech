@@ -6,8 +6,9 @@ import { parseDatabaseArray } from '../src/utils/dbHelpers';
 
 export default function Home() {
     const [isAnnual, setIsAnnual] = useState(true);
-    const [heroMousePos, setHeroMousePos] = useState({ x: 0, y: 0 });
     const heroRef = useRef<HTMLDivElement>(null);
+    const circle1Ref = useRef<HTMLDivElement>(null);
+    const circle2Ref = useRef<HTMLDivElement>(null);
 
     // Dynamic Plans State
     const [plans, setPlans] = useState<any[]>([]);
@@ -69,11 +70,20 @@ export default function Home() {
 
     const handleMouseMove = (e: React.MouseEvent) => {
         if (!heroRef.current) return;
-        const { clientX, clientY } = e;
-        const { innerWidth, innerHeight } = window;
-        const x = (clientX / innerWidth - 0.5) * 2; // -1 to 1
-        const y = (clientY / innerHeight - 0.5) * 2; // -1 to 1
-        setHeroMousePos({ x, y });
+
+        requestAnimationFrame(() => {
+            const { clientX, clientY } = e;
+            const { innerWidth, innerHeight } = window;
+            const x = (clientX / innerWidth - 0.5) * 2; // -1 to 1
+            const y = (clientY / innerHeight - 0.5) * 2; // -1 to 1
+
+            if (circle1Ref.current) {
+                circle1Ref.current.style.transform = `translate(calc(-50% + ${x * -30}px), ${y * -30}px)`;
+            }
+            if (circle2Ref.current) {
+                circle2Ref.current.style.transform = `translate(${x * 20}px, ${y * 20}px)`;
+            }
+        });
     };
 
     // Tilt Effect Logic
@@ -190,12 +200,14 @@ export default function Home() {
             >
                 {/* Parallax Background Effects */}
                 <div
+                    ref={circle1Ref}
                     className="absolute top-0 left-1/2 w-[800px] h-[500px] bg-purple-600/30 rounded-full blur-[120px] -z-10 transition-transform duration-100 ease-out will-change-transform"
-                    style={{ transform: `translate(calc(-50% + ${heroMousePos.x * -30}px), ${heroMousePos.y * -30}px)` }}
+                    style={{ transform: 'translate(-50%, 0)' }}
                 ></div>
                 <div
+                    ref={circle2Ref}
                     className="absolute top-1/2 right-0 w-[600px] h-[600px] bg-cyan-600/20 rounded-full blur-[100px] -z-10 transition-transform duration-100 ease-out will-change-transform"
-                    style={{ transform: `translate(${heroMousePos.x * 20}px, ${heroMousePos.y * 20}px)` }}
+                    style={{ transform: 'translate(0, 0)' }}
                 ></div>
 
                 <div className="max-w-6xl mx-auto text-center relative z-10">

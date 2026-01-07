@@ -246,28 +246,28 @@ export default function AdminUsers() {
             </Helmet>
 
             {/* Header Section with Glass Effect */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-4">
                 <div>
-                    <h2 className="text-3xl font-bold text-white tracking-tight">Gestão de Usuários</h2>
-                    <p className="text-slate-400 mt-1">Administre acessos e assinaturas da plataforma.</p>
+                    <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">Gestão de Usuários</h2>
+                    <p className="text-slate-400 mt-1 text-sm md:text-base">Administre acessos e assinaturas da plataforma.</p>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                     <button
                         onClick={handleSync}
                         disabled={isLoading}
-                        className="px-6 py-3 bg-indigo-900/50 text-indigo-300 hover:bg-indigo-900 hover:text-white rounded-xl font-medium transition-all flex items-center gap-2 border border-indigo-500/20"
+                        className="px-6 py-3 bg-indigo-900/50 text-indigo-300 hover:bg-indigo-900 hover:text-white rounded-xl font-medium transition-all flex items-center justify-center gap-2 border border-indigo-500/20 w-full sm:w-auto"
                         title="Sincronizar usuários do Auth com o Banco de Dados"
                     >
                         <span className="material-symbols-outlined">sync</span>
-                        <span className="hidden sm:inline">Sincronizar Banco</span>
+                        <span>Sincronizar</span>
                     </button>
                     <button
                         onClick={() => setIsInviteModalOpen(true)}
-                        className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-purple-900/20 transition-all transform hover:scale-105 flex items-center gap-2"
+                        className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-purple-900/20 transition-all transform hover:scale-105 flex items-center justify-center gap-2 w-full sm:w-auto"
                     >
                         <span className="material-symbols-outlined">person_add</span>
-                        Gerar Novo Usuário
+                        Gerar Usuário
                     </button>
                 </div>
             </div>
@@ -323,61 +323,61 @@ export default function AdminUsers() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="border-b border-white/5 bg-black/20 text-slate-400 text-xs font-bold uppercase tracking-wider">
-                                <th className="p-5">Usuário</th>
-                                <th className="p-5">Plano / Ciclo</th>
-                                <th className="p-5">Status Pagto</th>
-                                <th className="p-5">Criado em</th>
-                                <th className="p-5">Vencimento</th>
-                                <th className="p-5 text-right">Ações</th>
+                                <th className="p-3 md:p-5">Usuário</th>
+                                <th className="p-3 md:p-5">Plano / Ciclo</th>
+                                <th className="p-3 md:p-5">Status</th>
+                                <th className="p-3 md:p-5 hidden md:table-cell">Criado em</th>
+                                <th className="p-3 md:p-5 hidden md:table-cell">Vencimento</th>
+                                <th className="p-3 md:p-5 text-right">Ações</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5 text-sm">
                             {isLoading ? (
-                                <tr><td colSpan={5} className="p-12 text-center text-slate-500 animate-pulse">Carregando dados...</td></tr>
+                                <tr><td colSpan={6} className="p-12 text-center text-slate-500 animate-pulse">Carregando dados...</td></tr>
                             ) : filteredUsers.length === 0 ? (
-                                <tr><td colSpan={5} className="p-12 text-center text-slate-500">Nenhum usuário encontrado.</td></tr>
+                                <tr><td colSpan={6} className="p-12 text-center text-slate-500">Nenhum usuário encontrado.</td></tr>
                             ) : (
                                 filteredUsers.map(user => (
                                     <tr key={user.id} className="hover:bg-white/5 transition-colors group">
-                                        <td className="p-5">
-                                            <div className="flex items-center gap-4">
-                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-lg relative ${user.active ? 'bg-gradient-to-br from-purple-600 to-indigo-600' : 'bg-red-500/20 text-red-500 border border-red-500/30'}`}>
-                                                    {user.name?.charAt(0)}
-                                                    <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-[#1e1e2e] ${user.active ? 'bg-emerald-500' : 'bg-red-500'} shadow`}></div>
+                                        <td className="p-3 md:p-5">
+                                            <div className="flex items-center gap-3 md:gap-4">
+                                                <div className={`w-8 h-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-lg relative ${user.active ? 'bg-gradient-to-br from-purple-600 to-indigo-600' : 'bg-red-500/20 text-red-500 border border-red-500/30'}`}>
+                                                    <span className="text-sm md:text-base">{user.name?.charAt(0)}</span>
+                                                    <div className={`absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full border-2 border-[#1e1e2e] ${user.active ? 'bg-emerald-500' : 'bg-red-500'} shadow`}></div>
                                                 </div>
-                                                <div>
-                                                    <div className="font-bold text-white text-base">{user.name}</div>
-                                                    <div className="text-slate-400 text-xs">{user.email}</div>
+                                                <div className="min-w-0">
+                                                    <div className="font-bold text-white text-sm md:text-base truncate max-w-[120px] md:max-w-none">{user.name}</div>
+                                                    <div className="text-slate-400 text-[10px] md:text-xs truncate max-w-[120px] md:max-w-none">{user.email}</div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="p-5">
+                                        <td className="p-3 md:p-5">
                                             <div className="flex flex-col">
-                                                <span className={`font-bold ${user.plan === 'CREATOR_PLUS' ? 'text-purple-300' : 'text-slate-300'}`}>
+                                                <span className={`font-bold text-xs md:text-sm ${user.plan === 'CREATOR_PLUS' ? 'text-purple-300' : 'text-slate-300'}`}>
                                                     {user.plan === 'CREATOR_PLUS' ? 'Creator+' : 'Start'}
                                                 </span>
-                                                <span className="text-xs text-slate-500 lowercase bg-white/5 px-2 py-0.5 rounded-full w-fit mt-1 border border-white/5">{user.planCycle}</span>
+                                                <span className="text-[10px] md:text-xs text-slate-500 lowercase bg-white/5 px-2 py-0.5 rounded-full w-fit mt-1 border border-white/5">{user.planCycle}</span>
                                             </div>
                                         </td>
-                                        <td className="p-5">
+                                        <td className="p-3 md:p-5">
                                             <Badge status={user.paymentStatus} />
                                         </td>
-                                        <td className="p-5 text-slate-400 font-medium text-xs">
+                                        <td className="p-3 md:p-5 text-slate-400 font-medium text-xs hidden md:table-cell">
                                             {new Date(user.createdAt).toLocaleDateString()}
                                         </td>
-                                        <td className="p-5 text-slate-400 font-medium">
+                                        <td className="p-3 md:p-5 text-slate-400 font-medium hidden md:table-cell">
                                             {user.nextPaymentDate ? new Date(user.nextPaymentDate).toLocaleDateString() : '-'}
                                         </td>
-                                        <td className="p-5 text-right">
-                                            <div className="flex justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
-                                                <button onClick={() => { setSelectedUser(user); setIsEditModalOpen(true); }} className="p-2 hover:bg-white/10 rounded-lg text-slate-300 hover:text-white transition-colors border border-transparent hover:border-white/10" title="Editar">
-                                                    <span className="material-symbols-outlined text-xl">edit_note</span>
+                                        <td className="p-3 md:p-5 text-right">
+                                            <div className="flex justify-end gap-1 md:gap-2 opacity-100 md:opacity-60 md:group-hover:opacity-100 transition-opacity">
+                                                <button onClick={() => { setSelectedUser(user); setIsEditModalOpen(true); }} className="p-2 hover:bg-white/10 rounded-lg text-slate-300 hover:text-white transition-colors">
+                                                    <span className="material-symbols-outlined text-lg md:text-xl">edit_note</span>
                                                 </button>
-                                                <button onClick={() => handleToggleStatus(user)} className={`p-2 hover:bg-white/10 rounded-lg transition-colors border border-transparent hover:border-white/10 ${user.active ? 'text-amber-400 hover:text-amber-300' : 'text-emerald-400 hover:text-emerald-300'}`} title={user.active ? "Desativar Acesso" : "Reativar Acesso"}>
-                                                    <span className="material-symbols-outlined text-xl">{user.active ? 'block' : 'check_circle'}</span>
+                                                <button onClick={() => handleToggleStatus(user)} className={`p-2 hover:bg-white/10 rounded-lg transition-colors ${user.active ? 'text-amber-400 hover:text-amber-300' : 'text-emerald-400 hover:text-emerald-300'}`}>
+                                                    <span className="material-symbols-outlined text-lg md:text-xl">{user.active ? 'block' : 'check_circle'}</span>
                                                 </button>
-                                                <button onClick={() => handleDelete(user.id)} className={`p-2 rounded-lg transition-colors border border-transparent ${user.email === 'influetechapp@gmail.com' ? 'text-slate-600 cursor-not-allowed opacity-50' : 'hover:bg-red-500/10 text-slate-300 hover:text-red-400 hover:border-red-500/20'}`} title="Deletar" disabled={user.email === 'influetechapp@gmail.com'}>
-                                                    <span className="material-symbols-outlined text-xl">delete</span>
+                                                <button onClick={() => handleDelete(user.id)} className={`p-2 rounded-lg transition-colors ${user.email === 'influetechapp@gmail.com' ? 'text-slate-600 cursor-not-allowed opacity-50' : 'hover:bg-red-500/10 text-slate-300 hover:text-red-400'}`} disabled={user.email === 'influetechapp@gmail.com'}>
+                                                    <span className="material-symbols-outlined text-lg md:text-xl">delete</span>
                                                 </button>
                                             </div>
                                         </td>
@@ -407,7 +407,7 @@ export default function AdminUsers() {
                             <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Nome</label>
                             <input name="name" defaultValue={selectedUser.name} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none transition-colors" />
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Plano</label>
                                 <select name="plan" defaultValue={selectedUser.plan} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none appearance-none cursor-pointer">
@@ -425,7 +425,7 @@ export default function AdminUsers() {
                                 </select>
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Status Pagamento</label>
                                 <select name="paymentStatus" defaultValue={selectedUser.paymentStatus} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none appearance-none cursor-pointer">
@@ -473,17 +473,17 @@ const Badge = ({ status }: { status: string }) => {
 
 const Modal = ({ title, onClose, children }: { title: string, onClose: () => void, children: React.ReactNode }) => (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#050510]/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-        <div className="relative w-full max-w-lg bg-[#1a1b2e] rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="relative w-full max-w-lg bg-[#1a1b2e] rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
             {/* Gradient Top */}
-            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-purple-500 via-indigo-500 to-cyan-500"></div>
+            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-purple-500 via-indigo-500 to-cyan-500 shrink-0"></div>
 
-            <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
-                <h3 className="text-xl font-bold text-white tracking-tight">{title}</h3>
+            <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/5 shrink-0">
+                <h3 className="text-xl font-bold text-white tracking-tight line-clamp-1">{title}</h3>
                 <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full text-slate-400 hover:text-white transition-colors">
                     <span className="material-symbols-outlined">close</span>
                 </button>
             </div>
-            <div className="p-6">
+            <div className="p-6 overflow-y-auto custom-scrollbar">
                 {children}
             </div>
         </div>
@@ -506,7 +506,7 @@ const InviteUserModal = ({ isOpen, onClose, onSubmit, isLoading }: any) => {
                     <input name="email" type="email" required className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none transition-colors" placeholder="maria@exemplo.com" />
                     <p className="text-[10px] text-slate-500 mt-1 ml-1">Um e-mail de boas-vindas será enviado com instruções.</p>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Plano</label>
                         <select name="plan" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none appearance-none cursor-pointer">

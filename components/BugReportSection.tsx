@@ -31,7 +31,8 @@ const BugReportSection: React.FC = () => {
     };
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = Array.from(e.target.files || []);
+        const fileList = e.target.files;
+        const files = fileList ? Array.from(fileList) as File[] : [];
 
         if (images.length + files.length > 3) {
             alert('Máximo de 3 imagens permitidas');
@@ -49,7 +50,7 @@ const BugReportSection: React.FC = () => {
             }
 
             try {
-                const compressed = await compressImage(file, 1); // 1MB max
+                const compressed = await compressImage(file, 1) as File; // 1MB max
                 validFiles.push(compressed);
 
                 const reader = new FileReader();
@@ -86,7 +87,8 @@ const BugReportSection: React.FC = () => {
 
     // Improved handleImageUpload
     const onFilesSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = Array.from(e.target.files || []);
+        const fileList = e.target.files;
+        const files = fileList ? Array.from(fileList) as File[] : [];
         if (images.length + files.length > 3) {
             alert('Máximo de 3 imagens permitidas');
             return;
@@ -102,7 +104,7 @@ const BugReportSection: React.FC = () => {
                 continue;
             }
             try {
-                const compressed = await compressImage(file, 1);
+                const compressed = await compressImage(file, 1) as File;
                 const base64 = await readFileAsBase64(compressed);
                 newImages.push(compressed);
                 newPreviews.push(base64);

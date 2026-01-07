@@ -11,7 +11,7 @@ export const BazarService = {
             .from('BazarEvent')
             .select('*')
             .eq('userId', userId)
-            .order('eventDate', { ascending: true });
+            .order('date', { ascending: true });
 
         if (error) throw error;
         return data;

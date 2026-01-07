@@ -2210,7 +2210,7 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
         neighborhood: neighborhood || null,
         city: city || null,
         state: state || null,
-        salePrice: parseFloat(salePrice)
+        salePrice: parseFloat(salePrice.replace(/\./g, '').replace(',', '.'))
         // userId handled in service
       });
 

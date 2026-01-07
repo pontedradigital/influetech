@@ -24,9 +24,14 @@ export interface Sale {
 
 export const SaleService = {
     async getAll(searchTerm?: string) {
+        const { data: userData } = await supabase.auth.getUser();
+        if (!userData.user) throw new Error('User not authenticated');
+        const userId = userData.user.id;
+
         let query = supabase
             .from('Sale')
             .select('*, product:Product(*), user:User(*)')
+            .eq('userId', userId)
             .order('saleDate', { ascending: false });
 
         if (searchTerm) {

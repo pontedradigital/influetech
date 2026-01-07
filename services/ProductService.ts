@@ -117,5 +117,15 @@ export class ProductService {
 
         if (error) throw error;
     }
+
+    static async deleteAll(): Promise<void> {
+        // Tenta deletar todos os produtos que o usuário tem permissão
+        const { error } = await supabase
+            .from('Product')
+            .delete()
+            .neq('id', '00000000-0000-0000-0000-000000000000');
+
+        if (error) throw error;
+    }
 }
 

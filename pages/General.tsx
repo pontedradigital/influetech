@@ -1191,6 +1191,19 @@ export default function Products() {
     }
   };
 
+  const handleClearData = async () => {
+    if (window.confirm('TEM CERTEZA? Isso apagará TODOS os seus produtos e não pode ser desfeito. Use apenas se os dados estiverem corrompidos.')) {
+      try {
+        await ProductService.deleteAll();
+        await fetchProducts();
+        alert('Produtos limpos com sucesso!');
+      } catch (error) {
+        console.error('Erro ao limpar produtos:', error);
+        alert('Erro ao limpar produtos. Pode ser necessário permissão administrativa.');
+      }
+    }
+  };
+
   // Get unique values for filters
   const categories = Array.from(new Set(products.map(p => p.category))).sort();
   const statuses = Array.from(new Set(products.map(p => p.status))).sort();
@@ -1234,16 +1247,25 @@ export default function Products() {
       />
       <div className="flex flex-wrap justify-between items-center gap-4">
         <h1 className="text-3xl font-black text-gray-900 dark:text-white">Produtos</h1>
-        <button
-          onClick={() => {
-            setEditingProduct(null);
-            setIsModalOpen(true);
-          }}
-          className="flex items-center gap-2 bg-primary hover:bg-primary-600 text-white px-4 py-2.5 rounded-lg font-bold transition-all"
-        >
-          <span className="material-symbols-outlined">add</span>
-          Cadastrar Produto
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={handleClearData}
+            className="px-4 py-2.5 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg font-bold transition-all hover:bg-red-200 dark:hover:bg-red-900/50 flex items-center gap-2"
+          >
+            <span className="material-symbols-outlined">delete_forever</span>
+            Limpar Dados (Debug)
+          </button>
+          <button
+            onClick={() => {
+              setEditingProduct(null);
+              setIsModalOpen(true);
+            }}
+            className="flex items-center gap-2 bg-primary hover:bg-primary-600 text-white px-4 py-2.5 rounded-lg font-bold transition-all"
+          >
+            <span className="material-symbols-outlined">add</span>
+            Cadastrar Produto
+          </button>
+        </div>
       </div>
 
       {/* Search and Filters */}
@@ -2119,11 +2141,12 @@ const NewSaleModal = ({ isOpen, onClose, onSave }: {
 
   React.useEffect(() => {
     if (isOpen) {
-      // Fetch products
-      fetch('http://localhost:3001/api/products')
-        .then(res => res.json())
-        .then(data => setProducts(data))
-        .catch(err => console.error('Erro ao buscar produtos:', err));
+      if (isOpen) {
+        // Fetch products using Service
+        ProductService.getAvailableForSale()
+          .then(data => setProducts(data))
+          .catch(err => console.error('Erro ao buscar produtos:', err));
+      }
     }
   }, [isOpen]);
 
@@ -2557,16 +2580,18 @@ export function Sales() {
   const [deletingSaleId, setDeletingSaleId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const fetchSales = () => {
-    fetch(`http://localhost:3001/api/sales${searchTerm ? `?search=${searchTerm}` : ''}`)
-      .then(res => res.json())
-      .then(data => setSales(data))
-      .catch(err => console.error('Erro ao buscar vendas:', err));
+  const fetchSales = async () => {
+    try {
+      const data = await SaleService.getAll();
+      setSales(data);
+    } catch (err) {
+      console.error('Erro ao buscar vendas:', err);
+    }
   };
 
   React.useEffect(() => {
     fetchSales();
-  }, [searchTerm]);
+  }, [searchTerm]); // Search filtering is now client-side or we need to implement search in Service
 
   const handleSave = () => {
     fetchSales();
@@ -2576,13 +2601,12 @@ export function Sales() {
   const confirmDelete = async () => {
     if (!deletingSaleId) return;
     try {
-      const response = await fetch(`http://localhost:3001/api/sales/${deletingSaleId}`, { method: 'DELETE' });
-      if (response.ok) {
-        fetchSales();
-        setViewingSale(null);
-      }
+      await SaleService.delete(deletingSaleId);
+      fetchSales();
+      setViewingSale(null);
     } catch (error) {
       console.error('Erro:', error);
+      alert('Erro ao excluir venda');
     }
     setDeletingSaleId(null);
   };

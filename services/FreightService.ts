@@ -56,7 +56,8 @@ export interface FreightCalculationResponse {
     jadlog?: FreightOption;
     loggi?: FreightOption;
     azul?: FreightOption;
-    [key: string]: FreightOption | undefined;
+    [key: string]: FreightOption | undefined | boolean;
+    isFallback?: boolean;
 }
 
 // Serviço de cálculo de frete
@@ -76,8 +77,8 @@ export class FreightService {
 
     static async calculate(request: FreightCalculationRequest): Promise<FreightCalculationResponse> {
         if (this.USE_MOCK) {
-            console.log('⚠️ Usando cálculo estimado (token não configurado)');
-            return this.calculateMockWithRealFormula(request);
+            console.error('❌ Token do Melhor Envio não configurado');
+            throw new Error('Token do Melhor Envio não configurado. Verifique o arquivo .env.local');
         }
 
         console.log('✅ Usando API real do Melhor Envio');
@@ -104,30 +105,39 @@ export class FreightService {
                 ]
             };
 
-            console.log('📦 Requisição para API:', JSON.stringify(apiRequest, null, 2));
+            console.log('📦 Requisição para API (Backend):', JSON.stringify(apiRequest, null, 2));
 
-            // Usar proxy local para evitar CORS
-            const response = await fetch('/api/melhor-envio/me/shipment/calculate', {
+            // Chamada ao Backend (que fará o proxy para o Melhor Envio)
+            // Funciona tanto local quanto em produção (sem depender do vite proxy)
+            const response = await fetch('/api/shipments/calculate', {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                    // Authorization e User-Agent são adicionados pelo proxy
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}` // Autenticação do usuário no nosso backend
                 },
                 body: JSON.stringify(apiRequest)
             });
 
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('❌ Erro da API:', response.status, errorText);
-                throw new Error(`API Error: ${response.status} - ${errorText}`);
+                // Tenta extrair mensagem de erro amigável se for JSON
+                try {
+                    const errorJson = JSON.parse(errorText);
+                    const msg = errorJson.message || errorJson.error || errorText;
+                    throw new Error(msg);
+                } catch (e) {
+                    throw new Error(`Erro da API (${response.status}): ${errorText}`);
+                }
             }
 
             const data: any[] = await response.json();
             console.log('📨 Resposta da API:', data.length, 'opções recebidas');
 
             // Organizar resultados - FILTRAR APENAS AS DESEJADAS
-            const result: FreightCalculationResponse = {};
+            const result: FreightCalculationResponse = {
+                isFallback: false
+            };
 
             data.forEach(option => {
                 // Validar se price é um número válido
@@ -159,7 +169,7 @@ export class FreightService {
                 }
 
                 if (shouldInclude) {
-                    result[key] = {
+                    (result[key] as FreightOption) = {
                         ...option,
                         price: price,
                         custom_price: parseFloat(option.custom_price || option.price),
@@ -168,18 +178,13 @@ export class FreightService {
                 }
             });
 
-            console.log('✅ Transportadoras encontradas:', Object.keys(result).join(', '));
+            console.log('✅ Transportadoras encontradas:', Object.keys(result).filter(k => k !== 'isFallback').join(', '));
 
-            // Se não encontrou nenhuma, usar fallback
-            if (Object.keys(result).length === 0) {
-                console.warn('⚠️ Nenhuma transportadora válida, usando fallback');
-                return this.calculateMockWithRealFormula(request);
-            }
             return result;
+
         } catch (error) {
             console.error('❌ Erro ao calcular frete com API:', error);
-            console.log('⚠️ Usando fallback para cálculo estimado');
-            return this.calculateMockWithRealFormula(request);
+            throw error; // Propaga o erro para a UI tratar
         }
     }
 

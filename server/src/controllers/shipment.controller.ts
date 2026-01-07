@@ -273,3 +273,46 @@ export const updateShipmentStatus = async (req: Request, res: Response) => {
 
 // Export delete as "delete"
 export { deleteShipment as delete };
+
+// Calcular Frete (Proxy para Melhor Envio)
+export const calculateFreight = async (req: Request, res: Response) => {
+    try {
+        const token = process.env.VITE_MELHOR_ENVIO_TOKEN || process.env.MELHOR_ENVIO_TOKEN;
+        const isSandbox = (process.env.VITE_MELHOR_ENVIO_SANDBOX !== 'false');
+
+        if (!token) {
+            console.error('❌ Token do Melhor Envio não configurado no servidor');
+            return res.status(500).json({ error: 'Configuração de frete ausente no servidor' });
+        }
+
+        const url = isSandbox
+            ? 'https://sandbox.melhorenvio.com.br/api/v2/me/shipment/calculate'
+            : 'https://melhorenvio.com.br/api/v2/me/shipment/calculate';
+
+        console.log('📦 Calculando frete via Backend:', url);
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+                'User-Agent': `${process.env.VITE_APP_NAME || 'InflueTech'} (${process.env.VITE_APP_EMAIL || 'contato@influetech.com.br'})`
+            },
+            body: JSON.stringify(req.body)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Erro da API Melhor Envio:', response.status, errorText);
+            return res.status(response.status).send(errorText);
+        }
+
+        const data = await response.json();
+        res.json(data);
+
+    } catch (error: any) {
+        console.error('Erro ao calcular frete:', error);
+        res.status(500).json({ error: 'Erro interno ao calcular frete', details: error.message });
+    }
+};

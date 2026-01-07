@@ -11,7 +11,7 @@ import { TrackingService, TrackingData } from '../services/TrackingService';
 import { FreightService, FreightCalculationRequest, FreightCalculationResponse, FreightOption } from '../services/FreightService';
 import { ShipmentService } from '../services/ShipmentService';
 import { LabelGenerator } from '../services/LabelGenerator';
-import { LabelGenerator } from '../services/LabelGenerator';
+
 import DeclarationDataModal from '../components/DeclarationDataModal';
 import { StatusBadge, StatusOption } from '../components/StatusBadge';
 
@@ -89,9 +89,10 @@ const ShippingCalculator = () => {
 
       const results = await FreightService.calculate(request);
       setFreightResults(results);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao calcular frete:', error);
-      alert('Erro ao calcular frete. Tente novamente.');
+      const msg = error.message || 'Erro ao calcular frete. Tente novamente.';
+      alert(`Erro: ${msg}`);
       setFreightResults(null);
     } finally {
       setLoadingFreight(false);
@@ -357,27 +358,56 @@ const ShippingCalculator = () => {
       </div>
 
       {/* Aviso sobre cálculos estimados */}
-      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
-        <div className="flex items-start gap-3">
-          <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <div className="flex-1">
-            <p className="text-sm text-blue-900 dark:text-blue-100">
-              <strong>Cálculos Estimados:</strong> Os valores exibidos são estimativas baseadas na API do Melhor Envio.
-              Para obter valores exatos e descontos de até 80%, recomendamos criar uma conta gratuita em{' '}
-              <a
-                href="https://melhorenvio.com.br"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline hover:text-blue-700 dark:hover:text-blue-300 font-semibold"
-              >
-                melhorenvio.com.br
-              </a>
-            </p>
+      {/* Status da API e Avisos */}
+      {freightResults?.isFallback ? (
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-lg p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <span className="material-symbols-outlined text-amber-600 dark:text-amber-500 mt-0.5">warning</span>
+            <div className="flex-1">
+              <h4 className="font-bold text-amber-900 dark:text-amber-100 mb-1">Valores Simulados (API Indisponível)</h4>
+              <p className="text-sm text-amber-800 dark:text-amber-200">
+                O sistema não conseguiu conectar com a API do Melhor Envio (verifique o token em .env.local).
+                Os valores abaixo são <strong>apenas estimativas matemáticas</strong> e podem diferir significativamente do valor real.
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      ) : freightResults ? (
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <span className="material-symbols-outlined text-green-600 dark:text-green-500 mt-0.5">check_circle</span>
+            <div className="flex-1">
+              <h4 className="font-bold text-green-900 dark:text-green-100 mb-1">Valores da API Melhor Envio (Sandbox)</h4>
+              <p className="text-sm text-green-800 dark:text-green-200">
+                Os valores foram calculados diretamente pela API em ambiente de testes.
+                Descontos reais podem variar na produção.
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div className="flex-1">
+              <p className="text-sm text-blue-900 dark:text-blue-100">
+                <strong>Cálculos Estimados:</strong> Os valores exibidos são estimativas baseadas na API do Melhor Envio.
+                Para obter valores exatos e descontos de até 80%, recomendamos criar uma conta gratuita em{' '}
+                <a
+                  href="https://melhorenvio.com.br"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-blue-700 dark:hover:text-blue-300 font-semibold"
+                >
+                  melhorenvio.com.br
+                </a>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div>
         <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Resultados</h3>

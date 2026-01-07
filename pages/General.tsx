@@ -188,7 +188,7 @@ const EditProductModal = ({ isOpen, onClose, onSave, product }: { isOpen: boolea
         brand: companies.find(c => c.id === companyId)?.name || product.company,
         marketValue: parseFloat(price) || 0,
         condition: 'Novo',
-        status: status === 'Em análise' ? 'RECEIVED' : status,
+        status: status,
         weight: parseFloat(weight) || null,
         height: parseFloat(height) || null,
         width: parseFloat(width) || null,
@@ -312,12 +312,16 @@ const EditProductModal = ({ isOpen, onClose, onSave, product }: { isOpen: boolea
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Status</label>
-            <select value={status} onChange={e => setStatus(e.target.value as Product['status'])} className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white">
-              <option value="Em análise">Em análise</option>
-              <option value="Aguardando Envio">Aguardando Envio</option>
-              <option value="Post Agendado">Post Agendado</option>
-              <option value="Publicado">Publicado</option>
-              <option value="Vendido">Vendido</option>
+            <select
+              value={status}
+              onChange={e => setStatus(e.target.value as Product['status'])}
+              className="w-full h-11 px-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white"
+            >
+              {STATUS_OPTIONS.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
           </div>
 

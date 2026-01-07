@@ -3,8 +3,9 @@ import { calculateDateScore } from '../src/utils/dateScoring';
 
 export const BazarService = {
     async getAll() {
-        const userId = localStorage.getItem('userId');
-        if (!userId) throw new Error('User not authenticated');
+        const { data: userData } = await supabase.auth.getUser();
+        if (!userData.user) throw new Error('User not authenticated');
+        const userId = userData.user.id;
 
         const { data, error } = await supabase
             .from('BazarEvent')
@@ -17,8 +18,9 @@ export const BazarService = {
     },
 
     async create(event: any) {
-        const userId = localStorage.getItem('userId');
-        if (!userId) throw new Error('User not authenticated');
+        const { data: userData } = await supabase.auth.getUser();
+        if (!userData.user) throw new Error('User not authenticated');
+        const userId = userData.user.id;
 
         const { data, error } = await supabase
             .from('BazarEvent')
@@ -31,8 +33,9 @@ export const BazarService = {
     },
 
     async update(id: string, updates: any) {
-        const userId = localStorage.getItem('userId');
-        if (!userId) throw new Error('User not authenticated');
+        const { data: userData } = await supabase.auth.getUser();
+        if (!userData.user) throw new Error('User not authenticated');
+        const userId = userData.user.id;
 
         const { data, error } = await supabase
             .from('BazarEvent')
@@ -47,8 +50,9 @@ export const BazarService = {
     },
 
     async delete(id: string) {
-        const userId = localStorage.getItem('userId');
-        if (!userId) throw new Error('User not authenticated');
+        const { data: userData } = await supabase.auth.getUser();
+        if (!userData.user) throw new Error('User not authenticated');
+        const userId = userData.user.id;
 
         const { error } = await supabase
             .from('BazarEvent')

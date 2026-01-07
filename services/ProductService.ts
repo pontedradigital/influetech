@@ -28,9 +28,13 @@ export interface Product {
 
 export class ProductService {
     static async getAll(): Promise<Product[]> {
+        const { data: userData } = await supabase.auth.getUser();
+        if (!userData.user) return [];
+
         const { data, error } = await supabase
             .from('Product')
             .select('*')
+            .eq('userId', userData.user.id)
             .order('createdAt', { ascending: false });
 
         if (error) throw error;
@@ -38,9 +42,13 @@ export class ProductService {
     }
 
     static async getAvailableForShipping(): Promise<Product[]> {
+        const { data: userData } = await supabase.auth.getUser();
+        if (!userData.user) return [];
+
         const { data, error } = await supabase
             .from('Product')
             .select('*')
+            .eq('userId', userData.user.id)
             .eq('status', 'SOLD')
             .order('createdAt', { ascending: false });
 
@@ -49,9 +57,13 @@ export class ProductService {
     }
 
     static async getAvailableForSale(): Promise<Product[]> {
+        const { data: userData } = await supabase.auth.getUser();
+        if (!userData.user) return [];
+
         const { data, error } = await supabase
             .from('Product')
             .select('*')
+            .eq('userId', userData.user.id)
             .neq('status', 'SOLD') // Filter out sold items
             .order('createdAt', { ascending: false });
 

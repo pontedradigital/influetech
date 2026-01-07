@@ -1,16 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { compressImage, validateImageFile } from '../utils/imageCompressor';
-
-interface BugReport {
-    id: string;
-    title: string;
-    description: string;
-    images: string[];
-    status: string;
-    adminMessage?: string;
-    createdAt: string;
-    updatedAt: string;
-}
+import { BugReportService, BugReport } from '../services/BugReportService';
 
 const BugReportSection: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -31,17 +21,8 @@ const BugReportSection: React.FC = () => {
     const fetchReports = async () => {
         setLoading(true);
         try {
-            const response = await fetch('http://localhost:3001/api/bug-reports', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                setReports(data);
-            } else {
-                console.error('Failed to fetch reports:', response.status, response.statusText);
-            }
+            const data = await BugReportService.getAll();
+            setReports(data);
         } catch (error) {
             console.error('Error fetching reports:', error);
         } finally {
@@ -73,10 +54,12 @@ const BugReportSection: React.FC = () => {
 
                 const reader = new FileReader();
                 reader.onloadend = () => {
-                    previews.push(reader.result as string);
-                    if (previews.length === validFiles.length) {
-                        setImages(prev => [...prev, ...validFiles]);
-                        setImagePreviews(prev => [...prev, ...previews]);
+                    if (reader.result) {
+                        previews.push(reader.result as string);
+                        // Only set state if we processed all files to avoid partial updates/flicker
+                        if (previews.length === validFiles.length) {
+                            // Use functional updates correctly
+                        }
                     }
                 };
                 reader.readAsDataURL(compressed);
@@ -85,7 +68,53 @@ const BugReportSection: React.FC = () => {
                 alert('Erro ao processar imagem');
             }
         }
+
+        // Simpler way: just wait for all compressions and reads
+        // Since FileReader is async callback based, logic above is tricky.
+        // Let's rely on standard promise-based helper.
     };
+
+    // Helper to read file as Base64
+    const readFileAsBase64 = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    };
+
+    // Improved handleImageUpload
+    const onFilesSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        if (images.length + files.length > 3) {
+            alert('Máximo de 3 imagens permitidas');
+            return;
+        }
+
+        const newImages: File[] = [];
+        const newPreviews: string[] = [];
+
+        for (const file of files) {
+            const validation = validateImageFile(file);
+            if (!validation.valid) {
+                alert(validation.error);
+                continue;
+            }
+            try {
+                const compressed = await compressImage(file, 1);
+                const base64 = await readFileAsBase64(compressed);
+                newImages.push(compressed);
+                newPreviews.push(base64);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        setImages(prev => [...prev, ...newImages]);
+        setImagePreviews(prev => [...prev, ...newPreviews]);
+    }
+
 
     const removeImage = (index: number) => {
         setImages(prev => prev.filter((_, i) => i !== index));
@@ -103,43 +132,32 @@ const BugReportSection: React.FC = () => {
         setSubmitting(true);
 
         try {
-            const formData = new FormData();
-            formData.append('title', title);
-            formData.append('description', description);
-            images.forEach((image) => {
-                formData.append('images', image);
+            // Convert existing images (Files) to Base64 strings for storage
+            // Actually, imagePreviews usually ARE DataURLs (base64) so we can use them directly?
+            // Yes, standard FileReader.readAsDataURL returns "data:image/..."
+            // But let's be safe and convert 'images' array fresh if needed, or just use 'imagePreviews'.
+            // Issue: 'imagePreviews' might match 'images' by index.
+
+            // Re-reading files to ensure fresh base64
+            const base64Images = await Promise.all(images.map(file => readFileAsBase64(file)));
+
+            await BugReportService.create({
+                title,
+                description,
+                images: base64Images
             });
 
-            console.log('Sending bug report...', { title, description, imageCount: images.length });
+            alert('Bug reportado com sucesso!');
+            setIsModalOpen(false);
+            setTitle('');
+            setDescription('');
+            setImages([]);
+            setImagePreviews([]);
+            fetchReports();
 
-            const response = await fetch('http://localhost:3001/api/bug-reports', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: formData
-            });
-
-            console.log('Response status:', response.status);
-
-            if (response.ok) {
-                const data = await response.json();
-                console.log('Bug report created:', data);
-                alert('Bug reportado com sucesso!');
-                setIsModalOpen(false);
-                setTitle('');
-                setDescription('');
-                setImages([]);
-                setImagePreviews([]);
-                fetchReports();
-            } else {
-                const errorText = await response.text();
-                console.error('Error response:', errorText);
-                alert(`Erro ao enviar report: ${response.status}`);
-            }
         } catch (error) {
             console.error('Error submitting report:', error);
-            alert('Erro ao enviar report. Verifique o console para mais detalhes.');
+            alert('Erro ao enviar report. Verifique o console.');
         } finally {
             setSubmitting(false);
         }
@@ -224,7 +242,7 @@ const BugReportSection: React.FC = () => {
                                 <span>ID: {report.id.slice(0, 8)}</span>
                                 <span>•</span>
                                 <span>{new Date(report.createdAt).toLocaleDateString('pt-BR')}</span>
-                                {report.images.length > 0 && (
+                                {report.images && report.images.length > 0 && (
                                     <>
                                         <span>•</span>
                                         <span className="flex items-center gap-1">
@@ -297,7 +315,7 @@ const BugReportSection: React.FC = () => {
                                     type="file"
                                     accept="image/jpeg,image/jpg,image/png,image/webp"
                                     multiple
-                                    onChange={handleImageUpload}
+                                    onChange={onFilesSelected}
                                     disabled={images.length >= 3}
                                     className="hidden"
                                     id="bug-image-upload"

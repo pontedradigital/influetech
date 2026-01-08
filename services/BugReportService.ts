@@ -42,9 +42,11 @@ export const BugReportService = {
                 title: report.title,
                 description: report.description,
                 images: report.images, // Expecting array of Base64 strings or URLs
-                status: 'Acompanhando'
+                status: 'Acompanhando',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
             }])
-            .select()
+            .select() // Returning * is safer
             .single();
 
         if (error) {

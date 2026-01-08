@@ -1191,18 +1191,7 @@ export default function Products() {
     }
   };
 
-  const handleClearData = async () => {
-    if (window.confirm('TEM CERTEZA? Isso apagará TODOS os seus produtos e não pode ser desfeito. Use apenas se os dados estiverem corrompidos.')) {
-      try {
-        await ProductService.deleteAll();
-        await fetchProducts();
-        alert('Produtos limpos com sucesso!');
-      } catch (error) {
-        console.error('Erro ao limpar produtos:', error);
-        alert('Erro ao limpar produtos. Pode ser necessário permissão administrativa.');
-      }
-    }
-  };
+
 
   // Get unique values for filters
   const categories = Array.from(new Set(products.map(p => p.category))).sort();
@@ -1248,13 +1237,7 @@ export default function Products() {
       <div className="flex flex-wrap justify-between items-center gap-4">
         <h1 className="text-3xl font-black text-gray-900 dark:text-white">Produtos</h1>
         <div className="flex gap-3">
-          <button
-            onClick={handleClearData}
-            className="px-4 py-2.5 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg font-bold transition-all hover:bg-red-200 dark:hover:bg-red-900/50 flex items-center gap-2"
-          >
-            <span className="material-symbols-outlined">delete_forever</span>
-            Limpar Dados (Debug)
-          </button>
+
           <button
             onClick={() => {
               setEditingProduct(null);

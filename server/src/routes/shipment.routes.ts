@@ -8,7 +8,7 @@ router.use(authenticate);
 
 // CRUD routes
 router.post('/', shipmentController.create);
-router.post('/calculate', shipmentController.calculateFreight);
+
 router.get('/', shipmentController.list);
 router.get('/:id', shipmentController.getById);
 router.put('/:id', shipmentController.update);

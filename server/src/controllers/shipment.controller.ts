@@ -1,7 +1,7 @@
 
 import { Request, Response } from 'express';
 import db from '../db';
-import { SuperFreteService } from '../services/SuperFreteService';
+
 
 
 // Criar novo envio
@@ -279,83 +279,5 @@ export { deleteShipment as delete };
 
 // Calcular Frete (SuperFrete)
 // Calcular Frete (SuperFrete)
-export const calculateFreight = async (req: Request, res: Response) => {
-    try {
-        console.log('📦 Calculando frete via SuperFrete - Iniciando...');
 
-        const { from, to, products, options, package: bodyPackage } = req.body;
-
-        // Validar dados básicos
-        const hasPackageInfo = (products && products.length > 0) || bodyPackage;
-        if (!to?.postal_code || !hasPackageInfo) {
-            return res.status(400).json({ error: 'Dados incompletos: CEP de destino ou Pacote faltando.' });
-        }
-
-        // Mapear payload do frontend para o serviço
-        let pkg;
-        if (bodyPackage) {
-            pkg = bodyPackage;
-        } else if (products && products.length > 0) {
-            pkg = products[0];
-        }
-
-        // Helper para limpar números (ex: "0,300" -> 0.3)
-        const parseNum = (val: any) => {
-            if (typeof val === 'number') return val;
-            if (typeof val === 'string') {
-                return parseFloat(val.replace(',', '.'));
-            }
-            return 0;
-        };
-
-        const weight = parseNum(pkg.weight);
-        const height = parseNum(pkg.height);
-        const width = parseNum(pkg.width);
-        const length = parseNum(pkg.length);
-
-        if (weight <= 0 || height <= 0 || width <= 0 || length <= 0) {
-            return res.status(400).json({
-                error: 'Dimensões ou peso do pacote inválidos (devem ser maiores que zero).',
-                received: { weight, height, width, length }
-            });
-        }
-
-        const requestData = {
-            from: {
-                postal_code: from?.postal_code || '01001-000'
-            },
-            to: {
-                postal_code: to.postal_code
-            },
-            services: "1,2,17", // PAC, SEDEX, Mini Envios
-            options: {
-                own_hand: false,
-                receipt: false,
-                insurance_value: parseNum(options?.insurance_value || 0),
-                use_insurance_value: parseNum(options?.insurance_value || 0) > 0
-            },
-            package: {
-                weight,
-                height,
-                width,
-                length
-            }
-        };
-
-        console.log('📦 Payload enviado ao SuperFrete:', JSON.stringify(requestData));
-
-        const result = await SuperFreteService.calculateShipping(requestData);
-        res.json(result);
-
-    } catch (error: any) {
-        console.error('Erro detalhado ao calcular frete:', error);
-
-        // Retornar 400 se for erro da API (ex: CEP inválido) para não ser tratado como "Erro Interno"
-        if (error.message && error.message.includes('API Error')) {
-            return res.status(422).json({ error: 'Erro na API dos Correios/SuperFrete', details: error.message });
-        }
-
-        res.status(500).json({ error: 'Erro interno ao calcular frete', details: error.message });
-    }
-};
 

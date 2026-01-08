@@ -58,10 +58,8 @@ const DeleteCascadeModal: React.FC<DeleteCascadeModalProps> = ({
                                 {description}
                             </p>
                             {uidd && (
-                                <div className="p-3 bg-blue-50 dark:bg-blue-500/10 rounded-lg border border-blue-100 dark:border-blue-500/20">
-                                    <p className="text-xs text-blue-600 dark:text-blue-400 font-mono">
-                                        UIDD: {uidd}
-                                    </p>
+                                <div className="hidden">
+                                    {/* UIDD Hidden for user */}
                                 </div>
                             )}
                         </div>
@@ -69,7 +67,7 @@ const DeleteCascadeModal: React.FC<DeleteCascadeModalProps> = ({
                         <div className="space-y-4">
                             <div className="p-4 bg-red-50 dark:bg-red-500/10 rounded-lg border border-red-100 dark:border-red-500/20">
                                 <p className="text-sm text-red-700 dark:text-red-400 font-medium leading-relaxed">
-                                    Este registro faz parte de uma transação unificada (UIDD {uidd || 'Unknown'}).
+                                    Este registro faz parte de uma transação unificada.
                                     <br /><br />
                                     <strong>Ao excluir este item, você também excluirá permanentemente:</strong>
                                     <ul className="list-disc ml-4 mt-2 mb-2">

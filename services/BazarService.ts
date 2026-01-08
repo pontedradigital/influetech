@@ -24,7 +24,14 @@ export const BazarService = {
 
         const { data, error } = await supabase
             .from('BazarEvent')
-            .insert([{ ...event, userId }])
+            .insert([{
+                ...event,
+                id: crypto.randomUUID(),
+                userId,
+                status: 'PLANNED',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            }])
             .select()
             .single();
 

@@ -92,7 +92,7 @@ export default function Agenda() {
 
         const posts = scheduledPosts.filter(p => new Date(p.scheduledFor).toLocaleDateString('sv') === dateStr);
         const taskList = tasks.filter(t => t.dueDate && new Date(t.dueDate).toLocaleDateString('sv') === dateStr);
-        const bazares = bazarEvents.filter(b => new Date(b.date).toLocaleDateString('sv') === dateStr);
+        const bazares = bazarEvents.filter(b => b.date && b.date.substring(0, 10) === dateStr);
 
         return { posts, tasks: taskList, bazares };
     };

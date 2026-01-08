@@ -76,13 +76,19 @@ function BazarContent() {
         // 2. Filtra produtos: não vendidos E não usados em outros bazares
         const invalidStatuses = ['SOLD', 'VENDIDO', 'SHIPPED', 'ENVIADO', 'SENT'];
 
-        const availableProducts = allProducts.filter((p) => {
-          const isSold = invalidStatuses.includes(p.status?.toUpperCase());
+        // Total Stock (Unsold) - Used for display count
+        const stockProducts = allProducts.filter(p => !invalidStatuses.includes(p.status?.toUpperCase()));
+
+        // Available for New Bazaar (Unsold + Not In Use) - Used for Modal selection
+        const availableProducts = stockProducts.filter((p) => {
           const isInUse = productsInUse.has(p.id); // Check adherence to exclusivity rule
-          return !isSold && !isInUse;
+          return !isInUse;
         });
 
-        setTotalProductsCount(availableProducts.length);
+        // Show Total Stock count to user (less confusing than 0 if all are assigned)
+        setTotalProductsCount(stockProducts.length);
+
+        // Pass only truly available products to the Modal
         setProducts(availableProducts);
         setBazarEvents(eventsData);
       } catch (error) {

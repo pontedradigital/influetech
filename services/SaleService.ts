@@ -137,6 +137,20 @@ export const SaleService = {
         }
 
         // 3. Create Shipment Record (Envios)
+        // Fetch product name for content description
+        let productName = 'Produto';
+        if (sale.productId) {
+            const { data: productData, error: productFetchError } = await supabase
+                .from('Product')
+                .select('name')
+                .eq('id', sale.productId)
+                .single();
+
+            if (!productFetchError && productData) {
+                productName = productData.name;
+            }
+        }
+
         const shipmentPayload = {
             id: crypto.randomUUID(),
             userId: userId,
@@ -155,7 +169,7 @@ export const SaleService = {
             price: 0,
             deliveryTime: 0,
             status: 'pending',
-            contentDescription: `Venda ${sale.customerName}`,
+            contentDescription: productName, // Uses actual Product Name
             contentQuantity: 1,
             labelGenerated: 0,
             declarationGenerated: 0,

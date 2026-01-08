@@ -106,10 +106,10 @@ const ShipmentList = () => {
         setShipments(shipments.filter(s => s.id !== selectedShipment.id));
         setSelectedShipment(null);
         setIsDeleteModalOpen(false); // Close modal explicitly
-        alert('Envio excluído com sucesso!');
+        // alert('Envio excluído com sucesso!'); // Removed per user request
       } catch (error) {
         console.error('Erro ao excluir envio:', error);
-        alert('Erro ao excluir envio. Tente novamente.');
+        // alert('Erro ao excluir envio. Tente novamente.');
       }
     }
   };

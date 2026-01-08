@@ -260,6 +260,7 @@ model Sale {
   updatedAt       DateTime @updatedAt
   
   shipments       Shipment[] // Relação com envios criados a partir desta venda
+  financialTransactions FinancialTransaction[] // Relação inversa para cascata
 }
 
 model Shipment {

@@ -1,5 +1,6 @@
 import { supabase } from '../src/lib/supabase';
 import { Shipment } from '../types';
+import { SaleService } from './SaleService';
 
 export class ShipmentService {
     static async create(shipmentData: any): Promise<Shipment> {
@@ -43,6 +44,27 @@ export class ShipmentService {
     }
 
     static async delete(id: string): Promise<void> {
+        // 1. Get Shipment to check for Sale ID
+        const { data: shipment, error: fetchError } = await supabase
+            .from('Shipment')
+            .select('saleId')
+            .eq('id', id)
+            .single();
+
+        if (fetchError) {
+            console.error('Error fetching shipment for deletion:', fetchError);
+        }
+
+        // 2. Reverse Cascade: If linked to a Sale, delete the Sale (which cascades everything)
+        // This fulfills the requirement: Apagar Envio -> Apagar Venda (e, por consequência, o resto)
+        if (shipment?.saleId) {
+            console.log('Reverse Cascade: Deleting linked Sale', shipment.saleId);
+            await SaleService.delete(shipment.saleId);
+            // SaleService.delete handles shipment deletion, so we return here.
+            return;
+        }
+
+        // 3. Simple Delete (if no Sale linked)
         const { error } = await supabase
             .from('Shipment')
             .delete()

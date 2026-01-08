@@ -74,7 +74,6 @@ function BazarContent() {
         });
 
         // 2. Filtra produtos: não vendidos E não usados em outros bazares
-        setTotalProductsCount(allProducts.length);
         const invalidStatuses = ['SOLD', 'VENDIDO', 'SHIPPED', 'ENVIADO', 'SENT'];
 
         const availableProducts = allProducts.filter((p) => {
@@ -83,6 +82,7 @@ function BazarContent() {
           return !isSold && !isInUse;
         });
 
+        setTotalProductsCount(availableProducts.length);
         setProducts(availableProducts);
         setBazarEvents(eventsData);
       } catch (error) {

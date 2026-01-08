@@ -153,7 +153,7 @@ export const SaleService = {
             currency: 'BRL',
             date: new Date().toISOString(),
             status: 'COMPLETED',
-            saleId: saleId, // Link to Sale for Cascade Delete (UIDD)
+            sale_id: saleId, // Link to Sale (Database column is sale_id)
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };
@@ -250,6 +250,8 @@ export const SaleService = {
         // Explicitly delete related records to guarantee cleanup
 
         // Delete Shipments linked to this sale
+        // Shipment usually uses saleId (based on previous observations), but IF it fails, check mapping. 
+        // Assuming saleId is correct for Shipment for now as user complained about Financial specifically.
         const { error: shipmentError } = await supabase
             .from('Shipment')
             .delete()
@@ -258,10 +260,11 @@ export const SaleService = {
         if (shipmentError) console.error('Error deleting related shipments:', shipmentError);
 
         // Delete Financial Transactions linked to this sale
+        // MUST USE sale_id because of @map("sale_id") in prisma
         const { error: financialError } = await supabase
             .from('FinancialTransaction')
             .delete()
-            .eq('saleId', id);
+            .eq('sale_id', id);
 
         if (financialError) console.error('Error deleting related financial transactions:', financialError);
 

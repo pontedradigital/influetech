@@ -87,10 +87,12 @@ export default function Agenda() {
     const getEventsForDate = (date: Date | null) => {
         if (!date) return { posts: [], tasks: [], bazares: [] };
 
-        const dateStr = date.toISOString().split('T')[0];
-        const posts = scheduledPosts.filter(p => p.scheduledFor.split('T')[0] === dateStr);
-        const taskList = tasks.filter(t => t.dueDate && t.dueDate.split('T')[0] === dateStr);
-        const bazares = bazarEvents.filter(b => b.date.split('T')[0] === dateStr);
+        // Compare using local date strings (YYYY-MM-DD) to avoid UTC shifts
+        const dateStr = date.toLocaleDateString('sv'); // 'sv' locale format is YYYY-MM-DD
+
+        const posts = scheduledPosts.filter(p => new Date(p.scheduledFor).toLocaleDateString('sv') === dateStr);
+        const taskList = tasks.filter(t => t.dueDate && new Date(t.dueDate).toLocaleDateString('sv') === dateStr);
+        const bazares = bazarEvents.filter(b => new Date(b.date).toLocaleDateString('sv') === dateStr);
 
         return { posts, tasks: taskList, bazares };
     };
@@ -231,7 +233,7 @@ export default function Agenda() {
             {/* Main Content */}
             {view === 'calendar' ? (
                 <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-lg">
-                    {/* Calendar Header */}
+                    {/* ... Calendar Header ... */}
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                             {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
@@ -270,7 +272,7 @@ export default function Agenda() {
                         {/* Calendar days */}
                         {getDaysInMonth(currentMonth).map((date, index) => {
                             const events = getEventsForDate(date);
-                            const hasEvents = events.posts.length > 0 || events.tasks.length > 0;
+                            const hasEvents = events.posts.length > 0 || events.tasks.length > 0 || events.bazares.length > 0;
 
                             return (
                                 <div
@@ -346,8 +348,7 @@ export default function Agenda() {
                             );
                         })}
                     </div>
-
-                    {/* Legend */}
+                    {/* Legend part is fine */}
                     <div className="flex gap-6 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                         <div className="flex items-center gap-2">
                             <div className="w-4 h-4 bg-blue-500 rounded"></div>
@@ -371,7 +372,7 @@ export default function Agenda() {
                 <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-lg">
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">📋 Timeline</h2>
                     <div className="space-y-4">
-                        {scheduledPosts.length === 0 && tasks.length === 0 ? (
+                        {scheduledPosts.length === 0 && tasks.length === 0 && bazarEvents.length === 0 ? (
                             <div className="text-center py-12">
                                 <span className="material-symbols-outlined text-6xl text-gray-300 dark:text-gray-600 mb-4">event_busy</span>
                                 <p className="text-gray-500">Nenhum item agendado</p>
@@ -440,87 +441,126 @@ export default function Agenda() {
                                         </span>
                                     </div>
                                 ))}
+                                {bazarEvents.map(bazar => (
+                                    <div
+                                        key={bazar.id}
+                                        className="flex gap-4 p-4 bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/10 dark:to-green-900/20 rounded-lg border border-green-200 dark:border-green-800 hover:shadow-md transition-shadow cursor-pointer"
+                                        onClick={() => {
+                                            setSelectedEvent({ ...bazar, type: 'bazar' });
+                                            setShowDetailModal(true);
+                                        }}
+                                    >
+                                        <span className="material-symbols-outlined text-green-600 dark:text-green-400 text-3xl">storefront</span>
+                                        <div className="flex-1">
+                                            <h3 className="font-bold text-gray-900 dark:text-white">{bazar.title}</h3>
+                                            {bazar.description && (
+                                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{bazar.description}</p>
+                                            )}
+                                            <div className="flex gap-4 mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                                <span>📅 {new Date(bazar.date).toLocaleDateString('pt-BR')}</span>
+                                                {bazar.location && (
+                                                    <span>📍 {bazar.location}</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <span className={`px-3 py-1 rounded-full text-xs font-bold h-fit ${bazar.status === 'COMPLETED' ? 'bg-green-500 text-white' :
+                                            bazar.status === 'CANCELLED' ? 'bg-red-500 text-white' :
+                                                'bg-blue-500 text-white'
+                                            }`}>
+                                            {bazar.status === 'COMPLETED' ? '✓ Realizado' :
+                                                bazar.status === 'CANCELLED' ? '✕ Cancelado' :
+                                                    '🚀 Planejado'}
+                                        </span>
+                                    </div>
+                                ))}
                             </>
                         )}
                     </div>
                 </div>
-            )}
+            )
+            }
 
             {/* Modals */}
-            {showDetailModal && selectedEvent && (
-                <AgendamentoDetailModal
-                    event={selectedEvent}
-                    onClose={() => {
-                        setShowDetailModal(false);
-                        setSelectedEvent(null);
-                    }}
-                    onEdit={() => {
-                        setShowDetailModal(false);
-                        setShowEditModal(true);
-                    }}
-                    onDelete={async () => {
-                        if (!confirm('Tem certeza que deseja excluir este agendamento?')) return;
-
-                        const endpoint = selectedEvent.type === 'post' ? '/api/scheduled-posts' :
-                            selectedEvent.type === 'task' ? '/api/tasks' :
-                                '/api/bazares';
-
-                        try {
-                            await fetch(`${endpoint}/${selectedEvent.id}`, { method: 'DELETE' });
+            {
+                showDetailModal && selectedEvent && (
+                    <AgendamentoDetailModal
+                        event={selectedEvent}
+                        onClose={() => {
                             setShowDetailModal(false);
                             setSelectedEvent(null);
-                            fetchData();
-                        } catch (error) {
-                            console.error('Error deleting:', error);
-                            alert('Erro ao excluir agendamento');
-                        }
-                    }}
-                    onComplete={async () => {
-                        if (!confirm(selectedEvent.type === 'post' ? 'Deseja marcar este post como publicado?' : 'Deseja marcar esta tarefa como concluída?')) return;
-
-                        const endpoint = selectedEvent.type === 'post'
-                            ? `/api/scheduled-posts/${selectedEvent.id}/publish`
-                            : `/api/tasks/${selectedEvent.id}/complete`;
-
-                        const method = selectedEvent.type === 'post' ? 'POST' : 'PATCH';
-
-                        try {
-                            await fetch(endpoint, { method });
+                        }}
+                        onEdit={() => {
                             setShowDetailModal(false);
+                            setShowEditModal(true);
+                        }}
+                        onDelete={async () => {
+                            if (!confirm('Tem certeza que deseja excluir este agendamento?')) return;
+
+                            const endpoint = selectedEvent.type === 'post' ? '/api/scheduled-posts' :
+                                selectedEvent.type === 'task' ? '/api/tasks' :
+                                    '/api/bazares';
+
+                            try {
+                                await fetch(`${endpoint}/${selectedEvent.id}`, { method: 'DELETE' });
+                                setShowDetailModal(false);
+                                setSelectedEvent(null);
+                                fetchData();
+                            } catch (error) {
+                                console.error('Error deleting:', error);
+                                alert('Erro ao excluir agendamento');
+                            }
+                        }}
+                        onComplete={async () => {
+                            if (!confirm(selectedEvent.type === 'post' ? 'Deseja marcar este post como publicado?' : 'Deseja marcar esta tarefa como concluída?')) return;
+
+                            const endpoint = selectedEvent.type === 'post'
+                                ? `/api/scheduled-posts/${selectedEvent.id}/publish`
+                                : `/api/tasks/${selectedEvent.id}/complete`;
+
+                            const method = selectedEvent.type === 'post' ? 'POST' : 'PATCH';
+
+                            try {
+                                await fetch(endpoint, { method });
+                                setShowDetailModal(false);
+                                setSelectedEvent(null);
+                                fetchData();
+                            } catch (error) {
+                                console.error('Error completing:', error);
+                                alert('Erro ao concluir item');
+                            }
+                        }}
+                        products={products}
+                    />
+                )
+            }
+            {
+                showEditModal && selectedEvent && selectedEvent.type === 'post' && (
+                    <EditPostModal
+                        post={selectedEvent}
+                        onClose={() => {
+                            setShowEditModal(false);
                             setSelectedEvent(null);
                             fetchData();
-                        } catch (error) {
-                            console.error('Error completing:', error);
-                            alert('Erro ao concluir item');
-                        }
-                    }}
-                    products={products}
-                />
-            )}
-            {showEditModal && selectedEvent && selectedEvent.type === 'post' && (
-                <EditPostModal
-                    post={selectedEvent}
-                    onClose={() => {
-                        setShowEditModal(false);
-                        setSelectedEvent(null);
-                        fetchData();
-                    }}
-                    products={products}
-                />
-            )}
-            {showEditModal && selectedEvent && selectedEvent.type === 'task' && (
-                <EditTaskModal
-                    task={selectedEvent}
-                    onClose={() => {
-                        setShowEditModal(false);
-                        setSelectedEvent(null);
-                        fetchData();
-                    }}
-                />
-            )}
+                        }}
+                        products={products}
+                    />
+                )
+            }
+            {
+                showEditModal && selectedEvent && selectedEvent.type === 'task' && (
+                    <EditTaskModal
+                        task={selectedEvent}
+                        onClose={() => {
+                            setShowEditModal(false);
+                            setSelectedEvent(null);
+                            fetchData();
+                        }}
+                    />
+                )
+            }
             {showPostModal && <NewPostModal onClose={() => { setShowPostModal(false); fetchData(); }} products={products} />}
             {showTaskModal && <NewTaskModal onClose={() => { setShowTaskModal(false); fetchData(); }} />}
-        </div>
+        </div >
     );
 }
 

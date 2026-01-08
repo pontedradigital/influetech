@@ -165,6 +165,7 @@ export const SaleService = {
             height: 10,
             width: 10,
             length: 10,
+            declaredValue: Number(sale.salePrice) || 0, // Set Declared Value from Sale Price
             carrier: 'A Definir',
             price: 0,
             deliveryTime: 0,

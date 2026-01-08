@@ -232,7 +232,6 @@ export const SaleService = {
 
         if (fetchError) {
             console.error('Error fetching sale for deletion:', fetchError);
-            // Proceed to delete anyway if not found to avoid zombies
         }
 
         // 2. Revert Product Status if exists
@@ -244,13 +243,30 @@ export const SaleService = {
 
             if (productError) {
                 console.error('Error reverting product status:', productError);
-                // Non-blocking but logged
             }
         }
 
-        // 3. Delete the Sale
-        // Note: Postgres ON DELETE CASCADE will handle Shipment and FinancialTransaction
-        // provided they are linked properly (which we fixed in create).
+        // 3. Manual Software Cascade (Fail-safe)
+        // Explicitly delete related records to guarantee cleanup
+
+        // Delete Shipments linked to this sale
+        const { error: shipmentError } = await supabase
+            .from('Shipment')
+            .delete()
+            .eq('saleId', id);
+
+        if (shipmentError) console.error('Error deleting related shipments:', shipmentError);
+
+        // Delete Financial Transactions linked to this sale
+        const { error: financialError } = await supabase
+            .from('FinancialTransaction')
+            .delete()
+            .eq('saleId', id);
+
+        if (financialError) console.error('Error deleting related financial transactions:', financialError);
+
+
+        // 4. Delete the Sale
         const { error } = await supabase
             .from('Sale')
             .delete()

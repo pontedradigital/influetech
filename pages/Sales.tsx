@@ -14,6 +14,19 @@ const CONTACT_CHANNELS = [
 ];
 
 
+const SALE_STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
+    'PENDING': { label: 'Pendente', color: 'text-yellow-800 dark:text-yellow-300', bg: 'bg-yellow-100 dark:bg-yellow-900/30' },
+    'SHIPPED': { label: 'Enviado', color: 'text-cyan-800 dark:text-cyan-300', bg: 'bg-cyan-100 dark:bg-cyan-900/30' },
+    'DELIVERED': { label: 'Entregue', color: 'text-green-800 dark:text-green-300', bg: 'bg-green-100 dark:bg-green-900/30' },
+    'CANCELLED': { label: 'Cancelado', color: 'text-red-800 dark:text-red-300', bg: 'bg-red-100 dark:bg-red-900/30' },
+};
+
+// Format options for StatusBadge
+const STATUS_OPTIONS: StatusOption[] = Object.entries(SALE_STATUS_MAP).map(([value, info]) => ({
+    value,
+    label: info.label,
+    color: `${info.bg} ${info.color}`
+}));
 
 // New Sale Modal
 const NewSaleModal = ({ isOpen, onClose, onSave }: {
@@ -715,19 +728,7 @@ export default function Sales() {
         }
     };
 
-    const SALE_STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
-        'PENDING': { label: 'Pendente', color: 'text-yellow-800 dark:text-yellow-300', bg: 'bg-yellow-100 dark:bg-yellow-900/30' },
-        'SHIPPED': { label: 'Enviado', color: 'text-cyan-800 dark:text-cyan-300', bg: 'bg-cyan-100 dark:bg-cyan-900/30' },
-        'DELIVERED': { label: 'Entregue', color: 'text-green-800 dark:text-green-300', bg: 'bg-green-100 dark:bg-green-900/30' },
-        'CANCELLED': { label: 'Cancelado', color: 'text-red-800 dark:text-red-300', bg: 'bg-red-100 dark:bg-red-900/30' },
-    };
 
-    // Format options for StatusBadge
-    const STATUS_OPTIONS: StatusOption[] = Object.entries(SALE_STATUS_MAP).map(([value, info]) => ({
-        value,
-        label: info.label,
-        color: `${info.bg} ${info.color}`
-    }));
 
     const getStatusInfo = (status: string) => {
         return SALE_STATUS_MAP[status] || { label: status, color: 'text-gray-800', bg: 'bg-gray-100' };

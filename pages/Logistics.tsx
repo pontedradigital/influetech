@@ -5,7 +5,7 @@ import { Shipment } from '../types';
 import { useInfluencer } from '../context/InfluencerContext';
 import NewShipmentModal from '../components/NewShipmentModal';
 import ShippingLabelGenerator from '../components/ShippingLabelGenerator';
-import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
+import DeleteCascadeModal from '../components/DeleteCascadeModal';
 import TrackingCodeModal from '../components/TrackingCodeModal';
 import { TrackingService, TrackingData } from '../services/TrackingService';
 
@@ -301,7 +301,7 @@ const ShipmentList = () => {
         initialData={selectedShipment ? getShipmentDetails(selectedShipment) : undefined}
       />
 
-      <DeleteConfirmationModal
+      <DeleteCascadeModal
         isOpen={isDeleteModalOpen}
         onClose={() => {
           setIsDeleteModalOpen(false);
@@ -309,7 +309,12 @@ const ShipmentList = () => {
         }}
         onConfirm={handleConfirmDelete}
         title="Excluir Envio"
-        message={`Tem certeza que deseja excluir o envio de "${selectedShipment?.contentDescription}" para ${selectedShipment?.recipientName}? Esta ação não pode ser desfeita.`}
+        description={
+          <span>
+            Tem certeza que deseja excluir o envio de "<strong>{selectedShipment?.contentDescription}</strong>" para {selectedShipment?.recipientName}?
+          </span>
+        }
+        uidd={(selectedShipment as any)?.saleId || undefined}
       />
 
       <TrackingCodeModal

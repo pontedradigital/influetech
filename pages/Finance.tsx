@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { FinancialService } from '../services/FinancialService';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, Legend } from 'recharts';
 
-import { TransactionModal, DeleteConfirmModal } from '../components/Financial/TransactionModals';
+import { TransactionModal } from '../components/Financial/TransactionModals';
+import DeleteCascadeModal from '../components/DeleteCascadeModal';
 import { GoalsSection } from '../components/Financial/GoalsSection';
 import { RecurringExpenseList } from '../components/Financial/RecurringExpenseList';
 import { MonthComparator } from '../components/Financial/MonthComparator';
@@ -105,7 +106,20 @@ export default function Finance() {
   return (
     <div className="space-y-8 pb-20">
       {/* --- Global Modals --- */}
-      <DeleteConfirmModal isOpen={!!deletingId} onClose={() => setDeletingId(null)} onConfirm={confirmDelete} />
+      <DeleteCascadeModal
+        isOpen={!!deletingId}
+        onClose={() => setDeletingId(null)}
+        onConfirm={confirmDelete}
+        title="Excluir Transação"
+        description={
+          <span>
+            Tem certeza que deseja excluir esta transação?
+            <br />
+            <strong>{transactions.find(t => t.id === deletingId)?.name}</strong>
+          </span>
+        }
+        uidd={transactions.find(t => t.id === deletingId)?.saleId || undefined}
+      />
       <TransactionModal isOpen={showIncomeModal} onClose={() => setShowIncomeModal(false)} type="INCOME" onSuccess={refreshData} />
       <TransactionModal isOpen={showExpenseModal} onClose={() => setShowExpenseModal(false)} type="EXPENSE" onSuccess={refreshData} />
       <TaxSimulatorModal isOpen={showTaxModal} onClose={() => setShowTaxModal(false)} onTransactionCreated={refreshData} />

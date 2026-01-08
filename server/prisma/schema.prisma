@@ -169,6 +169,10 @@ model FinancialTransaction {
   relatedId   String?  // ID of the Goal or RecurringExpense
   relatedType String?  // GOAL_FUNDING, RECURRING_EXPENSE
 
+  // UIDD Connection (Sale ID)
+  saleId      String?  @map("sale_id") //@db.Uuid if native types used, but string ok for prisma default
+  sale        Sale?    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

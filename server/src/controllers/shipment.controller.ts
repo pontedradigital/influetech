@@ -1,6 +1,7 @@
 
 import { Request, Response } from 'express';
 import db from '../db';
+import { CascadeDeleteService } from '../services/cascade-delete.service';
 
 
 
@@ -177,22 +178,30 @@ export const update = async (req: Request, res: Response) => {
     }
 };
 
-// Deletar envio
+// Deletar envio (Cascata via UIDD)
 export const deleteShipment = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const userId = (req as any).user.id;
 
-        // Verify ownership
+        // Verify ownership and get UIDD if available
         const existing = await db.shipment.findUnique({ where: { id } });
         if (!existing) return res.status(404).json({ error: 'Shipment not found' });
         if (existing.userId !== userId) return res.status(403).json({ error: 'Acesso negado' });
 
-        await db.shipment.delete({
-            where: { id }
-        });
+        // Identify UIDD
+        const uidd = existing.saleId;
 
-        res.status(204).send();
+        if (uidd) {
+            // Se tem UIDD (venda pai), deletar tudo via cascata
+            await CascadeDeleteService.deleteByUIDD(uidd, userId);
+            res.json({ message: 'Envio e registros relacionados excluídos (Cascata UIDD)' });
+        } else {
+            // Se é um envio órfão ou sem venda (ex: envio avulso), deletar apenas ele
+            await db.shipment.delete({ where: { id } });
+            res.status(204).send();
+        }
+
     } catch (error: any) {
         if (error.code === 'P2025') return res.status(404).json({ error: 'Shipment not found' });
         console.error('Error deleting shipment:', error);

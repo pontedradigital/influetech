@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import db from '../db';
 import { v4 as uuidv4 } from 'uuid';
+import { CascadeDeleteService } from '../services/cascade-delete.service';
 
 // List all sales
 export const listSales = async (req: Request, res: Response) => {
@@ -161,7 +162,8 @@ export const createSale = async (req: Request, res: Response) => {
                     date: saleDate,
                     category: 'Vendas',
                     status: 'COMPLETED',
-                    userId: finalUserId
+                    userId: finalUserId,
+                    saleId: newSale.id // UIDD Link
                 }
             });
 
@@ -255,53 +257,24 @@ export const updateSale = async (req: Request, res: Response) => {
     }
 };
 
-// Delete sale (with cascade delete for related records)
+// Delete sale (with cascade delete for related records via UIDD)
 export const deleteSale = async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { id } = req.params; // This is the UIDD
     const userId = (req as any).user.id;
 
     try {
-        // 1. Get sale info
-        const sale = await db.sale.findUnique({ where: { id } });
-
-        if (!sale) {
-            return res.status(404).json({ error: 'Venda não encontrada' });
-        }
-
-        if (sale.userId !== userId) {
-            return res.status(403).json({ error: 'Acesso negado' });
-        }
-
-        // 2. Delete related Financial Transactions (Manual)
-        // Pattern: Contains customer name and Category 'Vendas'
-        // This is a bit risky if customer has same name, but was standard logic.
-        const transactionPattern = sale.customerName; // contains logic in prisma
-
-        const deletedTransactions = await db.financialTransaction.deleteMany({
-            where: {
-                description: { contains: transactionPattern },
-                type: 'INCOME',
-                category: 'Vendas',
-                userId: sale.userId
-            }
-        });
-
-        // 3. Delete Sale (Cascade deletes Shipment automatically)
-        // Schema: Shipment sale Sale? @relation(fields: [saleId], references: [id], onDelete: Cascade)
-
-        await db.sale.delete({
-            where: { id }
-        });
-
-        console.log(`Venda ${id} excluída com sucesso`);
+        await CascadeDeleteService.deleteByUIDD(id, userId);
 
         res.json({
-            message: 'Venda e registros relacionados excluídos com sucesso',
-            excluidos: {
-                transacoes: deletedTransactions.count
-            }
+            message: 'Venda e registros relacionados excluídos com sucesso (Cascata UIDD)',
         });
-    } catch (error) {
+    } catch (error: any) {
+        if (error.message.includes('não encontrada')) {
+            return res.status(404).json({ error: error.message });
+        }
+        if (error.message.includes('Acesso negado')) {
+            return res.status(403).json({ error: error.message });
+        }
         console.error('Erro ao excluir venda:', error);
         res.status(500).json({ error: 'Erro ao excluir venda' });
     }

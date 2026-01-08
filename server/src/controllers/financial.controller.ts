@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import db from '../db';
+import { CascadeDeleteService } from '../services/cascade-delete.service';
 
 // List all transactions with optional month/year filter
 export const listTransactions = async (req: Request, res: Response) => {
@@ -150,19 +151,22 @@ export const deleteTransaction = async (req: Request, res: Response) => {
         const existing = await db.financialTransaction.findUnique({ where: { id } });
         if (!existing) return res.status(404).json({ error: 'Transação não encontrada' });
         if (existing.userId !== userId) return res.status(403).json({ error: 'Acesso negado' });
+
+        // CHECK FOR UIDD (Sale ID)
+        const txAny = existing as any; // Cast to access saleId until types generated
+        if (txAny.saleId) {
+            // It belongs to a UIDD chain -> Delete everything
+            await CascadeDeleteService.deleteByUIDD(txAny.saleId, userId);
+            return res.json({ message: 'Transação e registros relacionados (Venda/Envio) excluídos via UIDD' });
+        }
+
+        // Standard Logic for non-UIDD transactions
         await db.$transaction(async (tx: any) => {
             // 1. Get transaction
             const transaction = await tx.financialTransaction.findUnique({ where: { id } });
             if (!transaction) throw new Error('Transação não encontrada');
 
             // 2. Reverse Goal Funding if applicable
-            // Prisma schema usually doesn't have relatedType/relatedId on FinancialTransaction unless added manually.
-            // If they exist in schema, we use them. If not, this code block might fail if those fields are missing in type definition.
-            // Assuming they exist as per original code logic, but might be 'optional' fields not in main type if not in schema.
-            // Let's assume schema matches logic or use extensive 'any' casting if schema is loose.
-            // Better: Check if fields exist. Since I saw schema.prisma earlier (view_file), let's trust it has them or handle gracefully.
-            // Wait, schema view earlier was partial. I'll assume they exist.
-
             // Using 'any' for transaction to access potential loosely typed fields if not in generated client yet
             const txData = transaction as any;
 
@@ -184,8 +188,6 @@ export const deleteTransaction = async (req: Request, res: Response) => {
 
             // 3. Cascade Delete: Recurring Expense
             if (txData.relatedType === 'RECURRING_EXPENSE' && txData.relatedId) {
-                // Check if model exists in prisma client (RecurringExpense)
-                // Assuming yes based on original code
                 try {
                     await tx.recurringExpense.delete({ where: { id: txData.relatedId } });
                 } catch (e) { /* Ignore if already deleted */ }
@@ -206,6 +208,9 @@ export const deleteTransaction = async (req: Request, res: Response) => {
     } catch (error: any) {
         if (error.message === 'Transação não encontrada' || error.code === 'P2025') {
             return res.status(404).json({ error: 'Transação não encontrada' });
+        }
+        if (error.message && error.message.includes('Acesso negado')) {
+            return res.status(403).json({ error: error.message });
         }
         console.error('Error deleting transaction:', error);
         res.status(500).json({ error: `Erro ao excluir transação: ${error.message}` });

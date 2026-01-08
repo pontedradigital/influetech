@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { StatusBadge, StatusOption } from '../components/StatusBadge';
 import { SaleService } from '../services/SaleService';
 import { ProductService } from '../services/ProductService';
+import DeleteCascadeModal from '../components/DeleteCascadeModal';
 
 const CONTACT_CHANNELS = [
     'WhatsApp',
@@ -12,40 +13,7 @@ const CONTACT_CHANNELS = [
     'Facebook Messenger'
 ];
 
-// Delete Confirmation Modal
-const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, title, message }: {
-    isOpen: boolean;
-    onClose: () => void;
-    onConfirm: () => void;
-    title: string;
-    message: string
-}) => {
-    if (!isOpen) return null;
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-[#1A202C] w-full max-w-md rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
-                <div className="p-6">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                            <span className="material-symbols-outlined text-red-600 dark:text-red-400">warning</span>
-                        </div>
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">{title}</h3>
-                    </div>
-                    <p className="text-gray-600 dark:text-gray-300 mb-6">{message}</p>
-                    <div className="flex gap-3">
-                        <button onClick={onClose} className="flex-1 h-11 rounded-lg border border-gray-200 dark:border-gray-700 font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                            Cancelar
-                        </button>
-                        <button onClick={onConfirm} className="flex-1 h-11 rounded-lg bg-red-600 font-bold text-white hover:bg-red-700 transition-colors">
-                            Excluir
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
 
 // New Sale Modal
 const NewSaleModal = ({ isOpen, onClose, onSave }: {
@@ -767,12 +735,19 @@ export default function Sales() {
 
     return (
         <div className="flex flex-col gap-6">
-            <DeleteConfirmModal
+            <DeleteCascadeModal
                 isOpen={!!deletingSaleId}
                 onClose={() => setDeletingSaleId(null)}
                 onConfirm={confirmDelete}
                 title="Excluir Venda"
-                message="Tem certeza que deseja excluir esta venda?"
+                description={
+                    <span>
+                        Tem certeza que deseja excluir esta venda?
+                        <br />
+                        <strong>Cliente:</strong> {sales.find(s => s.id === deletingSaleId)?.customerName}
+                    </span>
+                }
+                uidd={deletingSaleId || undefined}
             />
 
             <SaleDetailsModal

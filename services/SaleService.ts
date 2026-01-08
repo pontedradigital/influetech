@@ -153,6 +153,7 @@ export const SaleService = {
             currency: 'BRL',
             date: new Date().toISOString(),
             status: 'COMPLETED',
+            saleId: saleId, // Link to Sale for Cascade Delete (UIDD)
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };
@@ -222,8 +223,34 @@ export const SaleService = {
     },
 
     async delete(id: string) {
-        // Optional: Should we revert product status if sale is deleted?
-        // For now, let's just delete the sale as per strict equivalent logic.
+        // 1. Get Sale to identify Product
+        const { data: sale, error: fetchError } = await supabase
+            .from('Sale')
+            .select('productId')
+            .eq('id', id)
+            .single();
+
+        if (fetchError) {
+            console.error('Error fetching sale for deletion:', fetchError);
+            // Proceed to delete anyway if not found to avoid zombies
+        }
+
+        // 2. Revert Product Status if exists
+        if (sale?.productId) {
+            const { error: productError } = await supabase
+                .from('Product')
+                .update({ status: 'RECEIVED' }) // Revert to "Em análise"
+                .eq('id', sale.productId);
+
+            if (productError) {
+                console.error('Error reverting product status:', productError);
+                // Non-blocking but logged
+            }
+        }
+
+        // 3. Delete the Sale
+        // Note: Postgres ON DELETE CASCADE will handle Shipment and FinancialTransaction
+        // provided they are linked properly (which we fixed in create).
         const { error } = await supabase
             .from('Sale')
             .delete()

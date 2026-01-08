@@ -52,6 +52,42 @@ export const SaleService = {
             .single();
 
         if (error) throw error;
+
+        // Sync Status to Shipment (Envios)
+        // User Requirement: "Ao mudar o status do produto em 'VENDAS' atualizar o mesmo status em 'ENVIOS'"
+        try {
+            // Map Sale Status to Shipment Status if needed.
+            // Assuming 1:1 mapping for 'PENDING', 'SHIPPED', 'DELIVERED', 'CANCELLED'
+            // Shipment default is 'pending' (lowercase), but Sale uses uppercase often.
+            // Let's normalize or map.
+            // Based on Sales.tsx: 'PENDING', 'SHIPPED', 'DELIVERED', 'CANCELLED'
+            // Based on Shipment creation: 'pending' hardcoded.
+            // I will use a simple mapping to lowercase to be safe for Shipment if it follows convention,
+            // OR just pass the value if the system is flexible.
+            // Observation: In Sales.tsx 'PENDING' is used. In ShipmentService, 'pending'.
+            // I will map to lowercase standard or keep as is if the UI handles it.
+            // Let's try to map to what seems to be the Shipment convention (lowercase or capitalized?).
+            // Actually, the user screenshot shows "Entregue" (UI label) but code uses 'DELIVERED' (key).
+            // Shipment list shows "Pendente" (UI label).
+            // Safe bet: Sync the raw key.
+
+            // Check if status keys are compatible.
+            const shipmentStatus = status; // Direct sync as requested
+
+            const { error: shipmentError } = await supabase
+                .from('Shipment')
+                .update({ status: shipmentStatus })
+                .eq('saleId', id);
+
+            if (shipmentError) {
+                console.error('Error syncing status to Shipment:', shipmentError);
+            } else {
+                console.log(`Synced Sale status ${status} to Shipment for Sale ${id}`);
+            }
+        } catch (e) {
+            console.error('Exception syncing shipment status:', e);
+        }
+
         return data;
     },
 

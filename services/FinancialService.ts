@@ -1,4 +1,5 @@
 import { supabase } from '../src/lib/supabase';
+import { SaleService } from './SaleService';
 
 export interface FinancialTransaction {
     id: string;
@@ -153,6 +154,28 @@ export const FinancialService = {
     },
 
     async delete(id: string) {
+        // 1. Get Transaction to check for Sale ID
+        // Note: In Prisma/DB it is 'sale_id', but Supabase checks the column name directly.
+        // We need to confirm if the SELECT returns 'sale_id' or camelCase if we configured it.
+        // Based on previous create(), we used 'sale_id' in insert, so column is 'sale_id'.
+        const { data: transaction, error: fetchError } = await supabase
+            .from('FinancialTransaction')
+            .select('sale_id')
+            .eq('id', id)
+            .single();
+
+        if (fetchError) {
+            console.error('Error fetching transaction for deletion:', fetchError);
+        }
+
+        // 2. Reverse Cascade: If linked to a Sale, delete the Sale
+        // This fulfills the requirement: Apagar Financeiro -> Apagar Venda
+        if (transaction?.sale_id) {
+            console.log('Reverse Cascade: Deleting linked Sale from Financial', transaction.sale_id);
+            await SaleService.delete(transaction.sale_id);
+            return;
+        }
+
         const { error } = await supabase
             .from('FinancialTransaction')
             .delete()

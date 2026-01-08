@@ -38,7 +38,7 @@ export const CascadeDeleteService = {
             if (sale.productId) {
                 await tx.product.update({
                     where: { id: sale.productId },
-                    data: { status: 'PUBLISHED' } // Volta para disponível
+                    data: { status: 'RECEIVED' } // Volta para 'Em análise' conforme solicitado
                 });
             }
 

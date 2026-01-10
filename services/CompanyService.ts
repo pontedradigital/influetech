@@ -18,7 +18,7 @@ export const CompanyService = {
     async getMediaKitBrands() {
         const { data, error } = await supabase
             .from('Company')
-            .select('id, name, logoUrl, partnershipStatus, backgroundColor') // Fetch minimal fields
+            .select('id, name, logoUrl, partnershipStatus') // Removed backgroundColor as it doesn't exist
             .in('partnershipStatus', ['Aceita', 'Iniciada'])
             .order('name');
 

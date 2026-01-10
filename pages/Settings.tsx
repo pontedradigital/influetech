@@ -22,14 +22,14 @@ const Nav = () => {
   ];
 
   return (
-    <div className="flex border-b border-gray-200 dark:border-gray-700 mb-8">
+    <div className="flex flex-wrap border-b border-gray-200 dark:border-gray-700 mb-8">
       {tabs.map(t => {
         const isActive = loc.pathname === t.path;
         return (
           <Link
             key={t.name}
             to={t.path}
-            className={`px-6 py-4 text-sm font-bold border-b-2 transition-colors ${isActive ? 'border-primary text-gray-900 dark:text-white' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            className={`px-3 py-3 md:px-6 md:py-4 text-xs md:text-sm font-bold border-b-2 transition-colors ${isActive ? 'border-primary text-gray-900 dark:text-white' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
           >
             {t.name}
           </Link>

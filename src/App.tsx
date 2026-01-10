@@ -40,6 +40,7 @@ import AdminBugReports from '../pages/AdminBugReports';
 import SetPassword from '../pages/SetPassword';
 import ResetPassword from '../pages/ResetPassword';
 import VerifyEmail from '../pages/VerifyEmail';
+import AdminAnnouncements from '../pages/AdminAnnouncements';
 import TutorialModal from '../components/TutorialModal';
 
 const SidebarItem: React.FC<{ to: string; icon: string; label: string; active: boolean; onClick?: () => void }> = ({ to, icon, label, active, onClick }) => (
@@ -305,6 +306,7 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         { to: '/area-administrativa/planos', icon: 'price_check', label: 'Planos e Valores' },
         { to: '/area-administrativa/marcas', icon: 'radar', label: 'Gestão de Marcas' },
         { to: '/area-administrativa/bug-reports', icon: 'bug_report', label: 'Bug Reports' },
+        { to: '/area-administrativa/avisos', icon: 'campaign', label: 'Avisos Dashboard' },
         { to: '/app', icon: 'arrow_back', label: 'Voltar para Plataforma' },
     ];
 
@@ -550,6 +552,7 @@ const AppContent = () => {
                                 <Route path="planos" element={<AdminPlans />} />
                                 <Route path="marcas" element={<AdminBrands />} />
                                 <Route path="bug-reports" element={<AdminBugReports />} />
+                                <Route path="avisos" element={<AdminAnnouncements />} />
                             </Routes>
                         </AdminLayout>
                     </PrivateRoute>

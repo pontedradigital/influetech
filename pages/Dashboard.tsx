@@ -100,11 +100,18 @@ const Dashboard = () => {
       {featuredInsight && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Hero Card */}
-          <div className={`lg:col-span-2 rounded-2xl p-8 relative overflow-hidden shadow-xl flex flex-col justify-center text-white ${featuredInsight.level === 'HIGH' ? 'bg-gradient-to-r from-red-500 to-orange-500' : 'bg-gradient-to-r from-indigo-500 to-purple-600'}`}>
+          <div className={`lg:col-span-2 rounded-2xl p-8 relative overflow-hidden shadow-xl flex flex-col justify-center text-white ${featuredInsight.level === 'HIGH' ? 'bg-gradient-to-r from-red-500 to-orange-500' :
+              featuredInsight.type === 'INFO' ? 'bg-gradient-to-r from-blue-600 to-cyan-500' :
+                'bg-gradient-to-r from-indigo-500 to-purple-600'
+            }`}>
             <div className="relative z-10">
               <div className="flex items-center gap-3 mb-4 opacity-90">
                 <span className="material-symbols-outlined text-3xl">{getInsightIcon(featuredInsight.type)}</span>
-                <span className="font-bold text-sm uppercase tracking-widest">{featuredInsight.type === 'ALERT' ? 'Atenção Necessária' : 'Sugestão Inteligente'}</span>
+                <span className="font-bold text-sm uppercase tracking-widest">
+                  {featuredInsight.type === 'ALERT' ? 'Atenção Necessária' :
+                    featuredInsight.type === 'INFO' ? 'Informativo' :
+                      'Sugestão Inteligente'}
+                </span>
               </div>
               <h2 className="text-3xl md:text-4xl font-extrabold mb-4 leading-tight">{featuredInsight.title}</h2>
               <p className="text-lg opacity-95 max-w-2xl">{featuredInsight.message}</p>

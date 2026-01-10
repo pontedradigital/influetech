@@ -187,10 +187,12 @@ export default function Agenda() {
                 <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-6 rounded-xl text-white shadow-lg">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-orange-100 text-sm font-medium">Alertas Ativos</p>
-                            <p className="text-3xl font-black mt-1">{unreadAlerts.length}</p>
+                            <p className="text-orange-100 text-sm font-medium">Bazar Ativos</p>
+                            <p className="text-3xl font-black mt-1">
+                                {bazarEvents.filter(b => b.status === 'PLANNED' || b.status === 'CONFIRMED').length}
+                            </p>
                         </div>
-                        <span className="material-symbols-outlined text-5xl opacity-20">notifications</span>
+                        <span className="material-symbols-outlined text-5xl opacity-20">storefront</span>
                     </div>
                 </div>
                 <div className="bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-xl text-white shadow-lg">

@@ -61,17 +61,35 @@ export default function Agenda() {
 
     const generateAlerts = async () => {
         try {
+            let userId;
             const { data } = await supabase.auth.getUser();
-            const userId = data.user?.id;
+            if (data.user) {
+                userId = data.user.id;
+            } else {
+                const localUser = localStorage.getItem('user');
+                if (localUser) userId = JSON.parse(localUser).id;
+                else userId = localStorage.getItem('userId');
+            }
+
+            if (!userId) {
+                alert('Erro: Usuário não autenticado. Não é possível gerar alertas.');
+                return;
+            }
+
             // Mantemos a chamada de API para geração, pois pode haver lógica de backend complexa
-            await fetch(`/api/alerts/generate`, {
+            const res = await fetch(`/api/alerts/generate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId })
             });
+
+            if (!res.ok) throw new Error('Falha na resposta do servidor');
+
             fetchData();
+            alert('Alertas gerados com sucesso!');
         } catch (error) {
             console.error('Error generating alerts:', error);
+            alert('Erro ao gerar alertas. Verifique o console.');
         }
     };
 

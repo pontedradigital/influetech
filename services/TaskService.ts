@@ -1,8 +1,29 @@
 import { supabase } from '../src/lib/supabase';
 
+function generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
 export const TaskService = {
     async getAll() {
-        const userId = localStorage.getItem('userId');
+        let userId;
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData.user) {
+            userId = userData.user.id;
+        } else {
+            const localUser = localStorage.getItem('user');
+            if (localUser) {
+                const parsed = JSON.parse(localUser);
+                userId = parsed.id || localStorage.getItem('userId');
+            } else {
+                userId = localStorage.getItem('userId');
+            }
+        }
+
         if (!userId) throw new Error('User not authenticated');
 
         const { data, error } = await supabase
@@ -16,12 +37,31 @@ export const TaskService = {
     },
 
     async create(task: any) {
-        const userId = localStorage.getItem('userId');
+        let userId;
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData.user) {
+            userId = userData.user.id;
+        } else {
+            const localUser = localStorage.getItem('user');
+            if (localUser) {
+                const parsed = JSON.parse(localUser);
+                userId = parsed.id || localStorage.getItem('userId');
+            } else {
+                userId = localStorage.getItem('userId');
+            }
+        }
+
         if (!userId) throw new Error('User not authenticated');
+
+        const newId = generateUUID();
 
         const { data, error } = await supabase
             .from('Task')
-            .insert([{ ...task, userId }])
+            .insert([{
+                ...task,
+                id: newId,
+                userId
+            }])
             .select()
             .single();
 
@@ -30,14 +70,10 @@ export const TaskService = {
     },
 
     async update(id: string, updates: any) {
-        const userId = localStorage.getItem('userId');
-        if (!userId) throw new Error('User not authenticated');
-
         const { data, error } = await supabase
             .from('Task')
             .update(updates)
             .eq('id', id)
-            .eq('userId', userId)
             .select()
             .single();
 
@@ -46,14 +82,10 @@ export const TaskService = {
     },
 
     async delete(id: string) {
-        const userId = localStorage.getItem('userId');
-        if (!userId) throw new Error('User not authenticated');
-
         const { error } = await supabase
             .from('Task')
             .delete()
-            .eq('id', id)
-            .eq('userId', userId);
+            .eq('id', id);
 
         if (error) throw error;
         return { success: true };

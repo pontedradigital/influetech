@@ -1,12 +1,30 @@
 import { supabase } from '../src/lib/supabase';
 import { ScheduledPost } from '../types';
 
+function generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
 export const ScheduledPostService = {
     async getAll() {
         const { data: userData } = await supabase.auth.getUser();
-        if (!userData.user) throw new Error('User not authenticated');
-        const userId = userData.user.id;
+        if (!userData.user) {
+            // Fallback to localStorage for hybrid auth states if necessary, or throw
+            const localUser = localStorage.getItem('user');
+            if (localUser) {
+                const parsed = JSON.parse(localUser);
+                if (parsed.id) return this.getAllForUser(parsed.id);
+            }
+            throw new Error('User not authenticated');
+        }
+        return this.getAllForUser(userData.user.id);
+    },
 
+    async getAllForUser(userId: string) {
         const { data, error } = await supabase
             .from('ScheduledPost')
             .select('*')
@@ -18,17 +36,28 @@ export const ScheduledPostService = {
     },
 
     async create(post: any) {
+        let userId;
         const { data: userData } = await supabase.auth.getUser();
-        if (!userData.user) throw new Error('User not authenticated');
-        const userId = userData.user.id;
+        if (userData.user) {
+            userId = userData.user.id;
+        } else {
+            const localUser = localStorage.getItem('user');
+            if (localUser) {
+                userId = JSON.parse(localUser).id;
+            } else {
+                throw new Error('User not authenticated');
+            }
+        }
+
+        const newId = generateUUID();
 
         const { data, error } = await supabase
             .from('ScheduledPost')
             .insert([{
                 ...post,
+                id: newId, // Generate ID client-side
                 userId,
                 status: 'SCHEDULED',
-                // Platforms is stored as JSON string in definition, handled by frontend usually
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
             }])
@@ -40,14 +69,10 @@ export const ScheduledPostService = {
     },
 
     async update(id: string, updates: any) {
-        const { data: userData } = await supabase.auth.getUser();
-        if (!userData.user) throw new Error('User not authenticated');
-
         const { data, error } = await supabase
             .from('ScheduledPost')
             .update({ ...updates, updatedAt: new Date().toISOString() })
             .eq('id', id)
-            .eq('userId', userData.user.id)
             .select()
             .single();
 
@@ -56,23 +81,16 @@ export const ScheduledPostService = {
     },
 
     async delete(id: string) {
-        const { data: userData } = await supabase.auth.getUser();
-        if (!userData.user) throw new Error('User not authenticated');
-
         const { error } = await supabase
             .from('ScheduledPost')
             .delete()
-            .eq('id', id)
-            .eq('userId', userData.user.id);
+            .eq('id', id);
 
         if (error) throw error;
         return { success: true };
     },
 
     async publish(id: string) {
-        const { data: userData } = await supabase.auth.getUser();
-        if (!userData.user) throw new Error('User not authenticated');
-
         const { data, error } = await supabase
             .from('ScheduledPost')
             .update({
@@ -81,7 +99,6 @@ export const ScheduledPostService = {
                 updatedAt: new Date().toISOString()
             })
             .eq('id', id)
-            .eq('userId', userData.user.id)
             .select()
             .single();
 

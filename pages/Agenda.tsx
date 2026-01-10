@@ -59,44 +59,7 @@ export default function Agenda() {
         }
     };
 
-    const generateAlerts = async () => {
-        try {
-            let userId;
-            const { data } = await supabase.auth.getUser();
-            if (data.user) {
-                userId = data.user.id;
-            } else {
-                const localUser = localStorage.getItem('user');
-                if (localUser) userId = JSON.parse(localUser).id;
-                else userId = localStorage.getItem('userId');
-            }
 
-            if (!userId) {
-                alert('Erro: Usuário não autenticado. Não é possível gerar alertas.');
-                return;
-            }
-
-            // Mantemos a chamada de API para geração, pois pode haver lógica de backend complexa
-            const res = await fetch(`/api/alerts/generate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId })
-            });
-
-            if (!res.ok) {
-                const errData = await res.json().catch(() => ({}));
-                console.error('Server Error Details:', JSON.stringify(errData, null, 2));
-                throw new Error(errData.details || errData.error || 'Falha na resposta do servidor');
-            }
-
-            fetchData();
-            alert('Alertas gerados com sucesso!');
-        } catch (error: any) {
-            console.error('Error generating alerts:', error);
-            // Show the actual error message in the alert if possible
-            alert(`Erro ao gerar alertas: ${error.message}`);
-        }
-    };
 
     const unreadAlerts = alerts.filter(a => !a.isRead);
     const pendingTasks = tasks.filter(t => t.status !== 'DONE');
@@ -150,14 +113,7 @@ export default function Agenda() {
                     <p className="text-gray-500">Organize seus posts, tarefas e produtos de forma visual</p>
                 </div>
                 <div className="flex gap-2 flex-wrap">
-                    <button
-                        onClick={generateAlerts}
-                        className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-bold shadow-lg shadow-orange-500/20 transition-all active:scale-95"
-                        title="Gerar alertas automáticos"
-                    >
-                        <span className="material-symbols-outlined">notifications_active</span>
-                        Gerar Alertas
-                    </button>
+
                     <button
                         onClick={() => setShowPostModal(true)}
                         className="flex items-center gap-2 bg-primary hover:bg-primary-600 text-white px-4 py-2 rounded-lg font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"

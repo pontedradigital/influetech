@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { ScheduledPost, Task, Alert, Product } from '../types';
+import { ScheduledPostService } from '../services/ScheduledPostService';
+import { TaskService } from '../services/TaskService';
+import { AlertService } from '../services/AlertService';
+import { ProductService } from '../services/ProductService';
+import { BazarService } from '../services/BazarService';
+import { supabase } from '../src/lib/supabase';
 
 interface BazarEvent {
     id: string;
@@ -30,33 +36,23 @@ export default function Agenda() {
         fetchData();
     }, []);
 
-    const getUserId = () => {
-        try {
-            const u = localStorage.getItem('user');
-            return u ? JSON.parse(u).id : null;
-        } catch { return null; }
-    };
-
     const fetchData = async () => {
-        const userId = getUserId();
-        const query = userId ? `?userId=${userId}` : '';
-
         try {
             const results = await Promise.allSettled([
-                fetch(`/api/scheduled-posts${query}`),
-                fetch(`/api/tasks${query}`),
-                fetch(`/api/alerts${query}`),
-                fetch(`/api/products${query}`),
-                fetch(`/api/bazares${query}`)
+                ScheduledPostService.getAll(),
+                TaskService.getAll(),
+                AlertService.getAll(),
+                ProductService.getAll(),
+                BazarService.getAll()
             ]);
 
             const [postsRes, tasksRes, alertsRes, productsRes, bazaresRes] = results;
 
-            if (postsRes.status === 'fulfilled' && postsRes.value.ok) setScheduledPosts(await postsRes.value.json());
-            if (tasksRes.status === 'fulfilled' && tasksRes.value.ok) setTasks(await tasksRes.value.json());
-            if (alertsRes.status === 'fulfilled' && alertsRes.value.ok) setAlerts(await alertsRes.value.json());
-            if (productsRes.status === 'fulfilled' && productsRes.value.ok) setProducts(await productsRes.value.json());
-            if (bazaresRes.status === 'fulfilled' && bazaresRes.value.ok) setBazarEvents(await bazaresRes.value.json());
+            if (postsRes.status === 'fulfilled') setScheduledPosts(postsRes.value);
+            if (tasksRes.status === 'fulfilled') setTasks(tasksRes.value);
+            if (alertsRes.status === 'fulfilled') setAlerts(alertsRes.value);
+            if (productsRes.status === 'fulfilled') setProducts(productsRes.value);
+            if (bazaresRes.status === 'fulfilled') setBazarEvents(bazaresRes.value);
 
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -65,7 +61,9 @@ export default function Agenda() {
 
     const generateAlerts = async () => {
         try {
-            const userId = getUserId();
+            const { data } = await supabase.auth.getUser();
+            const userId = data.user?.id;
+            // Mantemos a chamada de API para geração, pois pode haver lógica de backend complexa
             await fetch(`/api/alerts/generate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -91,11 +89,9 @@ export default function Agenda() {
         const startingDayOfWeek = firstDay.getDay();
 
         const days = [];
-        // Add empty cells for days before month starts
         for (let i = 0; i < startingDayOfWeek; i++) {
             days.push(null);
         }
-        // Add actual days
         for (let i = 1; i <= daysInMonth; i++) {
             days.push(new Date(year, month, i));
         }
@@ -104,9 +100,7 @@ export default function Agenda() {
 
     const getEventsForDate = (date: Date | null) => {
         if (!date) return { posts: [], tasks: [], bazares: [] };
-
-        // Compare using local date strings (YYYY-MM-DD) to avoid UTC shifts
-        const dateStr = date.toLocaleDateString('sv'); // 'sv' locale format is YYYY-MM-DD
+        const dateStr = date.toLocaleDateString('sv'); // YYYY-MM-DD for comparison
 
         const posts = scheduledPosts.filter(p => new Date(p.scheduledFor).toLocaleDateString('sv') === dateStr);
         const taskList = tasks.filter(t => t.dueDate && new Date(t.dueDate).toLocaleDateString('sv') === dateStr);
@@ -176,7 +170,7 @@ export default function Agenda() {
                                         </div>
                                         <button
                                             onClick={async () => {
-                                                await fetch(`/api/alerts/${alert.id}/read`, { method: 'PATCH' });
+                                                await AlertService.markAsRead(alert.id);
                                                 fetchData();
                                             }}
                                             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
@@ -251,7 +245,6 @@ export default function Agenda() {
             {/* Main Content */}
             {view === 'calendar' ? (
                 <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-lg">
-                    {/* ... Calendar Header ... */}
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                             {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
@@ -278,16 +271,13 @@ export default function Agenda() {
                         </div>
                     </div>
 
-                    {/* Calendar Grid */}
                     <div className="grid grid-cols-7 gap-2">
-                        {/* Weekday headers */}
                         {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
                             <div key={day} className="text-center font-bold text-gray-600 dark:text-gray-400 text-sm py-2">
                                 {day}
                             </div>
                         ))}
 
-                        {/* Calendar days */}
                         {getDaysInMonth(currentMonth).map((date, index) => {
                             const events = getEventsForDate(date);
                             const hasEvents = events.posts.length > 0 || events.tasks.length > 0 || events.bazares.length > 0;
@@ -366,7 +356,6 @@ export default function Agenda() {
                             );
                         })}
                     </div>
-                    {/* Legend part is fine */}
                     <div className="flex gap-6 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                         <div className="flex items-center gap-2">
                             <div className="w-4 h-4 bg-blue-500 rounded"></div>
@@ -415,13 +404,6 @@ export default function Agenda() {
                                             {post.caption && (
                                                 <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{post.caption}</p>
                                             )}
-                                            <div className="flex gap-2 mt-2">
-                                                {JSON.parse(post.platforms).map((platform: string) => (
-                                                    <span key={platform} className="text-xs px-2 py-1 bg-blue-600 text-white rounded font-medium">
-                                                        {platform}
-                                                    </span>
-                                                ))}
-                                            </div>
                                         </div>
                                         <span className={`px-3 py-1 rounded-full text-xs font-bold h-fit ${post.status === 'PUBLISHED' ? 'bg-green-500 text-white' : 'bg-yellow-500 text-white'
                                             }`}>
@@ -495,94 +477,76 @@ export default function Agenda() {
                         )}
                     </div>
                 </div>
-            )
-            }
+            )}
 
-            {/* Modals */}
-            {
-                showDetailModal && selectedEvent && (
-                    <AgendamentoDetailModal
-                        event={selectedEvent}
-                        onClose={() => {
+            {showDetailModal && selectedEvent && (
+                <AgendamentoDetailModal
+                    event={selectedEvent}
+                    onClose={() => {
+                        setShowDetailModal(false);
+                        setSelectedEvent(null);
+                    }}
+                    onEdit={() => {
+                        setShowDetailModal(false);
+                        setShowEditModal(true);
+                    }}
+                    onDelete={async () => {
+                        if (!confirm('Tem certeza que deseja excluir este agendamento?')) return;
+                        try {
+                            if (selectedEvent.type === 'post') await ScheduledPostService.delete(selectedEvent.id);
+                            else if (selectedEvent.type === 'task') await TaskService.delete(selectedEvent.id);
+                            else await BazarService.delete(selectedEvent.id);
                             setShowDetailModal(false);
                             setSelectedEvent(null);
-                        }}
-                        onEdit={() => {
+                            fetchData();
+                        } catch (error) {
+                            console.error('Error deleting:', error);
+                            alert('Erro ao excluir agendamento');
+                        }
+                    }}
+                    onComplete={async () => {
+                        if (!confirm(selectedEvent.type === 'post' ? 'Deseja marcar este post como publicado?' : 'Deseja marcar esta tarefa como concluída?')) return;
+                        try {
+                            if (selectedEvent.type === 'post') await ScheduledPostService.publish(selectedEvent.id);
+                            else await TaskService.update(selectedEvent.id, { status: 'DONE', completedAt: new Date().toISOString() });
                             setShowDetailModal(false);
-                            setShowEditModal(true);
-                        }}
-                        onDelete={async () => {
-                            if (!confirm('Tem certeza que deseja excluir este agendamento?')) return;
-
-                            const endpoint = selectedEvent.type === 'post' ? '/api/scheduled-posts' :
-                                selectedEvent.type === 'task' ? '/api/tasks' :
-                                    '/api/bazares';
-
-                            try {
-                                await fetch(`${endpoint}/${selectedEvent.id}`, { method: 'DELETE' });
-                                setShowDetailModal(false);
-                                setSelectedEvent(null);
-                                fetchData();
-                            } catch (error) {
-                                console.error('Error deleting:', error);
-                                alert('Erro ao excluir agendamento');
-                            }
-                        }}
-                        onComplete={async () => {
-                            if (!confirm(selectedEvent.type === 'post' ? 'Deseja marcar este post como publicado?' : 'Deseja marcar esta tarefa como concluída?')) return;
-
-                            const endpoint = selectedEvent.type === 'post'
-                                ? `/api/scheduled-posts/${selectedEvent.id}/publish`
-                                : `/api/tasks/${selectedEvent.id}/complete`;
-
-                            const method = selectedEvent.type === 'post' ? 'POST' : 'PATCH';
-
-                            try {
-                                await fetch(endpoint, { method });
-                                setShowDetailModal(false);
-                                setSelectedEvent(null);
-                                fetchData();
-                            } catch (error) {
-                                console.error('Error completing:', error);
-                                alert('Erro ao concluir item');
-                            }
-                        }}
-                        products={products}
-                    />
-                )
-            }
-            {
-                showEditModal && selectedEvent && selectedEvent.type === 'post' && (
-                    <EditPostModal
-                        post={selectedEvent}
-                        onClose={() => {
-                            setShowEditModal(false);
                             setSelectedEvent(null);
                             fetchData();
-                        }}
-                        products={products}
-                    />
-                )
-            }
-            {
-                showEditModal && selectedEvent && selectedEvent.type === 'task' && (
-                    <EditTaskModal
-                        task={selectedEvent}
-                        onClose={() => {
-                            setShowEditModal(false);
-                            setSelectedEvent(null);
-                            fetchData();
-                        }}
-                    />
-                )
-            }
+                        } catch (error) {
+                            console.error('Error completing:', error);
+                            alert('Erro ao concluir item');
+                        }
+                    }}
+                    products={products}
+                />
+            )}
+            {showEditModal && selectedEvent && selectedEvent.type === 'post' && (
+                <EditPostModal
+                    post={selectedEvent}
+                    onClose={() => {
+                        setShowEditModal(false);
+                        setSelectedEvent(null);
+                        fetchData();
+                    }}
+                    products={products}
+                />
+            )}
+            {showEditModal && selectedEvent && selectedEvent.type === 'task' && (
+                <EditTaskModal
+                    task={selectedEvent}
+                    onClose={() => {
+                        setShowEditModal(false);
+                        setSelectedEvent(null);
+                        fetchData();
+                    }}
+                />
+            )}
             {showPostModal && <NewPostModal onClose={() => { setShowPostModal(false); fetchData(); }} products={products} />}
             {showTaskModal && <NewTaskModal onClose={() => { setShowTaskModal(false); fetchData(); }} />}
         </div >
     );
 }
 
-// Modal Components (mantidos iguais ao anterior)
 function NewPostModal({ onClose, products }: { onClose: () => void; products: Product[] }) {
     const [title, setTitle] = useState('');
     const [caption, setCaption] = useState('');
@@ -590,27 +554,15 @@ function NewPostModal({ onClose, products }: { onClose: () => void; products: Pr
     const [scheduledFor, setScheduledFor] = useState('');
     const [platforms, setPlatforms] = useState<string[]>([]);
 
-    const getUserId = () => {
-        try {
-            const u = localStorage.getItem('user');
-            return u ? JSON.parse(u).id : null;
-        } catch { return null; }
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await fetch('/api/scheduled-posts', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    title,
-                    caption,
-                    productId: productId || null,
-                    scheduledFor,
-                    platforms: JSON.stringify(platforms),
-                    userId: getUserId()
-                })
+            await ScheduledPostService.create({
+                title,
+                caption,
+                productId: productId || null,
+                scheduledFor,
+                platforms: JSON.stringify(platforms)
             });
             onClose();
         } catch (error) {
@@ -728,27 +680,15 @@ function NewTaskModal({ onClose }: { onClose: () => void }) {
     const [priority, setPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH'>('MEDIUM');
     const [dueDate, setDueDate] = useState('');
 
-    const getUserId = () => {
-        try {
-            const u = localStorage.getItem('user');
-            return u ? JSON.parse(u).id : null;
-        } catch { return null; }
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await fetch('/api/tasks', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    title,
-                    description,
-                    category,
-                    priority,
-                    dueDate: dueDate || null,
-                    userId: getUserId()
-                })
+            await TaskService.create({
+                title,
+                description,
+                category,
+                priority,
+                dueDate: dueDate || null
             });
             onClose();
         } catch (error) {
@@ -847,7 +787,6 @@ function NewTaskModal({ onClose }: { onClose: () => void }) {
     );
 }
 
-// Modal de Detalhes do Agendamento
 function AgendamentoDetailModal({ event, onClose, onEdit, onDelete, onComplete, products }: {
     event: any;
     onClose: () => void;
@@ -973,7 +912,6 @@ function AgendamentoDetailModal({ event, onClose, onEdit, onDelete, onComplete, 
     );
 }
 
-// Modal de Edição de Post
 function EditPostModal({ post, onClose, products }: { post: any; onClose: () => void; products: Product[] }) {
     const [title, setTitle] = useState(post.title || '');
     const [caption, setCaption] = useState(post.caption || '');
@@ -984,16 +922,12 @@ function EditPostModal({ post, onClose, products }: { post: any; onClose: () => 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await fetch(`/api/scheduled-posts/${post.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    title,
-                    caption,
-                    productId: productId || null,
-                    scheduledFor,
-                    platforms: JSON.stringify(platforms)
-                })
+            await ScheduledPostService.update(post.id, {
+                title,
+                caption,
+                productId: productId || null,
+                scheduledFor,
+                platforms: JSON.stringify(platforms)
             });
             onClose();
         } catch (error) {
@@ -1043,7 +977,6 @@ function EditPostModal({ post, onClose, products }: { post: any; onClose: () => 
     );
 }
 
-// Modal de Edição de Tarefa
 function EditTaskModal({ task, onClose }: { task: any; onClose: () => void }) {
     const [title, setTitle] = useState(task.title || '');
     const [description, setDescription] = useState(task.description || '');
@@ -1054,11 +987,7 @@ function EditTaskModal({ task, onClose }: { task: any; onClose: () => void }) {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await fetch(`/api/tasks/${task.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, description, category, priority, dueDate: dueDate || null })
-            });
+            await TaskService.update(task.id, { title, description, category, priority, dueDate: dueDate || null });
             onClose();
         } catch (error) {
             console.error('Error updating task:', error);

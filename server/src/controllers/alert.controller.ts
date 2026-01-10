@@ -165,9 +165,13 @@ export const generateAutomaticAlerts = async (req: Request, res: Response) => {
             alertsCreated.push({ id: alert.id, type: 'PRODUCT_NO_POST' });
         }
 
-        res.json({ message: `${alertsCreated.length} alertas gerados`, alerts: alertsCreated });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error generating alerts:', error);
-        res.status(500).json({ error: 'Erro ao gerar alertas' });
+        res.status(500).json({
+            error: 'Erro ao gerar alertas',
+            details: error.message,
+            code: error.code,
+            meta: error.meta
+        });
     }
 };

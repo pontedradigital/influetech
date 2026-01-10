@@ -83,13 +83,17 @@ export default function Agenda() {
                 body: JSON.stringify({ userId })
             });
 
-            if (!res.ok) throw new Error('Falha na resposta do servidor');
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                console.error('Server Error Details:', errData);
+                throw new Error(errData.details || errData.error || 'Falha na resposta do servidor');
+            }
 
             fetchData();
             alert('Alertas gerados com sucesso!');
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error generating alerts:', error);
-            alert('Erro ao gerar alertas. Verifique o console.');
+            alert(`Erro ao gerar alertas: ${error.message}`);
         }
     };
 

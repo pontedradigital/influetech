@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import MediaKitGenerationModal from '../components/MediaKitGenerationModal';
 import { useInfluencer } from '../context/InfluencerContext';
-import { MediaKitService } from '../services/MediaKitService';
 import PremiumFeatureWrapper from '../components/PremiumFeatureWrapper';
 
 function MediaKitContent() {
@@ -18,68 +17,6 @@ function MediaKitContent() {
     // Calculate total average views
     const totalAverageViews = data.socials.reduce((acc, curr) => acc + (curr.averageViews || 0), 0);
 
-    // Brand Management
-    const [savedBrands, setSavedBrands] = useState<{ id: string; name: string; logo?: string }[]>([]);
-    const [newBrandName, setNewBrandName] = useState('');
-    const [newBrandLogo, setNewBrandLogo] = useState<string | null>(null);
-    const [newBrandFile, setNewBrandFile] = useState<File | null>(null); // Store the actual file
-    const [newBrandColor, setNewBrandColor] = useState('#ffffff');
-
-    // Fetch brands on mount
-    React.useEffect(() => {
-        fetchBrands();
-    }, []);
-
-    const fetchBrands = async () => {
-        try {
-            const data = await MediaKitService.getBrands();
-            setSavedBrands(data);
-        } catch (error) {
-            console.error('Error fetching brands:', error);
-        }
-    };
-
-    const handleBrandLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setNewBrandFile(file); // Save file for upload
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setNewBrandLogo(reader.result as string); // Preview
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const addBrand = async () => {
-        if (!newBrandName) return;
-        try {
-            await MediaKitService.addBrand({
-                name: newBrandName,
-                logo: newBrandFile || newBrandLogo, // Prioritize file
-                backgroundColor: newBrandColor
-            });
-
-            setNewBrandName('');
-            setNewBrandLogo(null);
-            setNewBrandFile(null); // Clear file
-            setNewBrandColor('#ffffff');
-            fetchBrands();
-        } catch (error) {
-            console.error('Error adding brand:', error);
-        }
-    };
-
-    const deleteBrand = async (id: string) => {
-        if (!confirm('Tem certeza que deseja remover esta marca?')) return;
-        try {
-            await MediaKitService.deleteBrand(id);
-            fetchBrands();
-        } catch (error) {
-            console.error('Error deleting brand:', error);
-        }
-    };
-
     // Map context data to the structure expected by the page and modal
     const influencerData = {
         name: data.profile.name,
@@ -90,7 +27,7 @@ function MediaKitContent() {
         photo: data.profile.photoUrl || null,
 
         // Pass saved brands to the modal
-        brands: savedBrands.map(b => ({ name: b.name, logo: b.logo, backgroundColor: (b as any).backgroundColor })),
+        brands: [],
 
         socialMedia: data.socials.map(s => ({
             platform: s.platform,
@@ -161,93 +98,7 @@ function MediaKitContent() {
                 </div>
             </div>
 
-            {/* Brand Management Section */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-                <div className="flex items-center gap-2 mb-6">
-                    <span className="material-symbols-outlined text-orange-500 text-3xl">handshake</span>
-                    <div>
-                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Marcas Parceiras</h2>
-                        <p className="text-gray-500 text-sm">Gerencie as marcas que aparecerão no seu Media Kit.</p>
-                    </div>
-                </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Add Brand Form */}
-                    <div className="lg:col-span-1 bg-gray-50 dark:bg-gray-900 p-5 rounded-lg border border-gray-100 dark:border-gray-700">
-                        <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase mb-4">Adicionar Nova</h3>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nome da Marca</label>
-                                <input
-                                    type="text"
-                                    value={newBrandName}
-                                    onChange={(e) => setNewBrandName(e.target.value)}
-                                    placeholder="Ex: Nike, Adidas..."
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary/20 outline-none"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Logotipo</label>
-                                <label className={`cursor-pointer h-20 rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-1 transition-all ${newBrandLogo ? 'border-primary bg-primary/5' : 'border-gray-200 dark:border-gray-700 hover:bg-white'}`}>
-                                    {newBrandLogo ? (
-                                        <img src={newBrandLogo} className="h-14 w-auto object-contain" alt="Preview" />
-                                    ) : (
-                                        <>
-                                            <span className="material-symbols-outlined text-gray-400">cloud_upload</span>
-                                            <span className="text-xs text-gray-500">Enviar Logo</span>
-                                        </>
-                                    )}
-                                    <input type="file" accept="image/*" onChange={handleBrandLogoUpload} className="hidden" />
-                                </label>
-                            </div>
-                            <button
-                                onClick={addBrand}
-                                disabled={!newBrandName.trim()}
-                                className="w-full py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold rounded-lg hover:opacity-90 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-                            >
-                                <span className="material-symbols-outlined text-sm">add</span>
-                                Adicionar
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Brands List */}
-                    <div className="lg:col-span-2">
-                        {savedBrands.length === 0 ? (
-                            <div className="h-full flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-100 dark:border-gray-700 rounded-lg p-8">
-                                <span className="material-symbols-outlined text-4xl mb-2">branding_watermark</span>
-                                <p className="text-sm">Nenhuma marca adicionada ainda.</p>
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                                {savedBrands.map((brand) => (
-                                    <div key={brand.id} className="group relative bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-xl p-3 flex flex-col items-center justify-center gap-2 hover:shadow-md transition-all">
-                                        <div
-                                            className="h-16 w-16 flex items-center justify-center overflow-hidden rounded-full border border-gray-100 dark:border-gray-700"
-                                            style={{ backgroundColor: (brand as any).backgroundColor || '#f9fafb' }} // Use dynamic color
-                                        >
-                                            {brand.logo ? (
-                                                <img src={brand.logo} alt={brand.name} className="h-full w-full object-contain" />
-                                            ) : (
-                                                <span className="text-xl font-bold text-gray-300">{brand.name[0]}</span>
-                                            )}
-                                        </div>
-                                        <span className="text-xs font-bold text-gray-600 dark:text-gray-400 truncate w-full text-center">{brand.name}</span>
-                                        {!(brand as any).isCompany && (
-                                            <button
-                                                onClick={() => deleteBrand(brand.id)}
-                                                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
-                                            >
-                                                <span className="material-symbols-outlined text-sm">close</span>
-                                            </button>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
 
 
             {/* Preview Section (Static for now, just to show data) */}

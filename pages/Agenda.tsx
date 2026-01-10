@@ -85,7 +85,7 @@ export default function Agenda() {
 
             if (!res.ok) {
                 const errData = await res.json().catch(() => ({}));
-                console.error('Server Error Details:', errData);
+                console.error('Server Error Details:', JSON.stringify(errData, null, 2));
                 throw new Error(errData.details || errData.error || 'Falha na resposta do servidor');
             }
 
@@ -93,6 +93,7 @@ export default function Agenda() {
             alert('Alertas gerados com sucesso!');
         } catch (error: any) {
             console.error('Error generating alerts:', error);
+            // Show the actual error message in the alert if possible
             alert(`Erro ao gerar alertas: ${error.message}`);
         }
     };

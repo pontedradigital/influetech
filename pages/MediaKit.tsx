@@ -1,12 +1,27 @@
 import React, { useState } from 'react';
 import MediaKitGenerationModal from '../components/MediaKitGenerationModal';
 import { useInfluencer } from '../context/InfluencerContext';
+import { CompanyService } from '../services/CompanyService';
 import PremiumFeatureWrapper from '../components/PremiumFeatureWrapper';
 
 function MediaKitContent() {
     const { data, totalFollowers } = useInfluencer();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [animationKey, setAnimationKey] = useState(0);
+    const [partnerBrands, setPartnerBrands] = useState<any[]>([]);
+
+    // Fetch Partner Brands
+    React.useEffect(() => {
+        const fetchBrands = async () => {
+            try {
+                const brands = await CompanyService.getMediaKitBrands();
+                setPartnerBrands(brands);
+            } catch (error) {
+                console.error('Error fetching partner brands:', error);
+            }
+        };
+        fetchBrands();
+    }, []);
 
     // Retrigger animation on mount
     React.useEffect(() => {
@@ -27,7 +42,11 @@ function MediaKitContent() {
         photo: data.profile.photoUrl || null,
 
         // Pass saved brands to the modal
-        brands: [],
+        brands: partnerBrands.map(b => ({
+            name: b.name,
+            logo: b.logoUrl,
+            backgroundColor: b.backgroundColor || '#ffffff'
+        })),
 
         socialMedia: data.socials.map(s => ({
             platform: s.platform,
@@ -98,8 +117,65 @@ function MediaKitContent() {
                 </div>
             </div>
 
+            {/* Partner Brands (Automated from 'Empresas') */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                <div className="flex items-center gap-2 mb-4">
+                    <span className="material-symbols-outlined text-orange-500 text-3xl">handshake</span>
+                    <div>
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Marcas Parceiras</h2>
+                        <p className="text-gray-500 text-sm">
+                            Estas são as empresas com parceria <strong>Aceita</strong> ou <strong>Iniciada</strong>.
+                        </p>
+                    </div>
+                </div>
 
+                {/* Tutorial / Explanation Info Box */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg p-4 mb-6 flex items-start gap-3">
+                    <span className="material-symbols-outlined text-blue-500 mt-0.5">info</span>
+                    <div>
+                        <h4 className="text-sm font-bold text-blue-800 dark:text-blue-300 mb-1">Como adicionar marcas aqui?</h4>
+                        <p className="text-xs text-blue-700 dark:text-blue-400 leading-relaxed">
+                            Para que uma marca apareça nesta lista e no seu Media Kit, vá até a sessão <strong>Empresas</strong> e
+                            cadastre a empresa com o status <strong>"Iniciada"</strong> ou <strong>"Aceita"</strong>.
+                            Não se esqueça de adicionar o logotipo lá!
+                        </p>
+                    </div>
+                </div>
 
+                {/* Brands Grid */}
+                {partnerBrands.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-100 dark:border-gray-700 rounded-xl text-center">
+                        <span className="material-symbols-outlined text-gray-300 text-4xl mb-2">domain_disabled</span>
+                        <p className="text-sm text-gray-500 font-medium">Nenhuma parceria ativa encontrada.</p>
+                        <p className="text-xs text-gray-400 max-w-xs mx-auto mt-1">
+                            Cadastre empresas com status "Aceita" ou "Iniciada" para vê-las aqui.
+                        </p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        {partnerBrands.map((brand) => (
+                            <div key={brand.id} className="group flex flex-col items-center justify-center gap-3 p-4 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-xl hover:shadow-md transition-all">
+                                <div
+                                    className="h-16 w-16 flex items-center justify-center rounded-full bg-white border border-gray-200 dark:border-gray-800 p-2"
+                                    style={{ backgroundColor: brand.backgroundColor || '#ffffff' }}
+                                >
+                                    {brand.logoUrl ? (
+                                        <img src={brand.logoUrl} alt={brand.name} className="h-full w-full object-contain" />
+                                    ) : (
+                                        <span className="text-xl font-bold text-gray-300 uppercase">{brand.name[0]}</span>
+                                    )}
+                                </div>
+                                <div className="text-center w-full">
+                                    <p className="text-xs font-bold text-gray-800 dark:text-gray-200 truncate" title={brand.name}>{brand.name}</p>
+                                    <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full mt-1 inline-block ${brand.partnershipStatus === 'Aceita' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                        {brand.partnershipStatus}
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
 
             {/* Preview Section (Static for now, just to show data) */}
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8 opacity-75 grayscale-[0.5] hover:grayscale-0 transition-all duration-500">

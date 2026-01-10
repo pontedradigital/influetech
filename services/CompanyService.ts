@@ -13,6 +13,20 @@ export const CompanyService = {
     },
 
     /**
+     * Busca empresas para o Media Kit (Aceita ou Iniciada)
+     */
+    async getMediaKitBrands() {
+        const { data, error } = await supabase
+            .from('Company')
+            .select('id, name, logoUrl, partnershipStatus, backgroundColor') // Fetch minimal fields
+            .in('partnershipStatus', ['Aceita', 'Iniciada'])
+            .order('name');
+
+        if (error) throw error;
+        return data || [];
+    },
+
+    /**
      * Upload de logo para Supabase Storage
      */
     async uploadLogo(file: File, userId: string, companyId: string): Promise<string> {

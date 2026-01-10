@@ -20,6 +20,17 @@ const Dashboard = () => {
   const [insights, setInsights] = useState<Insight[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Carousel Logic
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    if (insights.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentSlide(prev => (prev + 1) % insights.length);
+    }, 8000); // 8 seconds per slide
+    return () => clearInterval(interval);
+  }, [insights.length]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -96,40 +107,78 @@ const Dashboard = () => {
         ))}
       </div>
 
-      {/* Hero Insight Section */}
-      {featuredInsight && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Hero Card */}
-          <div className={`lg:col-span-2 rounded-2xl p-8 relative overflow-hidden shadow-xl flex flex-col justify-center text-white ${featuredInsight.level === 'HIGH' ? 'bg-gradient-to-r from-red-500 to-orange-500' :
-              featuredInsight.type === 'INFO' ? 'bg-gradient-to-r from-blue-600 to-cyan-500' :
-                'bg-gradient-to-r from-indigo-500 to-purple-600'
+      {/* Hero Insight Section - Carousel Style */}
+      {insights.length > 0 && (
+        <div className="w-full mb-8 relative group">
+          <div className={`w-full rounded-2xl p-8 relative overflow-hidden shadow-xl flex flex-col justify-center text-white transition-all duration-500 ease-in-out min-h-[220px] ${insights[currentSlide].level === 'HIGH' ? 'bg-gradient-to-r from-red-500 via-orange-500 to-amber-500' :
+            insights[currentSlide].type === 'INFO' ? 'bg-gradient-to-r from-blue-600 via-cyan-500 to-teal-400' :
+              'bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500'
             }`}>
-            <div className="relative z-10">
-              <div className="flex items-center gap-3 mb-4 opacity-90">
-                <span className="material-symbols-outlined text-3xl">{getInsightIcon(featuredInsight.type)}</span>
-                <span className="font-bold text-sm uppercase tracking-widest">
-                  {featuredInsight.type === 'ALERT' ? 'Atenção Necessária' :
-                    featuredInsight.type === 'INFO' ? 'Informativo' :
-                      'Sugestão Inteligente'}
-                </span>
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 animate-fade-in key={currentSlide}">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-3 opacity-90">
+                  <span className="material-symbols-outlined text-3xl bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                    {getInsightIcon(insights[currentSlide].type)}
+                  </span>
+                  <span className="font-bold text-xs uppercase tracking-[0.2em] px-2 py-1 rounded bg-black/10">
+                    {insights[currentSlide].type === 'ALERT' ? 'Atenção Necessária' :
+                      insights[currentSlide].type === 'INFO' ? 'Quadro de Avisos' :
+                        'Sugestão Inteligente'}
+                  </span>
+                </div>
+                <h2 className="text-2xl md:text-4xl font-extrabold mb-3 leading-tight tracking-tight">
+                  {insights[currentSlide].title}
+                </h2>
+                <p className="text-sm md:text-lg opacity-90 leading-relaxed max-w-3xl">
+                  {insights[currentSlide].message}
+                </p>
               </div>
-              <h2 className="text-3xl md:text-4xl font-extrabold mb-4 leading-tight">{featuredInsight.title}</h2>
-              <p className="text-lg opacity-95 max-w-2xl">{featuredInsight.message}</p>
+
+              {/* Action Button if applicable (placeholder for logic) */}
+              <div className="hidden md:block">
+                <button className="bg-white text-gray-900 px-6 py-3 rounded-xl font-bold hover:bg-opacity-90 transition-all shadow-lg flex items-center gap-2">
+                  <span>Ver Detalhes</span>
+                  <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                </button>
+              </div>
             </div>
-            <span className="material-symbols-outlined absolute -right-10 -bottom-10 text-[12rem] opacity-20 rotate-12">auto_awesome</span>
+
+            {/* Background Decor */}
+            <span className="material-symbols-outlined absolute -right-12 -bottom-16 text-[16rem] opacity-10 rotate-12 transition-transform duration-700 group-hover:rotate-6">
+              bg_pattern_circuit
+            </span>
           </div>
 
-          {/* Side List */}
-          <div className="flex flex-col gap-3">
-            <h3 className="font-bold text-gray-500 dark:text-gray-400 text-sm uppercase px-2">Outros Insights</h3>
-            {otherInsights.map(insight => (
-              <div key={insight.id} className={`p-4 rounded-xl border-l-4 shadow-sm bg-white dark:bg-[#1A202C] ${insight.level === 'HIGH' ? 'border-red-500' : 'border-blue-500'}`}>
-                <h4 className="font-bold text-gray-900 dark:text-white text-sm">{insight.title}</h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{insight.message}</p>
+          {/* Navigation Controls */}
+          {insights.length > 1 && (
+            <>
+              {/* Arrows */}
+              <button
+                onClick={() => setCurrentSlide(prev => (prev === 0 ? insights.length - 1 : prev - 1))}
+                className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white opacity-0 group-hover:opacity-100 transition-all"
+              >
+                <span className="material-symbols-outlined">chevron_left</span>
+              </button>
+              <button
+                onClick={() => setCurrentSlide(prev => (prev + 1) % insights.length)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white opacity-0 group-hover:opacity-100 transition-all"
+              >
+                <span className="material-symbols-outlined">chevron_right</span>
+              </button>
+
+              {/* Dots */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                {insights.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentSlide(idx)}
+                    className={`h-1.5 rounded-full transition-all duration-300 ${currentSlide === idx ? 'w-8 bg-white' : 'w-2 bg-white/40 hover:bg-white/60'
+                      }`}
+                  />
+                ))}
               </div>
-            ))}
-            {insights.length === 0 && <p className="text-sm text-gray-400 p-4">Tudo tranquilo por aqui.</p>}
-          </div>
+            </>
+          )}
         </div>
       )}
 

@@ -9,7 +9,7 @@ interface MediaKitGenerationModalProps {
     initialData: any;
 }
 
-import { PROXY_URL_BASE } from './proxyConfig';
+
 
 interface Brand {
     id: string;
@@ -27,9 +27,12 @@ const urlToBase64 = async (url: string): Promise<string | null> => {
     if (url.startsWith('data:')) return url;
 
     try {
-        // Use configurable proxy (Local or Supabase)
-        const proxyUrl = `${PROXY_URL_BASE}${encodeURIComponent(url)}`;
-        const response = await fetch(proxyUrl);
+        // Direct fetch without proxy (Browser Client-Side)
+        const response = await fetch(url, {
+            mode: 'cors', // Ensure CORS is respected
+            cache: 'no-cache'
+        });
+
         const blob = await response.blob();
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -39,7 +42,7 @@ const urlToBase64 = async (url: string): Promise<string | null> => {
         });
     } catch (error) {
         console.error('Error converting image to base64:', error);
-        return url;
+        return url; // Fallback to original URL if conversion fails
     }
 };
 

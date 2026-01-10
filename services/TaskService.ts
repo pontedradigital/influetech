@@ -60,7 +60,9 @@ export const TaskService = {
             .insert([{
                 ...task,
                 id: newId,
-                userId
+                userId,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
             }])
             .select()
             .single();
@@ -72,7 +74,10 @@ export const TaskService = {
     async update(id: string, updates: any) {
         const { data, error } = await supabase
             .from('Task')
-            .update(updates)
+            .update({
+                ...updates,
+                updatedAt: new Date().toISOString()
+            })
             .eq('id', id)
             .select()
             .single();

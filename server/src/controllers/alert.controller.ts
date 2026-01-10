@@ -70,7 +70,13 @@ export const deleteAlert = async (req: Request, res: Response) => {
 // Função para gerar alertas automáticos
 export const generateAutomaticAlerts = async (req: Request, res: Response) => {
     try {
-        const userId = '327aa8c1-7c26-41c2-95d7-b375c25eb896';
+        const { userId } = req.body;
+
+        if (!userId) {
+            res.status(400).json({ error: 'UserId is required' });
+            return; // Ensure void return or end function execution
+        }
+
         const alertsCreated: Array<{ id: string; type: string }> = [];
 
         const now = new Date();
@@ -78,9 +84,9 @@ export const generateAutomaticAlerts = async (req: Request, res: Response) => {
         const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
         // 1. Alertas de posts próximos (1 dia antes)
-        // SQL: WHERE ... datetime(scheduledFor) BETWEEN datetime('now') AND datetime('now', '+1 day')
         const upcomingPosts = await db.scheduledPost.findMany({
             where: {
+                userId,
                 status: 'SCHEDULED',
                 scheduledFor: {
                     gte: now,
@@ -90,16 +96,12 @@ export const generateAutomaticAlerts = async (req: Request, res: Response) => {
         });
 
         for (const post of upcomingPosts) {
-            // Check duplication if needed, but original code didn't check strictly inside loop, it just inserted.
-            // Assuming repetition is handled elsewhere or acceptable for now as per original logic.
-            // But actually, blindly inserting will spam alerts. Original code did blindly insert. I will mimic that behavior but usually unique check is better.
-            // For faithful port, I will insert.
             const alert = await db.alert.create({
                 data: {
                     userId,
                     type: 'POST_UPCOMING',
                     title: 'Post Próximo',
-                    message: `Post "${post.title}" agendado para amanhã`, // or 'em breve'
+                    message: `Post "${post.title}" agendado para amanhã`,
                     relatedId: post.id,
                     isRead: 0
                 }
@@ -110,6 +112,7 @@ export const generateAutomaticAlerts = async (req: Request, res: Response) => {
         // 2. Alertas de tarefas vencendo (deadline em 24h)
         const dueTasks = await db.task.findMany({
             where: {
+                userId,
                 status: { not: 'DONE' },
                 dueDate: {
                     gte: now,
@@ -133,9 +136,9 @@ export const generateAutomaticAlerts = async (req: Request, res: Response) => {
         }
 
         // 3. Alertas de produtos sem post agendado (recebidos há 7+ dias)
-        // SQL: ... NOT EXISTS (SELECT 1 FROM ScheduledPost sp WHERE sp.productId = p.id ...)
         const productsWithoutPost = await db.product.findMany({
             where: {
+                userId,
                 status: 'RECEIVED',
                 createdAt: {
                     lte: sevenDaysAgo

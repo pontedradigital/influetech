@@ -15,6 +15,7 @@ export const dashboardService = {
         // 1. Inventory Count (Not sold/shipped)
         const inventoryCount = await prisma.product.count({
             where: {
+                userId,
                 status: {
                     notIn: ['SOLD', 'SHIPPED']
                 }
@@ -24,6 +25,7 @@ export const dashboardService = {
         // 2. Monthly Revenue
         const monthlySales = await prisma.sale.findMany({
             where: {
+                userId,
                 saleDate: {
                     gte: firstDayOfMonth
                 }
@@ -38,13 +40,15 @@ export const dashboardService = {
         // 3. Pending Shipments
         const pendingShipments = await prisma.shipment.count({
             where: {
-                status: 'pending'
+                userId,
+                status: { in: ['pending', 'PENDING'] }
             }
         });
 
         // 4. Next Bazar Event
         const nextBazar = await prisma.bazarEvent.findFirst({
             where: {
+                userId,
                 date: {
                     gte: today
                 },
@@ -56,8 +60,10 @@ export const dashboardService = {
         });
 
         // 5. Urgent Tasks (Top 3 TODO)
+        // 5. Urgent Tasks (Top 3 TODO)
         const tasks = await prisma.task.findMany({
             where: {
+                userId,
                 status: { not: 'DONE' }
             },
             take: 3,
@@ -70,6 +76,7 @@ export const dashboardService = {
         // 6. Active Financial Goal
         const goal = await prisma.financialGoal.findFirst({
             where: {
+                userId,
                 status: 'ACTIVE'
             },
             take: 1
@@ -77,7 +84,7 @@ export const dashboardService = {
 
         // 7. Recent Sales
         const recentSales = await prisma.sale.findMany({
-            where: {},
+            where: { userId },
             take: 3,
             orderBy: { saleDate: 'desc' },
             include: {
@@ -99,6 +106,7 @@ export const dashboardService = {
             const monthRevenue = await prisma.sale.aggregate({
                 _sum: { salePrice: true },
                 where: {
+                    userId,
                     saleDate: { gte: start, lte: end }
                 }
             });
@@ -113,6 +121,7 @@ export const dashboardService = {
         // Efficient way:
         const soldProducts = await prisma.product.findMany({
             where: {
+                userId,
                 sales: { some: {} } // Products that have been sold
             },
             select: {

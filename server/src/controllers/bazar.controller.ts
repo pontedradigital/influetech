@@ -424,9 +424,17 @@ export const getSuggestions = (req: Request, res: Response) => {
 };
 
 // Lista eventos de bazar
+// Lista eventos de bazar
 export const listBazarEvents = async (req: Request, res: Response) => {
     try {
+        const userId = (req as any).user?.id || req.query.userId as string;
+
+        if (!userId) {
+            return res.status(401).json({ error: 'User not authenticated' });
+        }
+
         const events = await db.bazarEvent.findMany({
+            where: { userId },
             orderBy: { date: 'asc' }
         });
         res.json(events);

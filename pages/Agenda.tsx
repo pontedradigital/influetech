@@ -30,21 +30,34 @@ export default function Agenda() {
         fetchData();
     }, []);
 
-    const fetchData = async () => {
+    const getUserId = () => {
         try {
-            const [postsRes, tasksRes, alertsRes, productsRes, bazaresRes] = await Promise.all([
-                fetch('/api/scheduled-posts'),
-                fetch('/api/tasks'),
-                fetch('/api/alerts'),
-                fetch('/api/products'),
-                fetch('/api/bazares')
+            const u = localStorage.getItem('user');
+            return u ? JSON.parse(u).id : null;
+        } catch { return null; }
+    };
+
+    const fetchData = async () => {
+        const userId = getUserId();
+        const query = userId ? `?userId=${userId}` : '';
+
+        try {
+            const results = await Promise.allSettled([
+                fetch(`/api/scheduled-posts${query}`),
+                fetch(`/api/tasks${query}`),
+                fetch(`/api/alerts${query}`),
+                fetch(`/api/products${query}`),
+                fetch(`/api/bazares${query}`)
             ]);
 
-            setScheduledPosts(await postsRes.json());
-            setTasks(await tasksRes.json());
-            setAlerts(await alertsRes.json());
-            setProducts(await productsRes.json());
-            setBazarEvents(await bazaresRes.json());
+            const [postsRes, tasksRes, alertsRes, productsRes, bazaresRes] = results;
+
+            if (postsRes.status === 'fulfilled' && postsRes.value.ok) setScheduledPosts(await postsRes.value.json());
+            if (tasksRes.status === 'fulfilled' && tasksRes.value.ok) setTasks(await tasksRes.value.json());
+            if (alertsRes.status === 'fulfilled' && alertsRes.value.ok) setAlerts(await alertsRes.value.json());
+            if (productsRes.status === 'fulfilled' && productsRes.value.ok) setProducts(await productsRes.value.json());
+            if (bazaresRes.status === 'fulfilled' && bazaresRes.value.ok) setBazarEvents(await bazaresRes.value.json());
+
         } catch (error) {
             console.error('Error fetching data:', error);
         }
@@ -52,7 +65,12 @@ export default function Agenda() {
 
     const generateAlerts = async () => {
         try {
-            await fetch('/api/alerts/generate', { method: 'POST' });
+            const userId = getUserId();
+            await fetch(`/api/alerts/generate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId })
+            });
             fetchData();
         } catch (error) {
             console.error('Error generating alerts:', error);
